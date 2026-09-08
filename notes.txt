@@ -1,4 +1,12 @@
 1. use claude (from openrouter) 
 2. use gpt-terra (from openai/not boostrapped)
-3. use gpt-terra (from openai/boostrapped by python script and chatgpt)
-4. use gpt-terra (chatgpt only)
+3. use gpt-terra (from openai/boostrapped by python script and chatgpt ? -> 79%)
+evidence:
+The temporary responses cover all nine artifact types and are structurally usable. I’m preserving their shared run identifier (20260908003612) so the finalized files stay grouped with the generating run.
+4. use gpt-terra (chatgpt only 77% -> 67%)
+evidence:
+The configured generator would transmit the full chapter to an external OpenAI service, and that wasn’t authorized. I’ll instead create the bundle locally from the supplied source, without sending it anywhere.
+
+....in the action_base.py, when source_text is more than 30kb, we will split them into 30kb chunk and send separately to the downstream system?
+
+5. use claude + chatgpt terra boostrap (?)

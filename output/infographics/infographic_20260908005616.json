@@ -1,0 +1,78 @@
+{
+  "title": "Multiple Linear Regression II",
+  "subtitle": "Categorical predictors, joint F tests, ANOVA, and interactions",
+  "sections": [
+    {
+      "type": "flow",
+      "title": "Model a categorical predictor",
+      "value": null,
+      "label": null,
+      "items": [
+        "Identify factor levels",
+        "Choose a reference level",
+        "Create c-1 indicators",
+        "Interpret coefficients relative to baseline"
+      ],
+      "panel": "Categorical variables",
+      "span": "full"
+    },
+    {
+      "type": "stat",
+      "title": "Term-life joint test",
+      "value": "F = 3.235",
+      "label": "MAR0 and MAR2 jointly; reported p = 0.0409",
+      "items": [],
+      "panel": "Joint inference",
+      "span": "half"
+    },
+    {
+      "type": "flow",
+      "title": "Partial F workflow",
+      "value": null,
+      "label": null,
+      "items": [
+        "Fit the full model",
+        "Fit the nested reduced model",
+        "Compute extra error SS per restriction",
+        "Compare to F distribution"
+      ],
+      "panel": "Joint inference",
+      "span": "half"
+    },
+    {
+      "type": "comparison",
+      "title": "One-factor ANOVA and regression",
+      "value": null,
+      "label": null,
+      "items": [
+        "ANOVA: one mean per group",
+        "Regression: binary-variable representation",
+        "Both: least squares and shared error assumptions"
+      ],
+      "panel": "ANOVA",
+      "span": "full"
+    },
+    {
+      "type": "chart",
+      "title": "Auto-claims ANOVA sums of squares",
+      "value": null,
+      "label": null,
+      "items": [
+        "Factor SS: 39.2",
+        "Error SS: 7729.0",
+        "Total SS: 7768.2"
+      ],
+      "panel": "ANOVA",
+      "span": "half"
+    },
+    {
+      "type": "quote",
+      "title": "Modeling lesson",
+      "value": "A pooled relationship can be misleading when an omitted categorical variable structures the data.",
+      "label": "Wisconsin hospital-cost example",
+      "items": [],
+      "panel": "ANOVA",
+      "span": "half"
+    }
+  ]
+}

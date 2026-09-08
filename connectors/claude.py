@@ -22,7 +22,7 @@ class ClaudeConnector(LLMConnector):
         self.model = self.model or os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
         self.api_key = self.api_key or os.getenv("ANTHROPIC_API_KEY")
         if self.max_tokens is None:
-            raw_max_tokens = os.getenv("ANTHROPIC_MAX_TOKENS", "8192")
+            raw_max_tokens = os.getenv("ANTHROPIC_MAX_TOKENS", "16000")
             try:
                 self.max_tokens = int(raw_max_tokens)
             except ValueError as exc:

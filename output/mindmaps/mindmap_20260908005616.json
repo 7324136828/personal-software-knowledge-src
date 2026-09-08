@@ -1,0 +1,97 @@
+{
+  "name": "Multiple Linear Regression II",
+  "children": [
+    {
+      "name": "Categorical predictors",
+      "children": [
+        {
+          "name": "Factors and binary variables",
+          "children": [
+            {
+              "name": "Use c-1 indicators with an intercept",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Reference levels",
+          "children": [
+            {
+              "name": "Coefficients are differences from baseline",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Joint inference",
+      "children": [
+        {
+          "name": "General linear hypothesis",
+          "children": [
+            {
+              "name": "H0: Cβ = d",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Partial F test",
+          "children": [
+            {
+              "name": "Compare nested reduced and full models",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "One-factor ANOVA",
+      "children": [
+        {
+          "name": "Group means",
+          "children": [
+            {
+              "name": "Least-squares estimate is ȳⱼ",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Variation decomposition",
+          "children": [
+            {
+              "name": "Total SS = Factor SS + Error SS",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Combined models",
+      "children": [
+        {
+          "name": "ANCOVA",
+          "children": [
+            {
+              "name": "Variable intercepts or slopes",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "General linear model",
+          "children": [
+            {
+              "name": "Fitted values remain unique",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

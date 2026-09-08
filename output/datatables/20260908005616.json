@@ -1,0 +1,259 @@
+{
+  "title": "Multiple Linear Regression II: Concept Matrix",
+  "fields": [
+    {
+      "name": "central_concept",
+      "description": "Main analytical idea",
+      "example": "Joint inference, ANOVA, and categorical predictors"
+    },
+    {
+      "name": "model_form",
+      "description": "Key model or hypothesis",
+      "example": "H0: Cβ=d"
+    },
+    {
+      "name": "categorical_role",
+      "description": "How factors enter",
+      "example": "c-1 indicators plus intercept"
+    },
+    {
+      "name": "inference_tool",
+      "description": "Primary inferential device",
+      "example": "partial F test"
+    },
+    {
+      "name": "fit_measure",
+      "description": "Fit quantities used",
+      "example": "error SS and mean square"
+    },
+    {
+      "name": "reference_interpretation",
+      "description": "Meaning of omitted level",
+      "example": "baseline for coefficients"
+    },
+    {
+      "name": "anova_connection",
+      "description": "ANOVA/regression relationship",
+      "example": "one-factor ANOVA is regression"
+    },
+    {
+      "name": "key_formula",
+      "description": "Representative formula",
+      "example": "F=(ESSreduced-ESSfull)/(p s²full)"
+    },
+    {
+      "name": "empirical_example",
+      "description": "Applied illustration",
+      "example": "term life insurance"
+    },
+    {
+      "name": "diagnostic_lesson",
+      "description": "Modeling caution",
+      "example": "pooled association can conceal group patterns"
+    },
+    {
+      "name": "extension",
+      "description": "Broader model extension",
+      "example": "factor-by-covariate interaction"
+    },
+    {
+      "name": "source_focus",
+      "description": "Relevant source section",
+      "example": "Sections 4.1–4.4"
+    }
+  ],
+  "data": [
+    {
+      "central_concept": "Binary variables",
+      "model_form": "A factor with c categories is represented with c-1 binary indicators when an intercept is present; the omitted level is the reference.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "A factor with c categories is represented with c-1 binary indicators when an intercept is present; the omitted level is the reference.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Section 4.1",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "Reference levels",
+      "model_form": "Changing the omitted category changes coefficient interpretations and individual t-ratios, but not fitted values or the overall model fit.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "Changing the omitted category changes coefficient interpretations and individual t-ratios, but not fitted values or the overall model fit.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Tables 4.2–4.3",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "General linear hypothesis",
+      "model_form": "Joint restrictions are expressed as H0: Cβ=d, with C chosen for the scientific question.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "Joint restrictions are expressed as H0: Cβ=d, with C chosen for the scientific question.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Section 4.2.1",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "Partial F test",
+      "model_form": "Compare a reduced nested model with a full model: F=((Error SS)reduced-(Error SS)full)/(p s²full).",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "Compare a reduced nested model with a full model: F=((Error SS)reduced-(Error SS)full)/(p s²full).",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Equation 4.2",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "Term life example",
+      "model_form": "Testing MAR0 and MAR2 jointly gives F=3.235 with p=2 and 269 denominator degrees of freedom; the reported p-value is 0.0409.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "Testing MAR0 and MAR2 jointly gives F=3.235 with p=2 and 269 denominator degrees of freedom; the reported p-value is 0.0409.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Section 4.2.2",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "One-factor ANOVA",
+      "model_form": "The model yᵢⱼ=μⱼ+εᵢⱼ estimates each group mean by its sample average and partitions total variation into factor and error sums of squares.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "The model yᵢⱼ=μⱼ+εᵢⱼ estimates each group mean by its sample average and partitions total variation into factor and error sums of squares.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Section 4.3",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "Auto claims ANOVA",
+      "model_form": "For 18 risk classes and 6,773 claims, log-claim ANOVA reports Factor SS 39.2, Error SS 7729.0, and Error MS 1.14.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "For 18 risk classes and 6,773 claims, log-claim ANOVA reports Factor SS 39.2, Error SS 7729.0, and Error MS 1.14.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Table 4.7",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "ANCOVA",
+      "model_form": "A factor and covariate can have variable intercepts with a common slope, or both intercepts and slopes can vary by group.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "A factor and covariate can have variable intercepts with a common slope, or both intercepts and slopes can vary by group.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Section 4.4",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "Hospital costs",
+      "model_form": "The pooled plot suggests a negative association, but DRG-specific relationships show why an omitted factor can mislead; the variable-slope test is F=13.535.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "The pooled plot suggests a negative association, but DRG-specific relationships show why an omitted factor can mislead; the variable-slope test is F=13.535.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Tables 4.8–4.9",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "Interactions",
+      "model_form": "Interactions permit effects such as slopes to differ by category; with two factors they can be interpreted as a combined factor.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "Interactions permit effects such as slopes to differ by category; with two factors they can be interpreted as a combined factor.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Section 4.4",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "General linear model",
+      "model_form": "Continuous, transformed, and categorical predictors can enter linearly in coefficients; coefficient estimates can be nonunique under linear dependence.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "Continuous, transformed, and categorical predictors can enter linearly in coefficients; coefficient estimates can be nonunique under linear dependence.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Section 4.4",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    },
+    {
+      "central_concept": "Unique fitted values",
+      "model_form": "Even when parameter estimates are not unique, least-squares fitted values, residuals, and error sums of squares are unique.",
+      "categorical_role": "Indicators for factors when applicable",
+      "inference_tool": "F test or confidence interval",
+      "fit_measure": "Error SS / R² when applicable",
+      "reference_interpretation": "N/A",
+      "anova_connection": "N/A",
+      "key_formula": "Even when parameter estimates are not unique, least-squares fitted values, residuals, and error sums of squares are unique.",
+      "empirical_example": "N/A",
+      "diagnostic_lesson": "N/A",
+      "extension": "N/A",
+      "source_focus": "Section 4.4",
+      "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+      "page": "107-132"
+    }
+  ]
+}

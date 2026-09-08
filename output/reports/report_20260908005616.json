@@ -1,0 +1,85 @@
+{
+  "title": "Multiple Linear Regression II: Factors, Joint Inference, and ANOVA",
+  "executive_summary": "Chapter 4 extends multiple regression by showing how factors enter through binary variables, how several coefficients can be tested together, and how one-factor ANOVA fits inside the regression framework. The chapter uses term-life insurance, health-insurance spending, automobile claims, and Wisconsin hospital costs to demonstrate reference categories, partial F tests, group means, and interactions between factors and covariates.",
+  "sections": [
+    {
+      "title": "Categorical predictors and reference levels",
+      "content": "A categorical variable with c levels is encoded by c-1 binary variables when an intercept is included. The omitted category becomes the reference level, so indicator coefficients express fitted differences relative to that baseline. Reparameterizing changes those coefficients and their individual t-ratios without changing fitted values or overall fit.",
+      "claims": [
+        {
+          "claim": "With an intercept, c-1 binary variables represent a c-level factor.",
+          "citations": [
+            {
+              "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+              "page": 108,
+              "chunk_id": "binary-variables"
+            }
+          ]
+        },
+        {
+          "claim": "The reference level changes coefficient interpretation but not model fit.",
+          "citations": [
+            {
+              "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+              "page": 111,
+              "chunk_id": "reference-level"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Testing collections of coefficients",
+      "content": "The general linear hypothesis H0: Cβ=d provides a common language for testing a coefficient, equality of coefficients, model adequacy, or a block of predictors. The practical partial F procedure compares the error sums of squares of a full model and a nested reduced model.",
+      "claims": [
+        {
+          "claim": "The partial F statistic uses the extra error sum of squares per restriction divided by the full-model mean square error.",
+          "citations": [
+            {
+              "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+              "page": 116,
+              "chunk_id": "f-test"
+            }
+          ]
+        },
+        {
+          "claim": "In the term-life example, MAR0 and MAR2 are jointly significant at the stated 5 percent level.",
+          "citations": [
+            {
+              "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+              "page": 118,
+              "chunk_id": "term-life-f-test"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ANOVA and combined models",
+      "content": "One-factor ANOVA estimates each group mean by its sample average and partitions variation into factor and error components. It is a special regression case. Adding a continuous covariate creates ANCOVA-style models; allowing slopes to vary creates an interaction model, as the hospital-cost example illustrates.",
+      "claims": [
+        {
+          "claim": "One-factor ANOVA estimates μⱼ by ȳⱼ.",
+          "citations": [
+            {
+              "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+              "page": 123,
+              "chunk_id": "anova-estimation"
+            }
+          ]
+        },
+        {
+          "claim": "The hospital-cost example rejects equal slopes across DRG levels using the reported F statistic.",
+          "citations": [
+            {
+              "source_id": "Chapter 004. Multiple Linear Regression - II.txt",
+              "page": 130,
+              "chunk_id": "hospital-interaction"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "conclusions": "The chapter’s central habit is to match the inferential question to a nested model comparison. Binary variables and ANOVA make categorical structure explicit, while partial F tests assess it jointly. Interactions then extend the framework when the effect of one predictor differs across groups."
+}
