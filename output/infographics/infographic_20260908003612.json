@@ -1,0 +1,110 @@
+{
+  "title": "Multiple Linear Regression — I",
+  "subtitle": "A visual guide to least squares, model fit, inference, and special explanatory variables",
+  "sections": [
+    {
+      "type": "flow",
+      "title": "From multivariate data to a fitted plane",
+      "value": null,
+      "label": null,
+      "items": [
+        "Collect \\(n\\) observations with \\(k\\) explanatory variables and one response: \\((x_{i1},\\ldots,x_{ik},y_i)\\).",
+        "Inspect variables individually; use transformations such as LNFACE and LNINCOME when skewness and nonlinear patterns suggest them.",
+        "Use scatterplot matrices and correlation matrices to summarize pairwise relationships.",
+        "Fit the regression plane \\(\\widehat y=b_0+b_1x_1+\\cdots+b_kx_k\\)."
+      ],
+      "panel": "1. Least Squares Foundations",
+      "span": "full"
+    },
+    {
+      "type": "quote",
+      "title": "Least squares objective",
+      "value": "Determine the coefficients that minimize the sum of squared differences between observed and fitted responses.",
+      "label": "Equation (3.1)",
+      "items": [],
+      "panel": "1. Least Squares Foundations",
+      "span": "half"
+    },
+    {
+      "type": "stat",
+      "title": "Term life fitted regression plane",
+      "value": "\\(\\widehat y=2.584+0.206x_1+0.306x_2+0.494x_3\\)",
+      "label": "\\(y=\\mathrm{LNFACE}\\); \\(x_1=\\mathrm{EDUCATION}\\), \\(x_2=\\mathrm{NUMHH}\\), \\(x_3=\\mathrm{LNINCOME}\\)",
+      "items": [],
+      "panel": "1. Least Squares Foundations",
+      "span": "half"
+    },
+    {
+      "type": "comparison",
+      "title": "Matrix solution and estimator properties",
+      "value": null,
+      "label": null,
+      "items": [
+        "Normal equations vs solution: \\(\\mathbf X'\\mathbf X\\mathbf b=\\mathbf X'\\mathbf y\\) vs \\(\\mathbf b=(\\mathbf X'\\mathbf X)^{-1}\\mathbf X'\\mathbf y\\)",
+        "Unbiasedness vs precision: \\(\\mathrm E\\mathbf b=\\boldsymbol\\beta\\) vs \\(\\mathrm{Var}\\mathbf b=\\sigma^2(\\mathbf X'\\mathbf X)^{-1}\\)",
+        "F1–F4 vs F1–F5: Gauss–Markov gives minimum-variance unbiased linear estimation vs normality additionally gives a normal distribution for \\(\\mathbf b\\)"
+      ],
+      "panel": "2. Model Fit and Inference",
+      "span": "full"
+    },
+    {
+      "type": "chart",
+      "title": "Term life ANOVA: variation in LNFACE",
+      "value": null,
+      "label": "Regression of LNFACE on EDUCATION, NUMHH, and LNINCOME; Table 3.3",
+      "items": [
+        "Regression SS: 328.47",
+        "Error SS: 630.43",
+        "Total SS: 958.90"
+      ],
+      "panel": "2. Model Fit and Inference",
+      "span": "half"
+    },
+    {
+      "type": "stat",
+      "title": "Goodness-of-fit measures",
+      "value": "\\(R^2=34.3\\%\\quad s=1.525\\quad R_a^2=33.6\\%\\)",
+      "label": "\\(R^2\\) is the proportion of variability explained; \\(s\\) is the residual standard deviation",
+      "items": [],
+      "panel": "2. Model Fit and Inference",
+      "span": "half"
+    },
+    {
+      "type": "flow",
+      "title": "Test whether one coefficient matters",
+      "value": null,
+      "label": null,
+      "items": [
+        "State \\(H_0:\\beta_j=0\\) against \\(H_a:\\beta_j\\ne0\\).",
+        "Compute \\(se(b_j)\\) from \\(s\\) and the corresponding diagonal element of \\((\\mathbf X'\\mathbf X)^{-1}\\).",
+        "Form \\(t(b_j)=b_j/se(b_j)\\) with \\(df=n-(k+1)\\).",
+        "Reject \\(H_0\\) when \\u007c\\(t(b_j)\\)\\u007c exceeds the appropriate \\(t\\)-critical value; as a rule of thumb at 5%, a magnitude above two indicates importance."
+      ],
+      "panel": "2. Model Fit and Inference",
+      "span": "full"
+    },
+    {
+      "type": "comparison",
+      "title": "Extending the linear model",
+      "value": null,
+      "label": null,
+      "items": [
+        "Binary variable vs continuous variable: a binary coefficient compares the alternative level with its base level; a continuous coefficient is an expected change per unit change, holding other variables fixed.",
+        "Transformation vs nonlinear regression function: \\(x, x^2,\\ldots,x^p\\) or \\(\\ln x\\) can be explanatory variables while the model remains linear in its parameters.",
+        "Interaction vs additive effects: with \\(x_3=x_1x_2\\), \\(\\partial\\mathrm E y/\\partial x_1=\\beta_1+\\beta_3x_2\\), so the effect of one variable depends on the other.",
+        "Pairwise correlation vs partial correlation: an added variable plot controls for other explanatory variables and can reveal a relationship different from the unadjusted correlation."
+      ],
+      "panel": "3. Special Variables and Interpretation",
+      "span": "full"
+    },
+    {
+      "type": "stat",
+      "title": "Partial correlation from a t-ratio",
+      "value": "\\(r(y,x_j\\mid\\text{other }x)=\\dfrac{t(b_j)}{\\sqrt{t(b_j)^2+n-(k+1)}}\\)",
+      "label": "Equation (3.11): correlation after controlling for the other explanatory variables",
+      "items": [],
+      "panel": "3. Special Variables and Interpretation",
+      "span": "full"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "title": "Multiple Linear Regression I: Comparative Chapter Matrix",
+  "fields": [
+    {
+      "name": "central_concept",
+      "description": "Primary analytical topic and model framework.",
+      "example": "Multiple linear regression models a response using several explanatory variables and is linear in parameters."
+    },
+    {
+      "name": "model_form",
+      "description": "Core regression-function and fitted-model form presented.",
+      "example": "\\(\\textrm{E} y=\\beta_{0}x_{0}+\\beta_{1}x_{1}+\\cdots+\\beta_{k}x_{k}\\); \\(\\widehat y=b_{0}+b_{1}x_{1}+\\cdots+b_{k}x_{k}\\)."
+    },
+    {
+      "name": "estimation_method",
+      "description": "Parameter-estimation approach and key estimator.",
+      "example": "Least squares minimizes \\(SS(\\mathbf b^{*})=(\\mathbf y-\\mathbf X\\mathbf b^{*})'(\\mathbf y-\\mathbf X\\mathbf b^{*})\\); if \\(\\mathbf X'\\mathbf X\\) is invertible, \\(\\mathbf b=(\\mathbf X'\\mathbf X)^{-1}\\mathbf X'\\mathbf y\\)."
+    },
+    {
+      "name": "data_representation",
+      "description": "Notation used to organize observations, responses, and explanatory variables.",
+      "example": "Each observation is \\((x_{i1},\\ldots,x_{ik},y_i)\\); \\(\\mathbf y\\) is \\(n\\times1\\) and \\(\\mathbf X\\) is \\(n\\times(k+1)\\), typically with intercept column \\(x_{i0}=1\\)."
+    },
+    {
+      "name": "model_assumptions",
+      "description": "Sampling and error assumptions underlying the multiple linear regression model.",
+      "example": "Fixed explanatory variables; \\(\\textrm{E}y_i=\\beta_0+\\cdots+\\beta_kx_{ik}\\); constant variance \\(\\sigma^2\\); independent responses or errors; normal responses or errors."
+    },
+    {
+      "name": "estimator_properties",
+      "description": "Theoretical properties established for least-squares coefficient estimators.",
+      "example": "Under F1--F4, \\(\\mathbf b\\) is unbiased and \\(\\operatorname{Var}\\mathbf b=\\sigma^2(\\mathbf X'\\mathbf X)^{-1}\\); Gauss-Markov gives minimum variance among linear unbiased estimators; under F1--F5, \\(\\mathbf b\\) is normal."
+    },
+    {
+      "name": "goodness_of_fit",
+      "description": "Fit statistics, sums-of-squares decomposition, and their interpretations.",
+      "example": "Residual variance \\(s^2=\\sum e_i^2/[n-(k+1)]\\); \\(R^2=\\text{Regression SS}/\\text{Total SS}\\); \\(R_a^2=1-s^2/s_y^2\\)."
+    },
+    {
+      "name": "inference_method",
+      "description": "Single-coefficient testing and interval-estimation procedures.",
+      "example": "Test \\(H_0:\\beta_j=0\\) using \\(t(b_j)=b_j/se(b_j)\\) with \\(df=n-(k+1)\\); a confidence interval is \\(b_j\\pm t_{n-(k+1),1-\\alpha/2}se(b_j)\\)."
+    },
+    {
+      "name": "multivariate_diagnostic",
+      "description": "Graphical and numerical tools for assessing conditional relationships among variables.",
+      "example": "An added variable plot graphs residuals from \\(y\\) on other variables against residuals from \\(x_j\\) on other variables; its correlation is the partial correlation coefficient."
+    },
+    {
+      "name": "partial_correlation_relation",
+      "description": "Relationship between partial correlation and a regression coefficient t-ratio.",
+      "example": "\\(r(y,x_j\\mid x_1,\\ldots,x_{j-1},x_{j+1},\\ldots,x_k)=t(b_j)/\\sqrt{t(b_j)^2+n-(k+1)}\\)."
+    },
+    {
+      "name": "special_explanatory_variables",
+      "description": "Types of explanatory-variable constructions supported by the linear-in-parameters framework.",
+      "example": "Binary or indicator variables; polynomial and logarithmic transformations; interactions; piecewise linear or broken-stick terms with kinks."
+    },
+    {
+      "name": "key_empirical_examples",
+      "description": "Applied datasets and substantive contexts used to illustrate the methods.",
+      "example": "Term life insurance demand; female life-expectancy advantage across countries; refrigerator prices; life insurance company expenses; charitable contributions and wages; stockbroker commissions."
+    },
+    {
+      "name": "exercise_topics",
+      "description": "Numbered exercise applications and requested analytical tasks.",
+      "example": "3.1--3.3 compute ANOVA, fit, standard-error, covariance, and t-statistic quantities; 3.4 Wisconsin Lottery; 3.5 Insurance Company Expenses; 3.6 National Life Expectancies."
+    }
+  ],
+  "data": [
+    {
+      "central_concept": "Multiple linear regression extends linear regression to several explanatory variables, fitting a regression plane and permitting nonlinear functions of explanatory variables while retaining linearity in parameters.",
+      "model_form": "\\(\\textrm{E} y=\\beta_{0}x_{0}+\\beta_{1}x_{1}+\\cdots+\\beta_{k}x_{k}\\), with \\(x_0=1\\) usually; fitted plane \\(\\widehat y=b_0+b_1x_1+\\cdots+b_kx_k\\).",
+      "estimation_method": "Method of least squares minimizes \\(SS(b_0^*,\\ldots,b_k^*)=\\sum_{i=1}^n[y_i-(b_0^*+b_1^*x_{i1}+\\cdots+b_k^*x_{ik})]^2\\); normal equations are \\(\\mathbf X'\\mathbf X\\mathbf b=\\mathbf X'\\mathbf y\\); unique solution \\(\\mathbf b=(\\mathbf X'\\mathbf X)^{-1}\\mathbf X'\\mathbf y\\) when explanatory variables are not linear combinations of one another.",
+      "data_representation": "Data consist of \\(k\\) explanatory variables and one response for each of \\(n\\) observations: \\((x_{i1},\\ldots,x_{ik},y_i)\\); \\(\\mathbf y\\) is the \\(n\\times1\\) response vector and \\(\\mathbf X\\) is the \\(n\\times(k+1)\\) explanatory-variable matrix.",
+      "model_assumptions": "Observables representation F1--F5: linear conditional mean; nonstochastic \\(x\\)'s; \\(\\operatorname{Var}y_i=\\sigma^2\\); independent \\(y_i\\)'s; normally distributed \\(y_i\\)'s. Error representation E1--E5: additive errors; nonstochastic \\(x\\)'s; \\(\\textrm{E}\\varepsilon_i=0\\), \\(\\operatorname{Var}\\varepsilon_i=\\sigma^2\\); independent and normal errors.",
+      "estimator_properties": "Property 1: under F1--F4, \\(\\mathbf b\\) is unbiased for \\(\\boldsymbol\\beta\\). Property 2: \\(\\operatorname{Var}\\mathbf b=\\sigma^2(\\mathbf X'\\mathbf X)^{-1}\\). Gauss-Markov: least squares is minimum variance unbiased among estimators linear in responses. Property 3: under F1--F5, \\(\\mathbf b\\) is normally distributed.",
+      "goodness_of_fit": "Residuals are \\(e_i=y_i-\\widehat y_i\\); \\(s^2=\\sum_{i=1}^ne_i^2/[n-(k+1)]\\) is MSE and \\(s\\) is residual standard deviation. \\(\\text{Total SS}=\\text{Error SS}+\\text{Regression SS}\\); \\(R^2=\\text{Regression SS}/\\text{Total SS}\\); \\(R_a^2=1-[(\\text{Error SS})/[n-(k+1)]]/[(\\text{Total SS})/(n-1)]\\).",
+      "inference_method": "For \\(H_0:\\beta_j=d\\), use \\(t\\text{-ratio}=(b_j-d)/se(b_j)\\), where \\(se(b_j)=s\\sqrt{\\text{the }(j+1)\\text{st diagonal element of }(\\mathbf X'\\mathbf X)^{-1}}\\). For a two-sided test reject when \\(|t\\text{-ratio}|>t_{n-(k+1),1-\\alpha/2}\\); confidence interval \\(b_j\\pm t_{n-(k+1),1-\\alpha/2}se(b_j)\\).",
+      "multivariate_diagnostic": "Scatterplot and correlation matrices summarize only pairs of variables. Added variable plots control for other explanatory variables: regress \\(y\\) on all variables except \\(x_j\\), regress \\(x_j\\) on those same variables, then plot the first residuals against the second. Omitted variables can yield misleading coefficient significance or signs.",
+      "partial_correlation_relation": "The partial correlation is the correlation between the two residual series in an added variable plot and measures the relationship between \\(y\\) and \\(x_j\\) in the presence of other explanatory variables. It can be calculated as \\(t(b_j)/\\sqrt{t(b_j)^2+n-(k+1)}\\).",
+      "special_explanatory_variables": "Binary variables are indicators or dummy variables, with coefficients interpreted as changes from the base category. Transformations include powers \\(x,x^2,\\ldots,x^p\\), \\(\\ln x\\), and categorized continuous variables. Interaction terms such as \\(x_1x_2\\) allow marginal effects to depend on other variables. Piecewise linear models use binary variables and interactions to represent kinks or discontinuities.",
+      "key_empirical_examples": "Term Life Insurance: \\(n=275\\), LNFACE modeled using EDUCATION, NUMHH, and LNINCOME; fitted plane \\(\\widehat y=2.584+0.206x_1+0.306x_2+0.494x_3\\). Female advantage: Lemaire's model of life-expectancy differences across 169 countries. Refrigerator Prices: \\(n=37\\), illustrating ECOST's positive marginal correlation but negative controlled coefficient. Life Insurance Company Expenses: Segal's output, quadratic, binary-interaction, and input-price model.",
+      "exercise_topics": "Exercise 3.1: fictitious ANOVA and \\(R^2\\) calculations. Exercise 3.2: standard error, covariance, correlation, and variance calculations from \\((\\mathbf X'\\mathbf X)^{-1}\\). Exercise 3.3: small two-variable regression. Exercise 3.4: Wisconsin Lottery regression and added-variable analysis. Exercise 3.5: NAIC insurance-company expense models. Exercise 3.6: national life expectancies using FERTILITY, PUBLICEDUCATION, and lnHEALTH.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex",
+      "page": "70-106"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# Multiple Linear Regression I
+# Recall deck covering least squares, model assumptions, goodness of fit, inference, and special explanatory variables from Chapter 3. This is part two of a two-part series.
+What is the coefficient of determination \(R^2\)?	\(R^2=\dfrac{\mathrm{Regression}\ SS}{\mathrm{Total}\ SS}\), the proportion of variability explained by the regression function.
+What is the relationship between \(R^2\) and the correlation of \(y\) with fitted values?	\(R^2=[r(y,\widehat y)]^2\).
+Why can ordinary \(R^2\) be misleading for variable selection?	It never decreases when an explanatory variable is added, even if the added variable is not useful.
+What is the adjusted coefficient of determination?	\(R_a^2=1-\dfrac{(\mathrm{Error}\ SS)/[n-(k+1)]}{(\mathrm{Total}\ SS)/(n-1)}=1-\dfrac{s^2}{s_y^2}\).
+How are \(s^2\) and \(R_a^2\) related as measures of fit?	Better fit means smaller \(s^2\) and larger \(R_a^2\); minimizing \(s^2\) is equivalent to maximizing \(R_a^2\).
+What are the degrees of freedom in the multiple-regression ANOVA table?	Regression: \(k\); Error: \(n-(k+1)\); Total: \(n-1\).
+What is the standard error of coefficient \(b_j\)?	\(se(b_j)=s\sqrt{\text{the }(j+1)\text{st diagonal element of }(\mathbf{X}'\mathbf{X})^{-1}}\).
+What hypothesis is usually tested to determine whether explanatory variable \(x_j\) is important?	\(H_0:\beta_j=0\) versus \(H_a:\beta_j\ne0\).
+What is the t-ratio for a regression coefficient when testing \(H_0:\beta_j=0\)?	\(t(b_j)=b_j/se(b_j)\).
+How is \(t(b_j)\) interpreted?	It is the number of estimated standard errors that \(b_j\) is away from zero.
+For a two-sided t-test at significance level \(\alpha\), when is \(H_0:\beta_j=0\) rejected?	Reject when \(|t(b_j)|>t_{n-(k+1),\,1-\alpha/2}\).
+What rule of thumb is given for a variable's importance in a large sample?	A variable is important if its t-ratio exceeds two in absolute value.
+What is the \((1-\alpha)\) confidence interval for \(\beta_j\)?	\(b_j\pm t_{n-(k+1),\,1-\alpha/2}se(b_j)\).
+What is an added variable plot?	A plot of residuals from regressing \(y\) on the other explanatory variables against residuals from regressing \(x_j\) on those same other variables.
+How is the added variable plot for PRICE versus ECOST constructed in the refrigerator example?	Regress PRICE on RSIZE, FSIZE, SHELVES, and FEATURES to obtain \(e_1\); regress ECOST on those variables to obtain \(e_2\); then plot \(e_1\) versus \(e_2\).
+What does a partial correlation coefficient measure?	The correlation between \(y\) and \(x_j\) in the presence of the other explanatory variables.
+How can a partial correlation coefficient be calculated from a t-ratio?	\(r(y,x_j\mid\text{others})=\dfrac{t(b_j)}{\sqrt{t(b_j)^2+n-(k+1)}}\).
+Why might an added variable plot be preferable to a partial correlation coefficient alone?	The plot can reveal nonlinear relationships that a correlation coefficient may miss.
+What are omitted variables, and why can they be problematic?	They are variables left out of a regression; omission can make coefficients strongly significant when they should not be or even give them the incorrect sign.
+What is a binary explanatory variable also called?	An indicator variable or dummy variable.
+In the model \(LNFACE=\beta_0+\beta_1LNINCOME+\beta_2SINGLE+\varepsilon\), how is \(\beta_2\) interpreted?	It is the expected change in LNFACE when moving from SINGLE \(=0\) to SINGLE \(=1\), holding LNINCOME fixed.
+Why can linear regression represent nonlinear functions of explanatory variables?	The regression function must be linear in parameters, but explanatory variables can be transformed nonlinear functions such as \(x^2\), \(\ln x\), or products.
+What is polynomial regression as a special case of linear regression?	Use \(x_1=x,x_2=x^2,\ldots,x_p=x^p\) in \(\mathrm{E}\,y=\beta_0+\beta_1x_1+\cdots+\beta_px_p\).
+What is an interaction term?	A variable created as a nonlinear function of two or more explanatory variables, commonly \(x_3=x_1x_2\).
+In \(\mathrm{E}\,y=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_1x_2\), what is \(\partial\mathrm{E}\,y/\partial x_1\)?	\(\beta_1+\beta_3x_2\).
+Why cannot \(x_3=x_1+x_2\) be used as an estimable interaction-like explanatory variable alongside \(x_1\) and \(x_2\)?	It is a linear combination of existing explanatory variables, so all parameters cannot be estimated.
+What is piecewise linear regression?	A model with linear relationships in regions separated by one or more kinks, often using binary variables to join the pieces.

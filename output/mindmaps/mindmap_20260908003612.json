@@ -1,0 +1,605 @@
+{
+  "name": "Multiple Linear Regression — I",
+  "children": [
+    {
+      "name": "3.1 Method of Least Squares",
+      "children": [
+        {
+          "name": "Term life insurance demand",
+          "children": [
+            {
+              "name": "Response: LNFACE",
+              "children": []
+            },
+            {
+              "name": "Predictors: EDUCATION, NUMHH, LNINCOME",
+              "children": []
+            },
+            {
+              "name": "275 households purchasing term life insurance",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Multivariate data summaries",
+          "children": [
+            {
+              "name": "Summary statistics and logarithmic transforms",
+              "children": []
+            },
+            {
+              "name": "Scatterplot matrices summarize variable pairs",
+              "children": []
+            },
+            {
+              "name": "Correlations measure linear relationships only",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Regression plane",
+          "children": [
+            {
+              "name": "\\(y=b_0+b_1x_1+\\cdots+b_kx_k\\)",
+              "children": []
+            },
+            {
+              "name": "Plane lies in \\(k+1\\) dimensions",
+              "children": []
+            },
+            {
+              "name": "Usually cannot pass through all \\(n\\) observations",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Least squares criterion",
+          "children": [
+            {
+              "name": "\\(SS=\\sum_{i=1}^{n}[y_i-(b_0+\\cdots+b_kx_{ik})]^2\\)",
+              "children": []
+            },
+            {
+              "name": "Minimizes squared deviations from fitted values",
+              "children": []
+            },
+            {
+              "name": "\\(\\widehat y=b_0+b_1x_1+\\cdots+b_kx_k\\)",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Matrix notation and solution",
+          "children": [
+            {
+              "name": "\\(\\mathbf y\\) is an \\(n\\times1\\) response vector",
+              "children": []
+            },
+            {
+              "name": "\\(\\mathbf X\\) is an \\(n\\times(k+1)\\) explanatory matrix",
+              "children": []
+            },
+            {
+              "name": "Normal equations: \\(\\mathbf X'\\mathbf X\\mathbf b=\\mathbf X'\\mathbf y\\)",
+              "children": []
+            },
+            {
+              "name": "\\(\\mathbf b=(\\mathbf X'\\mathbf X)^{-1}\\mathbf X'\\mathbf y\\) when invertible",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3.2 Linear Regression Model and Properties of Estimators",
+      "children": [
+        {
+          "name": "Regression function",
+          "children": [
+            {
+              "name": "\\(\\mathrm Ey=\\beta_0x_0+\\beta_1x_1+\\cdots+\\beta_kx_k\\)",
+              "children": []
+            },
+            {
+              "name": "\\(x_0=1\\) gives the intercept",
+              "children": []
+            },
+            {
+              "name": "\\(\\beta_j\\) is the expected change per unit \\(x_j\\), holding others fixed",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Coefficient interpretation",
+          "children": [
+            {
+              "name": "Positive NUMHH coefficient implies greater expected insurance demand",
+              "children": []
+            },
+            {
+              "name": "Log response changes can be interpreted as approximate percentage changes",
+              "children": []
+            },
+            {
+              "name": "Log-log coefficient is an elasticity",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Model assumptions",
+          "children": [
+            {
+              "name": "F1: \\(\\mathrm Ey_i=\\beta_0+\\beta_1x_{i1}+\\cdots+\\beta_kx_{ik}\\)",
+              "children": []
+            },
+            {
+              "name": "F2: explanatory variables are nonstochastic",
+              "children": []
+            },
+            {
+              "name": "F3–F4: constant variance \\(\\sigma^2\\) and independent responses",
+              "children": []
+            },
+            {
+              "name": "F5: responses are normally distributed",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Estimator properties",
+          "children": [
+            {
+              "name": "Property 1: \\(\\mathbf b\\) is unbiased for \\(\\boldsymbol\\beta\\)",
+              "children": []
+            },
+            {
+              "name": "Property 2: \\(\\operatorname{Var}\\mathbf b=\\sigma^2(\\mathbf X'\\mathbf X)^{-1}\\)",
+              "children": []
+            },
+            {
+              "name": "Property 3: \\(\\mathbf b\\) is normally distributed under F1–F5",
+              "children": []
+            },
+            {
+              "name": "Gauss-Markov: least squares is minimum variance among linear unbiased estimators",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3.3 Estimation and Goodness of Fit",
+      "children": [
+        {
+          "name": "Residual standard deviation",
+          "children": [
+            {
+              "name": "Residual: \\(e_i=y_i-\\widehat y_i\\)",
+              "children": []
+            },
+            {
+              "name": "\\(s^2=\\frac{1}{n-(k+1)}\\sum_{i=1}^{n}(y_i-\\widehat y_i)^2\\)",
+              "children": []
+            },
+            {
+              "name": "\\(s=\\sqrt{s^2}\\) is the residual standard deviation",
+              "children": []
+            },
+            {
+              "name": "Error degrees of freedom: \\(n-(k+1)\\)",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Variability decomposition",
+          "children": [
+            {
+              "name": "Total SS = Error SS + Regression SS",
+              "children": []
+            },
+            {
+              "name": "Total variation is divided into unexplained and explained variation",
+              "children": []
+            },
+            {
+              "name": "Cross-product terms sum to zero",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Coefficient of determination",
+          "children": [
+            {
+              "name": "\\(R^2=\\frac{\\text{Regression SS}}{\\text{Total SS}}\\)",
+              "children": []
+            },
+            {
+              "name": "\\(R^2\\) is the proportion of variability explained",
+              "children": []
+            },
+            {
+              "name": "\\(R^2=[r(y,\\widehat y)]^2\\)",
+              "children": []
+            },
+            {
+              "name": "\\(R\\) is the multiple correlation coefficient",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "ANOVA and adjusted fit",
+          "children": [
+            {
+              "name": "Regression degrees of freedom: \\(k\\)",
+              "children": []
+            },
+            {
+              "name": "Error mean square: \\(MSE=s^2\\)",
+              "children": []
+            },
+            {
+              "name": "\\(R_a^2=1-\\frac{s^2}{s_y^2}\\)",
+              "children": []
+            },
+            {
+              "name": "Adding a variable never decreases unadjusted \\(R^2\\)",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Term life ANOVA example",
+          "children": [
+            {
+              "name": "Regression SS 328.47; Error SS 630.43; Total SS 958.90",
+              "children": []
+            },
+            {
+              "name": "\\(R^2=34.3\\%\\)",
+              "children": []
+            },
+            {
+              "name": "\\(s=1.525\\) and \\(R_a^2=33.6\\%\\)",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3.4 Statistical Inference for a Single Coefficient",
+      "children": [
+        {
+          "name": "3.4.1 The \\(t\\)-test",
+          "children": [
+            {
+              "name": "Test \\(H_0:\\beta_j=0\\) against \\(H_a:\\beta_j\\ne0\\)",
+              "children": []
+            },
+            {
+              "name": "\\(se(b_j)=s\\sqrt{\\text{diagonal element of }(\\mathbf X'\\mathbf X)^{-1}}\\)",
+              "children": []
+            },
+            {
+              "name": "\\(t(b_j)=b_j/se(b_j)\\)",
+              "children": []
+            },
+            {
+              "name": "Degrees of freedom: \\(n-(k+1)\\)",
+              "children": []
+            },
+            {
+              "name": "Rule of thumb: \\(|t|>2\\) indicates an important variable",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Alternative tests and \\(p\\)-values",
+          "children": [
+            {
+              "name": "Tests may use \\(H_0:\\beta_j=d\\)",
+              "children": []
+            },
+            {
+              "name": "Alternatives may be one-sided or two-sided",
+              "children": []
+            },
+            {
+              "name": "\\(p\\)-values describe strength of evidence against the null",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "3.4.2 Confidence intervals",
+          "children": [
+            {
+              "name": "\\(b_j\\pm t_{n-(k+1),1-\\alpha/2}se(b_j)\\)",
+              "children": []
+            },
+            {
+              "name": "A hypothesized value outside the interval is rejected by the two-sided test",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "3.4.3 Added variable plots",
+          "children": [
+            {
+              "name": "Regress response on all variables except \\(x_j\\) to obtain \\(e_1\\)",
+              "children": []
+            },
+            {
+              "name": "Regress \\(x_j\\) on the other variables to obtain \\(e_2\\)",
+              "children": []
+            },
+            {
+              "name": "Plot \\(e_1\\) versus \\(e_2\\)",
+              "children": []
+            },
+            {
+              "name": "Shows the relationship after controlling for other explanatory variables",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Refrigerator price example",
+          "children": [
+            {
+              "name": "PRICE modeled by ECOST, RSIZE, FSIZE, SHELVES, FEATURES",
+              "children": []
+            },
+            {
+              "name": "Model fit: \\(s=60.65\\), \\(R^2=83.8\\%\\)",
+              "children": []
+            },
+            {
+              "name": "ECOST has a negative regression coefficient despite positive pairwise correlation",
+              "children": []
+            },
+            {
+              "name": "FSIZE can explain the positive PRICE–ECOST association",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "3.4.4 Partial correlation",
+          "children": [
+            {
+              "name": "Correlation between added-variable residuals \\(e_1\\) and \\(e_2\\)",
+              "children": []
+            },
+            {
+              "name": "Measures association of \\(y\\) and \\(x_j\\) controlling for other predictors",
+              "children": []
+            },
+            {
+              "name": "\\(r=\\frac{t(b_j)}{\\sqrt{t(b_j)^2+n-(k+1)}}\\)",
+              "children": []
+            },
+            {
+              "name": "Large \\(t\\)-ratios correspond to large partial correlations",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3.5 Some Special Explanatory Variables",
+      "children": [
+        {
+          "name": "3.5.1 Binary variables",
+          "children": [
+            {
+              "name": "Categorical variables identify distinct groups",
+              "children": []
+            },
+            {
+              "name": "Binary variables are indicator or dummy variables",
+              "children": []
+            },
+            {
+              "name": "SINGLE equals 1 for single respondents and 0 otherwise",
+              "children": []
+            },
+            {
+              "name": "Binary coefficient compares the alternative level with the base level",
+              "children": []
+            },
+            {
+              "name": "Letter plots display a categorized third variable",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "3.5.2 Transforming explanatory variables",
+          "children": [
+            {
+              "name": "Regression is linear in parameters, not necessarily in explanatory variables",
+              "children": []
+            },
+            {
+              "name": "Polynomial regression uses \\(x,x^2,\\ldots,x^p\\)",
+              "children": []
+            },
+            {
+              "name": "Log transforms can represent gently sloping curves",
+              "children": []
+            },
+            {
+              "name": "Continuous variables can be categorized with binary transforms",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "3.5.3 Interaction terms",
+          "children": [
+            {
+              "name": "Create \\(x_3=x_1\\times x_2\\)",
+              "children": []
+            },
+            {
+              "name": "\\(\\frac{\\partial \\mathrm Ey}{\\partial x_1}=\\beta_1+\\beta_3x_2\\)",
+              "children": []
+            },
+            {
+              "name": "Marginal effect of one variable depends on another variable",
+              "children": []
+            },
+            {
+              "name": "A linear combination such as \\(x_1+x_2\\) cannot be separately estimated",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Curvilinear and piecewise models",
+          "children": [
+            {
+              "name": "Second-order models include squared and cross-product terms",
+              "children": []
+            },
+            {
+              "name": "Piecewise linear regression uses binary variables at kinks",
+              "children": []
+            },
+            {
+              "name": "Charitable-contribution example has a kink at \\$97,500",
+              "children": []
+            },
+            {
+              "name": "Stock commission example has a discontinuity at 100 shares",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Insurance company expense application",
+          "children": [
+            {
+              "name": "Segal models expenses using outputs, input prices, squares, and branch interactions",
+              "children": []
+            },
+            {
+              "name": "Branch indicator \\(D\\) changes output effects",
+              "children": []
+            },
+            {
+              "name": "Logarithmic coefficients are interpreted as elasticities",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3.6 Further Reading, References, and 3.7 Exercises",
+      "children": [
+        {
+          "name": "Further reading",
+          "children": [
+            {
+              "name": "Goldberger 1991 provides proofs of Chapter 3 results",
+              "children": []
+            },
+            {
+              "name": "Bates and Watts 1988 discusses nonlinear regression",
+              "children": []
+            },
+            {
+              "name": "Chapter 4 extends categorical variables and joint inference",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Exercises 3.1–3.3",
+          "children": [
+            {
+              "name": "3.1 calculates \\(R_a^2\\), ANOVA quantities, and \\(R^2\\)",
+              "children": []
+            },
+            {
+              "name": "3.2 uses \\((\\mathbf X'\\mathbf X)^{-1}\\) for errors, covariance, correlation, and variance",
+              "children": []
+            },
+            {
+              "name": "3.3 fits a two-predictor model to a small fictitious dataset",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Exercise 3.4 Wisconsin Lottery",
+          "children": [
+            {
+              "name": "Analyze SALES with eight economic and demographic variables",
+              "children": []
+            },
+            {
+              "name": "Compare full and parsimonious regression models",
+              "children": []
+            },
+            {
+              "name": "Use partial correlation and added-variable plots for MEDSCHYR",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Exercise 3.5 Insurance Company Expenses",
+          "children": [
+            {
+              "name": "Analyze 384 firms with losses using NAIC and BLS variables",
+              "children": []
+            },
+            {
+              "name": "Apply modified logarithm transform \\(\\ln(1+x)\\)",
+              "children": []
+            },
+            {
+              "name": "Compare reduced, quadratic, and GROUP interaction models",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Exercise 3.6 National Life Expectancies",
+          "children": [
+            {
+              "name": "Model LIFEEXP using FERTILITY, PUBLICEDUCATION, and \\(\\ln\\)HEALTH",
+              "children": []
+            },
+            {
+              "name": "Test the PUBLICEDUCATION coefficient",
+              "children": []
+            },
+            {
+              "name": "Interpret the added-variable plot controlling for FERTILITY and \\(\\ln\\)HEALTH",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

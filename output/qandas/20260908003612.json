@@ -1,0 +1,642 @@
+{
+  "title": "Multiple Linear Regression I",
+  "description": "Study the foundations of multiple linear regression: least squares estimation, interpretation, model assumptions, goodness of fit, inference for individual coefficients, partial regression, binary variables, transformations, and interactions. Complete the source exercises; exercises requiring the referenced empirical datasets state the required method because those datasets are not included in this source.",
+  "questions": [
+    {
+      "id": "generated-least-squares-objective",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "What quantity is minimized to obtain the least squares regression plane with \\(k\\) explanatory variables?",
+      "answer": "The least squares estimates minimize the sum of squared residuals:\\n\\[\\nSS(b_0^*,\\ldots,b_k^*)=\\sum_{i=1}^n\\left[y_i-\\left(b_0^*+b_1^*x_{i1}+\\cdots+b_k^*x_{ik}\\right)\\right]^2.\\n\\]",
+      "placeholder": "Think of squared vertical deviations from the fitted plane…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-normal-equations",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "State the normal equations and the least squares estimator when \\(\\mathbf{X}'\\mathbf{X}\\) is invertible.",
+      "answer": "The normal equations are\\n\\[\\n\\mathbf{X}'\\mathbf{X}\\mathbf{b}=\\mathbf{X}'\\mathbf{y}.\\n\\]\\nIf \\(\\mathbf{X}'\\mathbf{X}\\) is invertible, the unique least squares estimator is\\n\\[\\n\\mathbf{b}=(\\mathbf{X}'\\mathbf{X})^{-1}\\mathbf{X}'\\mathbf{y}.\\n\\]",
+      "placeholder": "Start by differentiating the matrix sum of squares…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-coefficient-interpretation",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "In the regression function \\(\\mathrm{E}y=\\beta_0+\\beta_1x_1+\\cdots+\\beta_kx_k\\), how is \\(\\beta_j\\) interpreted for a continuous explanatory variable?",
+      "answer": "\\(\\beta_j\\) is the expected change in \\(y\\) per one-unit change in \\(x_j\\), holding all other explanatory variables fixed. Equivalently,\\n\\[\\n\\beta_j=\\frac{\\partial}{\\partial x_j}\\mathrm{E}y.\\n\\]",
+      "placeholder": "Use the partial-derivative interpretation…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-log-log-elasticity",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "What does a coefficient on \\(\\ln x\\) mean in a model with \\(\\ln y\\) as the response?",
+      "answer": "In a log-log model, the coefficient is an elasticity: it is approximately the percentage change in \\(y\\) associated with a 1% change in \\(x\\), holding other variables fixed. Mathematically,\\n\\[\\n\\frac{\\partial\\ln y}{\\partial\\ln x}=\\left(\\frac{\\partial y}{y}\\right)\\bigg/\\left(\\frac{\\partial x}{x}\\right).\\n\\]",
+      "placeholder": "Relate changes in logarithms to proportional changes…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-estimator-properties",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "Under assumptions F1--F4, what are the expectation and variance of the least squares estimator \\(\\mathbf{b}\\)? What additional conclusion follows under F5?",
+      "answer": "Under F1--F4,\\n\\[\\n\\mathrm{E}\\mathbf{b}=\\boldsymbol{\\beta},\\qquad\\n\\mathrm{Var}(\\mathbf{b})=\\sigma^2(\\mathbf{X}'\\mathbf{X})^{-1}.\\n\\]\\nThus, \\(\\mathbf{b}\\) is unbiased. Under F1--F5, \\(\\mathbf{b}\\) is normally distributed.",
+      "placeholder": "Recall Properties 1, 2, and 3…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-gauss-markov-theorem",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "State the Gauss-Markov theorem as given for the multiple linear regression model.",
+      "answer": "Under F1--F4, among estimators that are linear functions of the responses, the least squares estimator \\(\\mathbf{b}\\) is the minimum-variance unbiased estimator of \\(\\boldsymbol{\\beta}\\).",
+      "placeholder": "Focus on linear unbiased estimators and precision…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-residual-standard-deviation",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "Define the mean square error and residual standard deviation in a regression with \\(k\\) explanatory variables.",
+      "answer": "With residuals \\(e_i=y_i-\\widehat y_i\\),\\n\\[\\ns^2=MSE=\\frac{1}{n-(k+1)}\\sum_{i=1}^n e_i^2,\\n\\qquad\\ns=\\sqrt{\\frac{1}{n-(k+1)}\\sum_{i=1}^n e_i^2}.\\n\\]\\nThe quantity \\(s\\) is also called the standard error of the estimate.",
+      "placeholder": "Use the error degrees of freedom…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-goodness-of-fit",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "Give the total-variation decomposition, \\(R^2\\), and adjusted \\(R^2\\) for multiple linear regression.",
+      "answer": "The decomposition is\\n\\[\\n\\mathrm{Total\\ SS}=\\mathrm{Error\\ SS}+\\mathrm{Regression\\ SS}.\\n\\]\\nThe coefficient of determination is\\n\\[\\nR^2=\\frac{\\mathrm{Regression\\ SS}}{\\mathrm{Total\\ SS}}.\\n\\]\\nThe adjusted coefficient is\\n\\[\\nR_a^2=1-\\frac{(\\mathrm{Error\\ SS})/[n-(k+1)]}{(\\mathrm{Total\\ SS})/(n-1)}=1-\\frac{s^2}{s_y^2}.\\n\\]",
+      "placeholder": "Contrast explained variation with unexplained variation…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-t-test-coefficient",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "How is a two-sided \\(t\\)-test conducted for \\(H_0:\\beta_j=0\\)?",
+      "answer": "Compute\\n\\[\\nt(b_j)=\\frac{b_j}{se(b_j)},\\n\\]\\nwhere\\n\\[\\nse(b_j)=s\\sqrt{\\text{the }(j+1)\\text{st diagonal element of }(\\mathbf{X}'\\mathbf{X})^{-1}}.\\n\\]\\nAt significance level \\(\\alpha\\), reject \\(H_0\\) if\\n\\[\\n|t(b_j)|>t_{n-(k+1),1-\\alpha/2}.\\n\\]\\nFor large samples, a common 5% rule of thumb is \\(|t|>2\\).",
+      "placeholder": "Standardize the estimated coefficient by its standard error…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-added-variable-plot",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "How is an added variable plot for \\(y\\) versus \\(x_j\\), controlling for the other explanatory variables, constructed?",
+      "answer": "First regress \\(y\\) on all explanatory variables except \\(x_j\\) and retain residuals \\(e_1\\). Then regress \\(x_j\\) on those same other explanatory variables and retain residuals \\(e_2\\). Plot \\(e_1\\) versus \\(e_2\\). The plot displays the relationship between \\(y\\) and \\(x_j\\) after controlling for the other explanatory variables.",
+      "placeholder": "Run two regressions that omit the focal variable from the response model…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-partial-correlation",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "How can the partial correlation between \\(y\\) and \\(x_j\\), controlling for all other explanatory variables, be computed from the coefficient \\(t\\)-ratio?",
+      "answer": "Use\\n\\[\\nr(y,x_j\\mid x_1,\\ldots,x_{j-1},x_{j+1},\\ldots,x_k)\\n=\\frac{t(b_j)}{\\sqrt{t(b_j)^2+n-(k+1)}}.\\n\\]\\nIt is the correlation between residuals from the two regressions used to form the added variable plot.",
+      "placeholder": "Combine the \\(t\\)-ratio with the error degrees of freedom…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-binary-variable-interpretation",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "In \\(\\mathrm{E}y=\\beta_0+\\beta_1x+\\beta_2D\\), where \\(D\\) is a binary variable coded 0 or 1, how is \\(\\beta_2\\) interpreted?",
+      "answer": "\\(\\beta_2\\) is the expected change in \\(y\\) when moving from the base category \\(D=0\\) to the category \\(D=1\\), holding \\(x\\) fixed. The two fitted lines have the same slope \\(\\beta_1\\) and intercepts differing by \\(\\beta_2\\).",
+      "placeholder": "Write one equation for \\(D=0\\) and another for \\(D=1\\)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "generated-interaction-interpretation",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "For \\(\\mathrm{E}y=\\beta_0+\\beta_1x_1+\\beta_2x_2+\\beta_3x_1x_2\\), what is the marginal effect of \\(x_1\\), and why is this an interaction?",
+      "answer": "The marginal effect is\\n\\[\\n\\frac{\\partial\\mathrm{E}y}{\\partial x_1}=\\beta_1+\\beta_3x_2.\\n\\]\\nIt is an interaction because the effect of \\(x_1\\) changes with the value of \\(x_2\\).",
+      "placeholder": "Differentiate with respect to \\(x_1\\)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-1-a",
+      "kind": "source_exercise",
+      "exercise_label": "3.1(a)",
+      "question": "Consider a fictitious dataset of \\(n=100\\) observations with \\(s_y=80\\). A regression with three explanatory variables gives \\(s=50\\). Calculate the adjusted coefficient of determination \\(R_a^2\\).",
+      "answer": "There are \\(k=3\\) explanatory variables, so\\n\\[\\nR_a^2=1-\\frac{s^2}{s_y^2}\\n=1-\\frac{50^2}{80^2}\\n=1-\\frac{2500}{6400}\\n=0.609375.\\n\\]\\nThus, \\(R_a^2\\approx 60.94\\%\\).",
+      "placeholder": "Use \\(R_a^2=1-s^2/s_y^2\\)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-1-b",
+      "kind": "source_exercise",
+      "exercise_label": "3.1(b)",
+      "question": "For Exercise 3.1, complete the ANOVA table.",
+      "answer": "Since \\(n=100\\) and \\(k=3\\), error degrees of freedom are \\(100-(3+1)=96\\), regression degrees of freedom are \\(3\\), and total degrees of freedom are \\(99\\).\\n\\n\\[\\n\\begin{array}{lrrr}\\n\\text{Source} & \\text{Sum of Squares} & df & \\text{Mean Square}\\\\\n\\hline\\n\\text{Regression} & 393{,}600 & 3 & 131{,}200\\\\\n\\text{Error} & 240{,}000 & 96 & 2{,}500\\\\\n\\text{Total} & 633{,}600 & 99 & \\\\\n\\end{array}\\n\\]\\n\\nCalculations: \\(\\mathrm{Total\\ SS}=99(80^2)=633{,}600\\), \\(\\mathrm{Error\\ SS}=96(50^2)=240{,}000\\), and \\(\\mathrm{Regression\\ SS}=633{,}600-240{,}000=393{,}600\\).",
+      "placeholder": "Find total and error sums of squares from their variances and degrees of freedom…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-1-c",
+      "kind": "source_exercise",
+      "exercise_label": "3.1(c)",
+      "question": "For Exercise 3.1, calculate the unadjusted coefficient of determination \\(R^2\\).",
+      "answer": "\\[\\nR^2=\\frac{\\mathrm{Regression\\ SS}}{\\mathrm{Total\\ SS}}\\n=\\frac{393{,}600}{633{,}600}\\n\\approx 0.6212.\\n\\]\\nThus, \\(R^2\\approx 62.12\\%\\).",
+      "placeholder": "Divide regression sum of squares by total sum of squares…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-2-a",
+      "kind": "source_exercise",
+      "exercise_label": "3.2(a)",
+      "question": "For \\(n=100\\), \\(k=3\\), and \\(s=50\\), suppose\\n\\[\\n(\\mathbf{X}'\\mathbf{X})^{-1}=\\begin{pmatrix}100&20&20&20\\\\20&90&30&40\\\\20&30&80&50\\\\20&40&50&70\\end{pmatrix}.\\n\\]\\nDetermine \\(se(b_3)\\).",
+      "answer": "The diagonal entry for \\(b_3\\) is \\(70\\). Therefore,\\n\\[\\nse(b_3)=s\\sqrt{70}=50\\sqrt{70}\\approx 418.33.\\n\\]",
+      "placeholder": "Use the fourth diagonal entry because the intercept is \\(b_0\\)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-2-b",
+      "kind": "source_exercise",
+      "exercise_label": "3.2(b)",
+      "question": "For Exercise 3.2, determine the estimated covariance between \\(b_2\\) and \\(b_3\\).",
+      "answer": "The relevant off-diagonal entry is \\(50\\). Since the estimated covariance matrix is \\(s^2(\\mathbf{X}'\\mathbf{X})^{-1}\\),\\n\\[\\n\\widehat{\\mathrm{Cov}}(b_2,b_3)=50^2(50)=125{,}000.\\n\\]",
+      "placeholder": "Multiply the relevant inverse-matrix entry by \\(s^2\\)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-2-c",
+      "kind": "source_exercise",
+      "exercise_label": "3.2(c)",
+      "question": "For Exercise 3.2, determine the estimated correlation between \\(b_2\\) and \\(b_3\\).",
+      "answer": "The common factor \\(s^2\\) cancels:\\n\\[\\n\\widehat{\\mathrm{Corr}}(b_2,b_3)\\n=\\frac{50}{\\sqrt{80\\cdot70}}\\n\\approx 0.6682.\\n\\]",
+      "placeholder": "Divide covariance by the square root of the two variances…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-2-d",
+      "kind": "source_exercise",
+      "exercise_label": "3.2(d)",
+      "question": "For Exercise 3.2, determine the estimated variance of \\(4b_2+3b_3\\).",
+      "answer": "Use \\(\\mathrm{Var}(aU+bV)=a^2\\mathrm{Var}(U)+b^2\\mathrm{Var}(V)+2ab\\mathrm{Cov}(U,V)\\):\\n\\[\\n\\begin{aligned}\\n\\widehat{\\mathrm{Var}}(4b_2+3b_3)\\n&=16(2500\\cdot80)+9(2500\\cdot70)+24(125{,}000)\\\\\n&=3{,}200{,}000+1{,}575{,}000+3{,}000{,}000\\\\\n&=7{,}775{,}000.\\n\\end{aligned}\\n\\]",
+      "placeholder": "Include the twice-the-product covariance term…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-3-a",
+      "kind": "source_exercise",
+      "exercise_label": "3.3(a)",
+      "question": "For the four observations \\(x_{i1}=(-1,2,4,6)\\), \\(x_{i2}=(0,0,1,1)\\), and \\(y_i=(0,1,5,8)\\), write the response vector \\(\\mathbf{y}\\) and explanatory-variable matrix \\(\\mathbf{X}\\), including an intercept.",
+      "answer": "\\[\\n\\mathbf{y}=\\begin{pmatrix}0\\\\1\\\\5\\\\8\\end{pmatrix},\\n\\qquad\\n\\mathbf{X}=\\begin{pmatrix}\\n1&-1&0\\\\\n1&2&0\\\\\n1&4&1\\\\\n1&6&1\\n\\end{pmatrix}.\\n\\]",
+      "placeholder": "Put a column of ones first in \\(\\mathbf{X}\\)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-3-b",
+      "kind": "source_exercise",
+      "exercise_label": "3.3(b)",
+      "question": "For Exercise 3.3, given \\(\\mathbf{b}=(0.15,0.692,2.88)'\\), determine \\(\\widehat y_3\\).",
+      "answer": "For observation 3, \\(x_{31}=4\\) and \\(x_{32}=1\\):\\n\\[\\n\\widehat y_3=0.15+0.692(4)+2.88(1)=5.798.\\n\\]",
+      "placeholder": "Substitute the third observation's two explanatory values…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-3-c",
+      "kind": "source_exercise",
+      "exercise_label": "3.3(c)",
+      "question": "For Exercise 3.3, given \\(s=1.373\\) and the third diagonal entry of \\((\\mathbf{X}'\\mathbf{X})^{-1}\\) equal to \\(4.11538\\), determine \\(se(b_2)\\).",
+      "answer": "\\[\\nse(b_2)=1.373\\sqrt{4.11538}\\approx 2.785.\\n\\]",
+      "placeholder": "Use the diagonal entry corresponding to \\(b_2\\)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-3-d",
+      "kind": "source_exercise",
+      "exercise_label": "3.3(d)",
+      "question": "For Exercise 3.3, given \\(b_1=0.692\\), \\(s=1.373\\), and the second diagonal entry of \\((\\mathbf{X}'\\mathbf{X})^{-1}\\) equal to \\(0.15385\\), determine \\(t(b_1)\\).",
+      "answer": "\\[\\nse(b_1)=1.373\\sqrt{0.15385}\\approx0.539,\\n\\qquad\\nt(b_1)=\\frac{0.692}{0.539}\\approx1.28.\\n\\]",
+      "placeholder": "Calculate the coefficient's standard error before forming its ratio…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-a",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(a)",
+      "question": "Wisconsin Lottery: Produce summary statistics for all variables. For observation 11 (Zip \\(=53211\\)), determine how many standard deviations MEDSCHYR and MEDHVL are above their respective means.",
+      "answer": "The referenced WiscLottery dataset is not included in this source, so numerical results cannot be computed here. Produce count, mean, median, standard deviation, minimum, and maximum for SALES and all explanatory variables. For observation 11, calculate\\n\\[\\nz_{\\mathrm{MEDSCHYR}}=\\frac{\\mathrm{MEDSCHYR}_{11}-\\overline{\\mathrm{MEDSCHYR}}}{s_{\\mathrm{MEDSCHYR}}},\\n\\qquad\\nz_{\\mathrm{MEDHVL}}=\\frac{\\mathrm{MEDHVL}_{11}-\\overline{\\mathrm{MEDHVL}}}{s_{\\mathrm{MEDHVL}}}.\\n\\]",
+      "placeholder": "Standardize each Shorewood value using its variable's mean and standard deviation…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-b",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(b)",
+      "question": "Wisconsin Lottery: Produce a correlation table. What three variables are most highly correlated with SALES?",
+      "answer": "The WiscLottery data are unavailable in this source. Compute the correlations of SALES with each explanatory variable, rank them by absolute value, and report the three variables with the largest absolute correlations.",
+      "placeholder": "Rank the SALES column by absolute correlation…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-c",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(c)",
+      "question": "Wisconsin Lottery: Produce a scatterplot matrix of all explanatory variables and SALES. In the MEDSCHYR-versus-SALES plot, describe the position of observation 11.",
+      "answer": "The data required to create and inspect the scatterplot matrix are not provided. Create pairwise scatterplots for SALES and the eight explanatory variables, identify observation 11 by its Zip code or plotting label, and describe whether it is extreme in MEDSCHYR, SALES, or both relative to the remaining observations.",
+      "placeholder": "Locate Zip 53211 in the MEDSCHYR--SALES panel…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-d",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(d)",
+      "question": "Wisconsin Lottery: Fit SALES on all eight explanatory variables and report \\(s\\), \\(R^2\\), and \\(R_a^2\\).",
+      "answer": "The WiscLottery dataset is not included. Fit\\n\\[\\n\\mathrm{SALES}\\sim\\mathrm{PERPERHH}+\\mathrm{MEDSCHYR}+\\mathrm{MEDHVL}+\\mathrm{PRCRENT}+\\mathrm{PRC55P}+\\mathrm{HHMEDAGE}+\\mathrm{MEDINC}+\\mathrm{POP}.\\n\\]\\nThen report the residual standard deviation \\(s\\), \\(R^2\\), and adjusted \\(R_a^2\\) from the regression output.",
+      "placeholder": "Use all eight listed demographic and economic predictors…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-e",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(e)",
+      "question": "Wisconsin Lottery: Based on the all-variable model, is MEDSCHYR statistically significant? State the hypotheses, decision criterion, and decision rule.",
+      "answer": "The numerical conclusion requires the unavailable dataset and fitted model output. Use\\n\\[\\nH_0:\\beta_{\\mathrm{MEDSCHYR}}=0,\\n\\qquad H_a:\\beta_{\\mathrm{MEDSCHYR}}\\ne0.\\n\\]\\nAt significance level \\(\\alpha\\), calculate \\(t=b_{\\mathrm{MEDSCHYR}}/se(b_{\\mathrm{MEDSCHYR}})\\) and reject \\(H_0\\) if\\n\\[\\n|t|>t_{50-(8+1),1-\\alpha/2}=t_{41,1-\\alpha/2}.\\n\\]\\nAt 5%, reject when \\(|t|>t_{41,0.975}\\).",
+      "placeholder": "There are eight explanatory variables in the full model…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-f",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(f)",
+      "question": "Wisconsin Lottery: Fit SALES on MEDSCHYR, MEDHVL, and POP. Report \\(s\\), \\(R^2\\), and \\(R_a^2\\), and compare them with the all-variable model.",
+      "answer": "The WiscLottery data are not available for numerical fitting. Fit\\n\\[\\n\\mathrm{SALES}\\sim\\mathrm{MEDSCHYR}+\\mathrm{MEDHVL}+\\mathrm{POP}.\\n\\]\\nReport \\(s\\), \\(R^2\\), and \\(R_a^2\\). Relative to the full model, \\(R^2\\) cannot increase after variables are removed; compare \\(s\\) and \\(R_a^2\\) to assess whether the reduced model is preferable after accounting for degrees of freedom.",
+      "placeholder": "Compare fit measures while remembering that \\(R^2\\) favors larger models…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-g",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(g)",
+      "question": "Wisconsin Lottery: In the reduced model, MEDSCHYR has a negative coefficient. Compute and interpret its partial correlation coefficient.",
+      "answer": "A numerical result requires the reduced-model \\(t\\)-ratio, which is unavailable. With \\(n=50\\) and \\(k=3\\), calculate\\n\\[\\nr(\\mathrm{SALES},\\mathrm{MEDSCHYR}\\mid\\mathrm{MEDHVL},\\mathrm{POP})\\n=\\frac{t(b_{\\mathrm{MEDSCHYR}})}{\\sqrt{t(b_{\\mathrm{MEDSCHYR}})^2+46}}.\\n\\]\\nIt measures the linear association between SALES and MEDSCHYR after controlling for MEDHVL and POP. Its negative sign indicates a negative controlled association.",
+      "placeholder": "The reduced model has \\(50-(3+1)=46\\) error degrees of freedom…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-h",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(h)",
+      "question": "Wisconsin Lottery: Produce an added variable plot for MEDSCHYR versus SALES controlling for MEDHVL and POP, and check its correlation against part (g).",
+      "answer": "The numerical plot requires the unavailable data. Regress SALES on MEDHVL and POP and retain residuals \\(e_1\\). Regress MEDSCHYR on MEDHVL and POP and retain residuals \\(e_2\\). Plot \\(e_1\\) versus \\(e_2\\). The correlation of these residuals should equal the partial correlation computed in part (g), apart from rounding.",
+      "placeholder": "Residualize both SALES and MEDSCHYR against MEDHVL and POP…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-i",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(i)",
+      "question": "Wisconsin Lottery: Refit the part (f) model after removing observation 11. Report basic summary statistics and formally test whether MEDSCHYR is statistically significant.",
+      "answer": "The data are unavailable for a numerical answer. Remove observation 11 and fit SALES on MEDSCHYR, MEDHVL, and POP using \\(n=49\\). Report \\(s\\), \\(R^2\\), \\(R_a^2\\), coefficients, standard errors, and \\(t\\)-ratios. Test\\n\\[\\nH_0:\\beta_{\\mathrm{MEDSCHYR}}=0\\quad\\text{versus}\\quad H_a:\\beta_{\\mathrm{MEDSCHYR}}\\ne0.\\n\\]\\nAt level \\(\\alpha\\), reject if\\n\\[\\n|t|>t_{49-(3+1),1-\\alpha/2}=t_{45,1-\\alpha/2}.\\n\\]",
+      "placeholder": "After deleting one observation, update the error degrees of freedom…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-4-j",
+      "kind": "source_exercise",
+      "exercise_label": "3.4(j)",
+      "question": "Wisconsin Lottery: Rerun the part (f) regression after removing observation 9 and cite the basic summary statistics.",
+      "answer": "The WiscLottery dataset is not supplied. Remove observation 9, fit SALES on MEDSCHYR, MEDHVL, and POP, and report basic regression statistics such as coefficient estimates, standard errors, \\(t\\)-ratios, residual standard deviation \\(s\\), \\(R^2\\), and adjusted \\(R_a^2\\). Compare them with the fit in part (f) to assess sensitivity to observation 9.",
+      "placeholder": "Use the same three-predictor specification as in part (f)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-a",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(a)",
+      "question": "Insurance Company Expenses: For the 384 companies with losses, produce summary statistics for EXPENSES and the nonbinary explanatory variables. Describe skewness and note negative values.",
+      "answer": "The NAICExpense dataset is not included, so numerical summaries cannot be produced. Restrict to the 384 companies with some losses. For EXPENSES and nonbinary predictors, report at least mean, median, standard deviation, minimum, and maximum. Compare mean with median and inspect extremes to describe skewness; explicitly identify variables with negative observations.",
+      "placeholder": "Restrict first to firms reporting some losses in 2005…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-b",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(b)",
+      "question": "Insurance Company Expenses: Transform every nonbinary variable using \\(\\ln(1+x)\\), define \\(\\mathrm{LNEXPENSES}=\\ln(1+\\mathrm{EXPENSES})\\), and produce summary statistics for the modified variables.",
+      "answer": "The dataset is unavailable for numerical summaries. For each nonbinary variable \\(X\\), create \\(X^*=\\ln(1+X)\\), including\\n\\[\\n\\mathrm{LNEXPENSES}=\\ln(1+\\mathrm{EXPENSES}).\\n\\]\\nThen report summary statistics for the transformed nonbinary explanatory variables. Subsequent analysis should use these modified variables.",
+      "placeholder": "Apply the stated modified logarithm to each nonbinary variable…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-c",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(c)",
+      "question": "Insurance Company Expenses: Produce correlations for the modified nonbinary variables. What three variables are most highly correlated with LNEXPENSES?",
+      "answer": "The NAICExpense data are not provided. Compute correlations among the modified nonbinary variables, identify correlations with LNEXPENSES, and select the three explanatory variables having the greatest absolute correlations with LNEXPENSES.",
+      "placeholder": "Rank correlations with LNEXPENSES by absolute value…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-d",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(d)",
+      "question": "Insurance Company Expenses: Provide a boxplot of LNEXPENSES by GROUP. Which group level has higher expenses?",
+      "answer": "The data are unavailable. Construct side-by-side boxplots of LNEXPENSES for GROUP \\(=0\\) and GROUP \\(=1\\), then compare their medians and distributions. The group with the higher typical LNEXPENSES, usually judged by the median, has higher modified-log expenses.",
+      "placeholder": "Compare the centers of the two GROUP boxplots…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-e",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(e)",
+      "question": "Insurance Company Expenses: Fit LNEXPENSES on all eleven explanatory variables and report \\(s\\), \\(R^2\\), and \\(R_a^2\\).",
+      "answer": "The NAICExpense data are not included. Fit LNEXPENSES using all eleven explanatory variables: the modified nonbinary variables and GROUP, STOCK, and MUTUAL. Report the residual standard deviation \\(s\\), coefficient of determination \\(R^2\\), and adjusted coefficient \\(R_a^2\\).",
+      "placeholder": "Include all listed explanatory variables, including the three binary indicators…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-fi",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(f)(i)",
+      "question": "Insurance Company Expenses: Fit the reduced model of LNEXPENSES after dropping CASH, STOCK, and MUTUAL. Include assets, GROUP, both loss variables, both gross-premium variables, and the two BLS wage variables. Report \\(s\\), \\(R^2\\), and \\(R_a^2\\).",
+      "answer": "The required data are unavailable. Fit the stated eight-variable reduced model and report \\(s\\), \\(R^2\\), and \\(R_a^2\\) from the output.",
+      "placeholder": "Count the eight predictors after removing CASH, STOCK, and MUTUAL…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-fii",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(f)(ii)",
+      "question": "Insurance Company Expenses: Interpret the coefficient associated with commercial-lines gross premiums in the reduced logarithmic model.",
+      "answer": "Let \\(b_{\\mathrm{LNGPWCOMM}}\\) be the coefficient on the modified-log commercial-lines gross premiums. Holding the other model variables fixed, a small proportional increase in GPWCOMM is associated with an approximately \\(b_{\\mathrm{LNGPWCOMM}}\\) proportional increase in EXPENSES. Thus the coefficient is interpreted as an elasticity-like marginal effect on the logarithmic scale.",
+      "placeholder": "Both the response and GPWCOMM use the modified logarithm…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-fiii",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(f)(iii)",
+      "question": "Insurance Company Expenses: If GPWCOMM increases by \\(\\$1.00\\), how much is EXPENSES expected to increase? Use part (f)(ii) and median GPWCOMM and EXPENSES.",
+      "answer": "The numerical coefficient and medians require the unavailable dataset. At medians \\(G=\\mathrm{median}(\\mathrm{GPWCOMM})\\) and \\(E=\\mathrm{median}(\\mathrm{EXPENSES})\\), use the modified-log derivative approximation:\\n\\[\\n\\frac{\\partial\\mathrm{EXPENSES}}{\\partial\\mathrm{GPWCOMM}}\\n\\approx b_{\\mathrm{LNGPWCOMM}}\\frac{1+E}{1+G}.\\n\\]\\nFor a \\(\\$1\\) increase, the expected expense increase is approximately this quantity.",
+      "placeholder": "Differentiate \\(\\ln(1+\\mathrm{EXPENSES})\\) with respect to \\(\\ln(1+\\mathrm{GPWCOMM})\\)…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-gi",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(g)(i)",
+      "question": "Insurance Company Expenses: Add squared terms for the two loss variables and two gross-premium variables to the eight-variable reduced model. Report \\(s\\), \\(R^2\\), and \\(R_a^2\\).",
+      "answer": "The NAICExpense data are unavailable. Create squared terms for the modified versions of LOSSLONG, LOSSSHORT, GPWPERSONAL, and GPWCOMM, fit the resulting 12-variable model, and report \\(s\\), \\(R^2\\), and \\(R_a^2\\).",
+      "placeholder": "Add four squared terms to the eight-variable model…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-gii",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(g)(ii)",
+      "question": "Insurance Company Expenses: Do the quadratic variables appear to be useful explanatory variables?",
+      "answer": "A numerical conclusion requires the fitted 12-variable model. Examine the \\(t\\)-ratios or \\(p\\)-values for the four squared terms, and compare adjusted \\(R_a^2\\) and residual standard deviation \\(s\\) with the model in part (f). Variables with sufficiently large absolute \\(t\\)-ratios provide evidence of usefulness individually; a higher \\(R_a^2\\) or lower \\(s\\) supports improved overall fit.",
+      "placeholder": "Check both the individual quadratic coefficients and adjusted model fit…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-h",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(h)",
+      "question": "Insurance Company Expenses: Omit the two BLS variables from the quadratic model. Fit LNEXPENSES on assets, GROUP, both loss variables, both gross-premium variables, and quadratic terms. Report \\(s\\), \\(R^2\\), and \\(R_a^2\\), and comment on the observations used compared with part (f).",
+      "answer": "The data are unavailable for numerical output. Fit the stated model and report \\(s\\), \\(R^2\\), and \\(R_a^2\\). Compare the number of usable observations with part (f): omitting the BLS wage variables can permit more observations if those variables had missing values, because observations missing only BLS information no longer need to be excluded.",
+      "placeholder": "Consider whether missing BLS information limits the part (f) sample…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-ii",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(i)(i)",
+      "question": "Insurance Company Expenses: Drop the quadratic terms and add GROUP interactions with assets, both loss variables, and both gross-premium variables. Report \\(s\\), \\(R^2\\), and \\(R_a^2\\).",
+      "answer": "The data are not supplied. Fit LNEXPENSES using assets, GROUP, LOSSLONG, LOSSSHORT, GPWPERSONAL, GPWCOMM, their five interactions with GROUP, and the two BLS wage variables, for 11 explanatory variables. Report \\(s\\), \\(R^2\\), and \\(R_a^2\\).",
+      "placeholder": "Create one GROUP-product term for each nonbinary operating variable listed…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-iii-group-0",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(i)(ii), GROUP = 0",
+      "question": "Insurance Company Expenses: In the interaction model, if GPWCOMM increases by \\(\\$1.00\\), how much is EXPENSES expected to increase for GROUP \\(=0\\) companies? Use group-0 medians of GPWCOMM and EXPENSES.",
+      "answer": "The numerical coefficients and medians are unavailable. For GROUP \\(=0\\), the GPWCOMM interaction is zero, so use the main coefficient \\(b_{\\mathrm{LNGPWCOMM}}\\). At group-0 medians \\(G_0\\) and \\(E_0\\),\\n\\[\\n\\Delta\\mathrm{EXPENSES}\\approx b_{\\mathrm{LNGPWCOMM}}\\frac{1+E_0}{1+G_0}\\n\\]\\nfor a \\(\\$1\\) increase in GPWCOMM.",
+      "placeholder": "Set GROUP equal to zero before differentiating the modified-log model…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-5-iii-group-1",
+      "kind": "source_exercise",
+      "exercise_label": "3.5(i)(ii), GROUP = 1",
+      "question": "Insurance Company Expenses: In the interaction model, if GPWCOMM increases by \\(\\$1.00\\), how much is EXPENSES expected to increase for GROUP \\(=1\\) companies? Use group-1 medians of GPWCOMM and EXPENSES.",
+      "answer": "The numerical coefficients and medians require the unavailable dataset. For GROUP \\(=1\\), the relevant modified-log slope is the sum of the main and interaction coefficients:\\n\\[\\nb_{\\mathrm{LNGPWCOMM}}+b_{\\mathrm{GROUP}\\times\\mathrm{LNGPWCOMM}}.\\n\\]\\nAt group-1 medians \\(G_1\\) and \\(E_1\\),\\n\\[\\n\\Delta\\mathrm{EXPENSES}\\approx\\n\\left(b_{\\mathrm{LNGPWCOMM}}+b_{\\mathrm{GROUP}\\times\\mathrm{LNGPWCOMM}}\\right)\\n\\frac{1+E_1}{1+G_1}.\\n\\]",
+      "placeholder": "For GROUP equal to one, add the main and interaction slopes…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-6-a",
+      "kind": "source_exercise",
+      "exercise_label": "3.6(a)",
+      "question": "National Life Expectancies: Fit LIFEEXP on FERTILITY, PUBLICEDUCATION, and \\(\\ln(\\mathrm{PRIVATEHEALTH})\\). Interpret the regression coefficient associated with PUBLICEDUCATION.",
+      "answer": "The UNLifeExpectancy dataset and fitted coefficient are not included. If the coefficient is \\(b_{\\mathrm{PUBLICEDUCATION}}\\), then holding FERTILITY and \\(\\ln(\\mathrm{PRIVATEHEALTH})\\) fixed, a one-unit increase in PUBLICEDUCATION is associated with an expected change of \\(b_{\\mathrm{PUBLICEDUCATION}}\\) years in LIFEEXP.",
+      "placeholder": "The response LIFEEXP remains on its original scale…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-6-b",
+      "kind": "source_exercise",
+      "exercise_label": "3.6(b)",
+      "question": "National Life Expectancies: Interpret the coefficient associated with health expenditures without using the logarithmic expenditure scale.",
+      "answer": "The numerical coefficient is unavailable. If the fitted model includes \\(b_{\\ln H}\\ln(H)\\), where \\(H=\\mathrm{PRIVATEHEALTH}\\), then a small percentage increase in health expenditure has an expected LIFEEXP change of approximately\\n\\[\\nb_{\\ln H}\\times\\text{the proportional change in }H.\\n\\]\\nFor example, a 1% increase in \\(H\\) is associated with an approximate change of \\(0.01b_{\\ln H}\\) years in LIFEEXP, holding FERTILITY and PUBLICEDUCATION fixed.",
+      "placeholder": "Translate a small logarithmic change into a percentage change in expenditure…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-6-c",
+      "kind": "source_exercise",
+      "exercise_label": "3.6(c)",
+      "question": "National Life Expectancies: Is PUBLICEDUCATION statistically significant? State the hypotheses, decision criterion, and decision rule.",
+      "answer": "The fitted output is unavailable, so significance cannot be numerically determined. Test\\n\\[\\nH_0:\\beta_{\\mathrm{PUBLICEDUCATION}}=0,\\n\\qquad H_a:\\beta_{\\mathrm{PUBLICEDUCATION}}\\ne0.\\n\\]\\nCompute\\n\\[\\nt=\\frac{b_{\\mathrm{PUBLICEDUCATION}}}{se(b_{\\mathrm{PUBLICEDUCATION}})}.\\n\\]\\nAt level \\(\\alpha\\), reject \\(H_0\\) when \\(|t|>t_{n-(3+1),1-\\alpha/2}\\), using the sample size \\(n\\) of the fitted model.",
+      "placeholder": "There are three explanatory variables in this model…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-6-di",
+      "kind": "source_exercise",
+      "exercise_label": "3.6(d)(i)",
+      "question": "National Life Expectancies: Describe the purpose of an added variable plot and a method for producing one.",
+      "answer": "An added variable plot shows the relationship between a response and one explanatory variable after controlling for other explanatory variables. For PUBLICEDUCATION, regress LIFEEXP on FERTILITY and \\(\\ln(\\mathrm{PRIVATEHEALTH})\\) and retain residuals \\(e_1\\). Regress PUBLICEDUCATION on FERTILITY and \\(\\ln(\\mathrm{PRIVATEHEALTH})\\) and retain residuals \\(e_2\\). Plot \\(e_1\\) versus \\(e_2\\).",
+      "placeholder": "Residualize both variables against FERTILITY and lnHEALTH…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "id": "exercise-3-6-dii",
+      "kind": "source_exercise",
+      "exercise_label": "3.6(d)(ii)",
+      "question": "National Life Expectancies: Calculate the correlation corresponding to the added variable plot in Figure 3.11.",
+      "answer": "A numerical calculation requires the PUBLICEDUCATION coefficient \\(t\\)-ratio and sample size from the fitted model, neither of which is given in the source excerpt. Calculate the plot's partial correlation as\\n\\[\\nr(\\mathrm{LIFEEXP},\\mathrm{PUBLICEDUCATION}\\mid\\mathrm{FERTILITY},\\ln\\mathrm{HEALTH})\\n=\\frac{t(b_{\\mathrm{PUBLICEDUCATION}})}{\\sqrt{t(b_{\\mathrm{PUBLICEDUCATION}})^2+n-(3+1)}}.\\n\\]\\nEquivalently, compute the ordinary correlation between the two sets of plotted residuals.",
+      "placeholder": "Use the residual correlation or the \\(t\\)-ratio identity…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    }
+  ]
+}

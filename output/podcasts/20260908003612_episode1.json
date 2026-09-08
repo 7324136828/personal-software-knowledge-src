@@ -1,0 +1,302 @@
+{
+  "episode_title": "Multiple Linear Regression I: Inference, Added Variables, and Special Terms — Episode 2 of 2",
+  "podcast_show": "Regression Modeling Walkthrough",
+  "cast": [
+    {
+      "speaker_id": "maya",
+      "host_id": "HOST_A",
+      "name": "Maya",
+      "voice_file": "af_heart",
+      "style": "Clear, curious, and measured explanatory delivery."
+    },
+    {
+      "speaker_id": "daniel",
+      "host_id": "HOST_B",
+      "name": "Daniel",
+      "voice_file": "am_michael",
+      "style": "Calm, precise, and conversational analytical delivery."
+    }
+  ],
+  "script": [
+    {
+      "segment_name": "Cold Open and Inference Preview",
+      "scenes": [
+        {
+          "speaker_id": "maya",
+          "directions": "[upbeat] [pause=400]",
+          "dialogue": "Welcome back to Regression Modeling Walkthrough. This is Episode 2 of 2 on Chapter 3, Multiple Linear Regression I. In the first episode, we fit a regression plane and assessed goodness of fit. Now we ask a more pointed question: is a particular explanatory variable important after the other variables in the model have been taken into account? The chapter answers with t-tests, confidence intervals, added variable plots, and partial correlations."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "The episode then broadens the meaning of linear regression. We will examine binary explanatory variables, transformations of explanatory variables, interaction terms, curvilinear response functions, and piecewise linear models. These methods allow regression functions to express complex behavior while retaining linearity in the unknown coefficients. Throughout, the chapter remains careful: a useful model needs appropriate variables, sensible interpretation, and attention to what has been controlled for."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[reflective]",
+          "dialogue": "The key recurring contrast is between pairwise and multivariable reasoning. A correlation describes two variables together. A regression coefficient describes a variable's relationship with the response while other included variables are held fixed. Those can tell different stories, not because one is automatically wrong, but because they answer different questions. The refrigerator-price example gives the chapter's clearest demonstration of this distinction."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "We will also return to term life insurance. There, the coefficient of LNINCOME is 0.494 and the residual standard deviation is 1.525. These values support a t-statistic for the income coefficient and illustrate how standard errors convert a fitted coefficient into a standardized measure of evidence. Let us begin with the single-coefficient t-test."
+        }
+      ]
+    },
+    {
+      "segment_name": "3.4 Statistical Inference for a Single Coefficient",
+      "scenes": [
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "In many applications, one variable is the primary focus and other variables are included to control additional sources of variability. A sales agent might care about income's effect on insurance demand while also including sex, occupation, age, household size, education, and other characteristics. To decide whether x sub j is important, the chapter investigates whether its corresponding slope parameter beta sub j equals zero."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "The standard null hypothesis is H sub 0: beta sub j equals zero. The usual two-sided alternative is H sub a: beta sub j does not equal zero. Because b sub j depends on the units of y and x sub j, its magnitude alone is not enough. We standardize it by its estimated standard deviation, called the standard error. The standard error of b sub j is s times the square root of the relevant diagonal element of inverse X prime X."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[reflective]",
+          "dialogue": "The t-ratio is t of b sub j equals b sub j divided by se of b sub j. It is interpreted as the number of standard errors that b sub j is away from zero. Under the null hypothesis and assumptions F1 through F5, this statistic has a t distribution with n minus k plus 1 degrees of freedom. That distribution supplies a decision rule for whether observed evidence is sufficiently far from the null value."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "For a two-sided test at significance level alpha, reject the null if the absolute t-ratio exceeds the t critical value at percentile one minus alpha divided by two, using n minus k plus 1 degrees of freedom. With a sufficiently large sample, the chapter says this can be approximated by the standard normal value. At the five percent level, that value is 1.96. The practical rule of thumb is that a variable is important when its absolute t-ratio exceeds two."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "The chapter also allows hypotheses about values other than zero. For H sub 0: beta sub j equals d, use t-ratio equal to b sub j minus d, divided by se of b sub j. The alternative may be beta less than d, beta greater than d, or beta not equal to d. The rejection region changes according to whether the test is one-sided or two-sided. The chapter also presents p-values as an alternative way to convey the strength of deviation from the null."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[reflective]",
+          "dialogue": "In the term life model, the standard errors shown for the intercept, EDUCATION, NUMHH, and LNINCOME are 0.846, 0.039, 0.063, and 0.078. The residual standard deviation is 1.525. The relevant diagonal element of inverse X prime X for LNINCOME is 0.002585, so se of b sub 3 equals 1.525 times the square root of 0.002585, or 0.078."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "The LNINCOME t-ratio is 0.494 divided by 0.078, or 6.3. It is therefore many standard errors above zero. With 275 observations and three explanatory variables, the degrees of freedom are 271. At a five percent significance level, the chapter uses 1.96 as the critical value. Since 6.3 exceeds 1.96 in absolute value, the null hypothesis that beta sub 3 equals zero is rejected in favor of the conclusion that LNINCOME is important."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "Confidence intervals provide another way to describe the contribution of an explanatory variable. The point estimate is b sub j, and a confidence interval is b sub j plus or minus the relevant t percentile times se of b sub j. There is a direct duality with the two-sided hypothesis test: if a hypothesized value lies outside the confidence interval, the corresponding null hypothesis is rejected at the same significance level."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[reflective]",
+          "dialogue": "The chapter includes an example on female advantage, the difference in life expectancy between women and men. Lemaire analyzed 169 countries and reported a parsimonious model using four of 45 original variables. It explained 61 percent of variability. The variables included logarithmic persons per physician, fertility, percentage of Hindus and Buddhists, and a Soviet Union dummy. The chapter notes substantial collinearity among candidate variables, so alternative variable sets could also be chosen."
+        }
+      ]
+    },
+    {
+      "segment_name": "3.4.3 Added Variable Plots and 3.4.4 Partial Correlations",
+      "scenes": [
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "The refrigerator example asks which product characteristics determine PRICE. The data contain 37 refrigerators. Explanatory variables are RSIZE, refrigerator size in cubic feet; FSIZE, freezer size; ECOST, annual energy cost; SHELVES, the number of shelves in refrigerator and freezer doors; and FEATURES, a count including items such as can shelves, see-through crispers, ice makers, and egg racks."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "The average refrigerator price is 626.40 dollars, with standard deviation 139.80 dollars. Average ECOST is 70.51 dollars. Pairwise correlations show strong positive linear relationships between PRICE and freezer space, and between PRICE and FEATURES. Surprisingly, PRICE and ECOST also have a positive correlation, 0.522. A consumer might expect higher-priced refrigerators to have lower energy costs, so this pairwise result invites closer analysis."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[reflective]",
+          "dialogue": "The fitted multiple regression has residual standard deviation 60.65 dollars and R squared of 83.8 percent. Its coefficient for ECOST is negative: minus 6.96, with standard error 2.275 and t-ratio minus 3.1. The other listed coefficients are 76.5 for RSIZE, 137 for FSIZE, 37.9 for SHELVES, and 23.8 for FEATURES. Each explanatory variable has an absolute t-ratio exceeding two."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "The ECOST coefficient means that, holding the other explanatory variables fixed, a one-dollar increase in annual energy cost is associated with an expected decrease of 6.96 dollars in PRICE. This conforms to the stated economic intuition. The positive pairwise correlation and the negative multivariable coefficient are not contradictory once we recognize that correlation does not control for other variables whereas the regression coefficient does."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "The added variable plot shows this controlled relationship graphically. First, regress PRICE on RSIZE, FSIZE, SHELVES, and FEATURES, omitting ECOST, and save residuals e sub 1. Second, regress ECOST on those same four explanatory variables and save residuals e sub 2. Third, plot e sub 1 versus e sub 2. This is the added variable plot of PRICE versus ECOST after controlling for the other explanatory variables."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[reflective]",
+          "dialogue": "The vertical axis can be read as PRICE controlled for RSIZE, FSIZE, SHELVES, and FEATURES. The horizontal axis is ECOST controlled for those variables. The plot therefore focuses on the relationship remaining after the other explanatory variables' effects have been removed. Its correlation is minus 0.48. That negative association aligns with the negative ECOST regression coefficient."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "The chapter points to FSIZE as a reason for the positive raw correlation. Freezer size is positively correlated with both ECOST and PRICE. A larger freezer plausibly increases both the energy cost and refrigerator price. Thus, the positive PRICE-ECOST correlation may arise because FSIZE makes both variables larger, rather than because energy cost itself causes price to increase. Variables omitted from regression can create serious modeling problems, including misleading signs."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "The correlation in an added variable plot is called a partial correlation coefficient. It is the correlation between e sub 1 and e sub 2, denoted as the correlation between y and x sub j conditional on all other explanatory variables. It summarizes the relationship between the response and one explanatory variable in the presence of the remaining explanatory variables. For PRICE and ECOST in this example, that partial correlation is minus 0.48."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[reflective]",
+          "dialogue": "The chapter gives a shortcut: partial correlation equals the t-ratio for b sub j divided by the square root of that t-ratio squared plus n minus k plus 1. For ECOST, minus 3.1 divided by the square root of minus 3.1 squared plus 37 minus 6 is approximately minus 0.48. This permits calculation after one regression, though graphs remain valuable because a correlation statistic can fail to reveal nonlinear relationships."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[upbeat]",
+          "dialogue": "This formula adds another interpretation for t-ratios. A larger absolute t-ratio corresponds to a larger absolute partial correlation. In other words, a large t-ratio means a large controlled correlation between the response and that explanatory variable. This offers only a partial answer to the common question, which variable is most important? Importance also depends on the model context, measurement, intended use, and the set of variables included."
+        }
+      ]
+    },
+    {
+      "segment_name": "3.5 Special Explanatory Variables: Binary Variables and Transformations",
+      "scenes": [
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "Section 3.5 underscores that linear regression can include a rich variety of explanatory variables. The three featured categories are binary variables, transformations, and interactions. A categorical variable labels observations belonging to distinct groups. A binary variable has only two values. Binary explanatory variables are also called indicator variables or dummy variables. Their use changes coefficient interpretation, but ordinary least squares estimation remains valid."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "In the term life data, SINGLE equals one when the respondent is single and zero otherwise. The single category includes separated, divorced, widowed, never married, and respondents who are not married nor living with a partner. The sample contains 57 single respondents and 218 others. The chapter uses a letter plot of LNFACE versus LNINCOME, with S for single and another symbol for other respondents, to portray a third categorized variable in two dimensions."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[reflective]",
+          "dialogue": "The letter plot suggests that LNFACE is lower for single respondents at a given income level. The model is LNFACE equals beta sub 0 plus beta sub 1 LNINCOME plus beta sub 2 SINGLE plus epsilon. For other respondents, expected y is beta sub 0 plus beta sub 1 LNINCOME. For single respondents, it is beta sub 0 plus beta sub 2 plus beta sub 1 LNINCOME."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "Thus beta sub 2 is interpreted as the expected increase in y when moving from the base level SINGLE equals zero to SINGLE equals one, with income unchanged. The chapter reports a fitted coefficient of minus 0.800 for SINGLE. Its interpretation is that expected logarithmic face amount is smaller by 0.80 for a single respondent compared with the other category, assuming income remains unchanged. The two fitted lines are parallel because they share the same income slope."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "Transformations of explanatory variables expand the possible response shapes. Polynomial regression has expected y equal to beta sub 0 plus beta sub 1 x plus beta sub 2 x squared through beta sub p x to the p. This is a multiple linear regression model with transformed explanatory variables x, x squared, and higher powers. The expected response can be nonlinear in x while the model is still linear in the beta parameters."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[reflective]",
+          "dialogue": "Other transformations need not be powers. Expected y equal to beta sub 0 plus beta sub 1 ln x uses the transformed variable x star equal to ln x and can represent a gently sloping curve. Transformations need not even be smooth. The chapter suggests that if self-reported years of education have substantial measurement error, an analyst might use a less informative but potentially more reliable binary transformation for whether the respondent completed 13 years of schooling."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "In that example, x star equals one if education is at least 13 years and zero otherwise. The chapter contrasts such transformed linear-regression models with nonlinear regression models such as y equals beta sub 0 plus exp of beta sub 1 x plus epsilon. Those can arise in scientific applications where fundamental principles guide a more complex model form. The chapter's central message remains: linear regression refers specifically to linearity in parameters."
+        }
+      ]
+    },
+    {
+      "segment_name": "3.5.3 Interaction Terms and Piecewise Linear Models",
+      "scenes": [
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "An additive model with x sub 1 and x sub 2 says expected y equals beta sub 0 plus beta sub 1 x sub 1 plus beta sub 2 x sub 2. In that setup, the marginal change in expected y for a one-unit change in x sub 1 is beta sub 1 regardless of x sub 2. But sometimes the effect of x sub 1 changes when x sub 2 changes. An interaction term represents this possibility."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "Create x sub 3 equal to x sub 1 times x sub 2 and fit expected y equal to beta sub 0 plus beta sub 1 x sub 1 plus beta sub 2 x sub 2 plus beta sub 3 x sub 1 x sub 2. Then the partial derivative with respect to x sub 1 is beta sub 1 plus beta sub 3 x sub 2. The marginal effect of x sub 1 now depends on x sub 2."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[reflective]",
+          "dialogue": "More generally, an interaction term is a variable created as a nonlinear function of two or more explanatory variables. It can be entered into the regression as another explanatory variable. But a created variable must not simply be a linear combination of existing variables. If x sub 3 equals x sub 1 plus x sub 2, all parameters cannot be estimated. The chapter points ahead to methods for avoiding variables that are linear combinations of one another."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "For term life, interacting LNINCOME with SINGLE allows different income slopes. For other respondents, expected LNFACE equals beta sub 0 plus beta sub 1 LNINCOME. For single respondents, it equals beta sub 0 plus beta sub 2 plus beta sub 1 plus beta sub 3, all multiplying LNINCOME as appropriate. One four-parameter model therefore creates two distinct regression lines, one for each marital-status grouping."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "The chapter then describes Segal's life insurance company expense analysis. Overall company expenses were modeled using insurance-production outputs and input prices. Outputs included numbers of life policies issued, amounts of term and whole life insurance sold, annuity considerations, and accident and health premiums. The model also included squares of outputs and interactions with a branch-company dummy D, plus logarithmic prices of labor and capital."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[reflective]",
+          "dialogue": "For the number of life policies issued, the marginal change in expected y depends on the baseline coefficient, the D interaction, the squared term, and the D-by-squared interaction. At the reported median number of policies, the estimated marginal change is 0.165 for baseline companies and 0.182 for branch companies. Since the variables are in logarithmic units, these quantities are elasticities. The chapter translates the branch estimate into a marginal expense amount using median cost and policy counts."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "A second-order response function with two explanatory variables includes x sub 1, x sub 2, their squares, and their product. With three explanatory variables, it includes each linear term, each square, and each pairwise interaction. The chapter remarks that third- and higher-order models are rarely used when there is more than one explanatory variable. Richer functions are possible, but complexity should be justified by the application."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "Piecewise linear regression handles abrupt behavior changes at a threshold. The charitable-contributions illustration uses wages x and a kink at 97,500 dollars, the point above which the cited 2007 Social Security tax treatment changes. Define z as zero below 97,500 and one at or above it. The model is expected y equals beta sub 0 plus beta sub 1 x plus beta sub 2 z times x minus 97,500."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[reflective]",
+          "dialogue": "Below 97,500, the slope is beta sub 1. At or above 97,500, the slope becomes beta sub 1 plus beta sub 2. The graph has a sharp but continuous break, called a kink. The chapter calls this piecewise linear regression, or sometimes a broken-stick model. More than one kink can be used; the historical illustration of 1992 federal taxable income for single filers uses breaks at 21,450 and 51,900 dollars."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "Piecewise models need not be continuous. For stockbroker commissions versus shares traded, the chapter describes a discontinuity at 100 shares because trades below 100 are odd lots with administrative expenses. The model uses a binary z for whether x is at least 100, together with x, z, and z times x. The intercept and slope may both change at the threshold, reflecting a jump and economies of scale for larger trades."
+        }
+      ]
+    },
+    {
+      "segment_name": "3.6 Further Reading, 3.7 Exercises, and Closing Practice",
+      "scenes": [
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "Section 3.6 directs readers seeking proofs of Chapter 3 results to Goldberger, and readers seeking nonlinear regression discussion to Bates and Watts. The chapter preview also points ahead. Chapter 4 widens the scope with categorical variables and inference for several coefficients simultaneously. Chapter 5 introduces techniques for selecting appropriate explanatory variables. Chapter 6 synthesizes model interpretation, variable selection, and data collection."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[reflective]",
+          "dialogue": "Exercise 3.1 uses a fictitious dataset with n equal to 100, response standard deviation 80, three explanatory variables, and residual standard deviation 50. It asks for adjusted R squared, a completed ANOVA table, and ordinary R squared. This exercise is direct practice with the relationship among total variability, error variability, degrees of freedom, mean square error, and the two forms of the coefficient of determination."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "Exercise 3.2 also uses n equal to 100, s sub y equal to 80, s equal to 50, and a displayed inverse X prime X matrix. It asks for the standard error of b sub 3, the estimated covariance and correlation between b sub 2 and b sub 3, and the estimated variance of 4 b sub 2 plus 3 b sub 3. The exercise reinforces that the coefficient covariance matrix contains more than separate standard errors."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "Exercise 3.3 supplies four observations, two explanatory variables, fitted coefficients, residual standard deviation, and an inverse matrix. It asks for the response vector y and explanatory matrix X, the fitted value for the third observation, the standard error of b sub 2, and the t-ratio for b sub 1. It is a compact exercise connecting matrix representation, prediction, standard errors, and inference."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[reflective]",
+          "dialogue": "Exercise 3.4 revisits Wisconsin lottery sales for 50 Zip codes. It requests summary statistics, correlations, a scatterplot matrix, a full regression on eight explanatory variables, a formal test for MEDSCHYR, and a reduced model using MEDSCHYR, MEDHVL, and POP. It then asks for partial correlation and an added variable plot, followed by refits excluding influential observations. The exercise emphasizes how conclusions can change with variable choice and observations."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm]",
+          "dialogue": "Exercise 3.5 studies insurer expenses. It asks readers to examine skewness, apply modified logarithm transformations ln of 1 plus x, investigate correlations and GROUP boxplots, and fit several models for LNEXPENSES. The models compare full and reduced specifications, quadratic terms, and interactions with GROUP. Several parts ask for interpretations of gross-premium coefficients and expected expense changes based on median values. This is an applied progression from summaries to model comparison."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[calm]",
+          "dialogue": "Exercise 3.6 concerns national life expectancies. It fits LIFEEXP using FERTILITY, PUBLICEDUCATION, and lnHEALTH. Readers interpret public education and health-expenditure coefficients, formally test public education, and investigate a surprising negative public-education coefficient using an added variable plot. The exercise captures a central lesson from this episode: a positive raw correlation can coexist with a negative controlled relationship once other explanatory variables are included."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[reflective]",
+          "dialogue": "For a final practice, state the t-test sequence: formulate H sub 0 and H sub a, choose a significance level, compute the t-ratio, identify degrees of freedom n minus k plus 1, and compare the absolute statistic with the appropriate critical value. Then state the added-variable-plot sequence: regress y on all variables except x sub j, regress x sub j on those same other variables, and plot the two residual sets."
+        },
+        {
+          "speaker_id": "maya",
+          "directions": "[upbeat]",
+          "dialogue": "Also practice the vocabulary. R squared is the proportion of variability explained by the regression function. Adjusted R squared penalizes unnecessary explanatory variables through degrees of freedom. A residual is observed y minus fitted y. A partial correlation is the correlation between residualized response and residualized explanatory variable. A binary variable represents categories. An interaction allows the effect of one variable to depend on another variable."
+        },
+        {
+          "speaker_id": "daniel",
+          "directions": "[calm] [pause=400]",
+          "dialogue": "That concludes Multiple Linear Regression I: Inference, Added Variables, and Special Terms, Episode 2 of 2. Chapter 3 has established multiple linear regression as a framework for organizing complex multivariate data while retaining interpretable coefficients, formal inference, and flexible explanatory-variable construction. Thank you for listening to Regression Modeling Walkthrough."
+        }
+      ]
+    }
+  ]
+}

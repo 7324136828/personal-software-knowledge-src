@@ -1,0 +1,4 @@
+1. use claude (from openrouter) 
+2. use gpt-terra (from openai/not boostrapped)
+3. use gpt-terra (from openai/boostrapped by python script and chatgpt)
+4. use gpt-terra (chatgpt only)

@@ -1,0 +1,181 @@
+{
+  "title": "Multiple Linear Regression I",
+  "slides": [
+    {
+      "title": "Multiple Linear Regression I",
+      "subtitle": "Methods, interpretation, fit, inference, and special variables",
+      "bullets": [
+        "Several explanatory variables",
+        "Regression planes and least squares",
+        "Actuarial and financial applications",
+        "Term life insurance example"
+      ],
+      "speaker_notes": "This chapter extends simple linear regression to settings with several explanatory variables. The framework retains familiar ideas such as goodness of fit and t-based inference while allowing flexible functions of explanatory variables.",
+      "image_query": "regression data analytics",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Motivating Example: Term Life Insurance",
+      "subtitle": "Demand for policy face amount",
+      "bullets": [
+        "2004 Survey of Consumer Finances",
+        "275 purchasing households",
+        "Response: LNFACE",
+        "Predictors: EDUCATION, NUMHH, LNINCOME",
+        "Right-skewed FACE and INCOME"
+      ],
+      "speaker_notes": "The analysis focuses on households that purchased term life insurance and asks which characteristics influence the amount purchased. Logarithmic transformations of face amount and income help represent a relationship that is more nearly linear.",
+      "image_query": "term life insurance",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Exploring Multivariate Data",
+      "subtitle": "Before fitting a model",
+      "bullets": [
+        "Univariate summary statistics",
+        "Scatter plots and logarithmic scales",
+        "Scatterplot matrices",
+        "Correlation matrices",
+        "Pairwise relationships only"
+      ],
+      "speaker_notes": "Scatterplot matrices and correlation tables are useful first summaries of multivariate data. However, correlation measures linear pairwise association and can miss nonlinear patterns or relationships that emerge only after controlling for other variables.",
+      "image_query": "scatterplot matrix",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Least Squares Regression Plane",
+      "subtitle": "Fitting several explanatory variables",
+      "bullets": [
+        "\\(y=b_{0}+b_{1}x_{1}+\\cdots+b_{k}x_{k}\\)",
+        "Plane in \\(k+1\\) dimensions",
+        "Squared residual minimization",
+        "\\(\\widehat{y}=b_{0}+b_{1}x_{1}+\\cdots+b_{k}x_{k}\\)",
+        "Term life fitted plane"
+      ],
+      "speaker_notes": "Because a single plane usually cannot pass through all observations, least squares selects coefficients that minimize the sum of squared vertical deviations. For term life insurance, the fitted model is \\(\\widehat{y}=2.584+0.206x_{1}+0.306x_{2}+0.494x_{3}\\).",
+      "image_query": "regression plane",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Matrix Formulation",
+      "subtitle": "Normal equations and coefficient estimator",
+      "bullets": [
+        "Response vector \\(\\mathbf{y}\\)",
+        "Design matrix \\(\\mathbf{X}\\)",
+        "Normal equations \\(\\mathbf{X}'\\mathbf{X}\\mathbf{b}=\\mathbf{X}'\\mathbf{y}\\)",
+        "\\(\\mathbf{b}=(\\mathbf{X}'\\mathbf{X})^{-1}\\mathbf{X}'\\mathbf{y}\\)",
+        "Invertibility without linear dependence"
+      ],
+      "speaker_notes": "Matrix notation makes the least-squares solution compact and scalable. A unique formula requires that the explanatory variables not be linear combinations of one another, so that \\(\\mathbf{X}'\\mathbf{X}\\) is invertible.",
+      "image_query": "matrix mathematics",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Regression Function and Assumptions",
+      "subtitle": "Interpretation and sampling framework",
+      "bullets": [
+        "\\(\\mathrm{E}y=\\beta_{0}+\\beta_{1}x_{1}+\\cdots+\\beta_{k}x_{k}\\)",
+        "Linearity in parameters",
+        "Other variables held fixed",
+        "Constant variance \\(\\sigma^{2}\\)",
+        "Independent normal responses or errors"
+      ],
+      "speaker_notes": "For a continuous explanatory variable, \\(\\beta_j\\) is the expected change in the response per unit change in \\(x_j\\), holding the other explanatory variables fixed. The model may be nonlinear in explanatory variables while remaining linear in its parameters.",
+      "image_query": "statistical model assumptions",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Properties of Least Squares Estimators",
+      "subtitle": "Precision and distribution",
+      "bullets": [
+        "Unbiasedness: \\(\\mathrm{E}\\mathbf{b}=\\boldsymbol{\\beta}\\)",
+        "Variance: \\(\\mathrm{Var}\\mathbf{b}=\\sigma^{2}(\\mathbf{X}'\\mathbf{X})^{-1}\\)",
+        "Normality under F1–F5",
+        "Gauss-Markov minimum variance",
+        "Linear unbiased estimators"
+      ],
+      "speaker_notes": "Under assumptions F1 through F4, least squares coefficients are unbiased and have the stated covariance matrix. With normal responses or errors, the coefficient vector is normally distributed, supporting later statistical inference.",
+      "image_query": "statistical inference",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Goodness of Fit",
+      "subtitle": "Residual variation and explained variation",
+      "bullets": [
+        "Residuals: \\(e_i=y_i-\\widehat{y}_i\\)",
+        "\\(s^{2}=\\frac{\\sum e_i^{2}}{n-(k+1)}\\)",
+        "Total SS = Error SS + Regression SS",
+        "\\(R^{2}=\\frac{\\mathrm{Regression\\ SS}}{\\mathrm{Total\\ SS}}\\)",
+        "Adjusted \\(R_a^{2}\\)"
+      ],
+      "speaker_notes": "The residual standard deviation is the typical error about the fitted regression plane. While \\(R^2\\) is the proportion of response variability explained by the regression, it never decreases when a variable is added; adjusted \\(R^2\\) accounts for degrees of freedom.",
+      "image_query": "anova regression",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Inference and Added Variable Plots",
+      "subtitle": "Assessing one explanatory variable",
+      "bullets": [
+        "\\(H_{0}:\\beta_{j}=0\\)",
+        "\\(t(b_j)=b_j/se(b_j)\\)",
+        "Degrees of freedom: \\(n-(k+1)\\)",
+        "Added variable residual plots",
+        "Partial correlation coefficients"
+      ],
+      "speaker_notes": "The t-ratio measures how many estimated standard errors a coefficient is from zero; as a rule of thumb, an absolute t-ratio exceeding two indicates an important variable. Added variable plots compare residualized response and residualized predictor values, revealing the relationship after controlling for the remaining predictors.",
+      "image_query": "partial regression plot",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "Special Explanatory Variables",
+      "subtitle": "Flexible models within linear regression",
+      "bullets": [
+        "Binary indicator variables",
+        "Polynomial transformations",
+        "Logarithmic transformations",
+        "Interaction terms",
+        "Piecewise linear regression"
+      ],
+      "speaker_notes": "Binary variables represent group differences relative to a base category. Transformations and interactions permit nonlinear response patterns and slopes that depend on other explanatory variables, while the model remains linear in the coefficients.",
+      "image_query": "data transformation interaction",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    },
+    {
+      "title": "What to Carry Away",
+      "subtitle": "Multiple linear regression foundations",
+      "bullets": [
+        "Joint effects beyond pairwise correlations",
+        "Least squares regression plane",
+        "Conditional coefficient interpretation",
+        "Fit measures and t-based inference",
+        "Flexible explanatory-variable construction",
+        "Careful variable selection"
+      ],
+      "speaker_notes": "Multiple linear regression summarizes complex multivariate data using a model that is linear in parameters. Effective analysis combines exploratory graphics, meaningful coefficient interpretation, diagnostics of fit, inference, and thoughtful choices of variables and transformations.",
+      "image_query": "business analytics discussion",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex"
+      ]
+    }
+  ]
+}
