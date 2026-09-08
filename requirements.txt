@@ -1,0 +1,10 @@
+# LLM provider SDKs
+openai>=1.54.0
+anthropic>=0.40.0
+
+# Binary document extraction
+pypdf>=5.0.0
+python-docx>=1.1.0
+
+# Batch-runner configuration
+PyYAML>=6.0.0

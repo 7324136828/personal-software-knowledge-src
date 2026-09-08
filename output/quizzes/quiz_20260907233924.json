@@ -1,0 +1,156 @@
+{
+  "title": "Basic Linear Regression — Quiz",
+  "description": "Ten source-grounded questions spanning correlation, fitting, inference, residual diagnostics, CAPM, and matrix form.",
+  "questions": [
+    {
+      "question": "What does r=0 measure?",
+      "options": [
+        "No linear relationship",
+        "No relationship of any kind",
+        "A perfect positive line",
+        "A perfect negative line"
+      ],
+      "correct": 0,
+      "explanation": "The chapter’s y=x^2 example has r=0 despite a perfect nonlinear relationship. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "recall",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "For Wisconsin Lottery data, which fitted line is reported?",
+      "options": [
+        "yhat=469.7+0.647x",
+        "yhat=0.647+469.7x",
+        "yhat=6495+0.886x",
+        "yhat=3792+0.785x"
+      ],
+      "correct": 0,
+      "explanation": "The least-squares estimates reported are intercept 469.7 and slope 0.647. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "recall",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "What is R-squared?",
+      "options": [
+        "Error SS divided by Total SS",
+        "The proportion of variability explained by the regression line",
+        "The correlation itself",
+        "The residual standard deviation"
+      ],
+      "correct": 1,
+      "explanation": "R-squared is Regression SS divided by Total SS, hence explained variation; Error SS/Total SS is its complement. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "understanding",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "Why does MSE divide Error SS by n-2?",
+      "options": [
+        "Two coefficients determine a basic line",
+        "There are two response variables",
+        "Correlation has two signs",
+        "The model has two samples"
+      ],
+      "correct": 0,
+      "explanation": "A line needs an intercept and slope, leaving n-2 error degrees of freedom. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "understanding",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "What happens to se(b1) if x values become more spread out, all else equal?",
+      "options": [
+        "It decreases",
+        "It increases",
+        "It is unchanged",
+        "It becomes R-squared"
+      ],
+      "correct": 0,
+      "explanation": "se(b1)=s/[s_x sqrt(n-1)], so larger s_x reduces the standard error. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "analysis",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "Which test addresses the importance of one explanatory variable?",
+      "options": [
+        "H0: beta1=0",
+        "H0: beta0=0",
+        "H0: sigma2=0",
+        "H0: r=1"
+      ],
+      "correct": 0,
+      "explanation": "If beta1=0, x drops out of the basic model; that is the chapter’s t-test formulation. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "analysis",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "What does a prediction interval cover that a confidence interval for the slope does not?",
+      "options": [
+        "A new individual response",
+        "The true correlation",
+        "Only error degrees of freedom",
+        "The intercept alone"
+      ],
+      "correct": 0,
+      "explanation": "Prediction adds uncertainty from a new observation, whereas the slope confidence interval targets beta1. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "analysis",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "Which is a model-misspecification issue listed in residual analysis?",
+      "options": [
+        "Heteroscedasticity",
+        "Perfect randomization",
+        "A unit-free correlation",
+        "A fitted mean"
+      ],
+      "correct": 0,
+      "explanation": "The chapter lists lack of independence, heteroscedasticity, relations with explanatory variables, nonnormality, and unusual points. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "expert",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "In the CAPM example, what does a slope greater than one indicate?",
+      "options": [
+        "An aggressive security",
+        "A defensive security",
+        "Zero market risk",
+        "A risk-free security"
+      ],
+      "correct": 0,
+      "explanation": "The text labels slopes greater than one aggressive and slopes less than one defensive. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "expert",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "question": "What is the basic matrix regression representation?",
+      "options": [
+        "y=X beta+epsilon",
+        "y=beta/X",
+        "X=y beta epsilon",
+        "beta=y+X"
+      ],
+      "correct": 0,
+      "explanation": "The technical supplement obtains the standard compact regression notation y=X beta+epsilon. A tempting alternative appears elsewhere in the chapter but does not answer this definition.",
+      "difficulty": "expert",
+      "sources": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    }
+  ]
+}

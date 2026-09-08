@@ -1,0 +1,2023 @@
+% Compile this UTF-8 document with XeLaTeX or LuaLaTeX.
+\documentclass[11pt]{article}
+\usepackage{fontspec}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage[margin=1in]{geometry}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+\begin{document}
+\section*{2 Basic Linear Regression}
+{\small Source: Regression Modeling with Actuarial and Financial Applications (Frees)/Regression Modeling with Actuarial and Financial Applications.pdf\par}
+\medskip
+2
+Basic Linear Regression
+Chapter Preview. This chapter considers regression in the case of only one explanatory
+variable. Despite this seeming simplicity, most of the deep ideas of regression can be
+developed in this framework. By limiting ourselves to the one variable case, we are
+ able to express many calculations using simple algebra. This will allow us to develop
+our intuition about regression techniques by reinforcing it with simple demonstrations.
+ Further, we can illustrate the relationships between two variables graphically because we
+are working in only two dimensions. Graphical tools prove important for developing a
+link between the data and a model.
+ 2.1 Correlations and Least Squares
+Regression is about relationships. Specifically, we will study how two variables,
+an \(x\) and a \(y\) , are related. We want to be able to answer questions such as, If
+ we change the level of \(x\) , what will happen to the level of \(y\) ? If we compare
+two subjects that appear similar except for the \(x\) measurement, how will their \(y\)
+ measurements differ? Understanding relationships among variables is critical for
+quantitative management, particularly in actuarial science, where uncertainty is
+ so prevalent.
+It is helpful to work with a specific example to become familiar with key
+ concepts. Analysis of lottery sales has not been part of traditional actuarial
+ practice, but it is a growth area in which actuaries could contribute.
+@ EMPIRICAL
+Example: Wisconsin Lottery Sales. State of Wisconsin lottery administrators Filename is
+ are interested in assessing factors that affect lottery sales. Sales consists of online "WiscLottery"
+lottery tickets that are sold by selected retail establishments in Wisconsin. The
+tickets are generally priced at \(\S1 . 0 0\) , so the number of tickets sold equals the
+ lottery revenue. We analyze average lottery sales (SALES) over a \(4 0\) -week period,
+April 1998 through January 1999, from fifty randomly selected areas identified
+by postal (ZIP) code within the state of Wisconsin.
+Although many economic and demographic variables might influence sales,
+ our first analysis focuses on population (POP) as a key determinant. Chapter 3
+will show how to consider additional explanatory variables. Intuitively, it seems
+clear that geographic areas with more people have higher sales. So, other things
+23
+\clearpage
+24 Basic Linear Regression
+Table 2.1 Summary
+Statistics of Each Standard
+Variable Variable Mean Median Deviation Minimum Maximum
+POP 9,311 4,406 11,098 280 39,098
+SALES 6,495 2,426 8,103 189 33,181
+Source: Frees and Miller (2003).
+Figure 2.1 Frequency Frequency
+Histograms of 25 30
+ population and sales. 20 25
+Each distribution is
+skewed to the right. 20
+indicating that there 15 15
+ are many small areas 10 10
+compared to a few
+ areas with larger sales 5 5
+ and populations. 0 0
+0 20,000 40,000 0 15,000 35,000
+POP SALES
+ being equal, a larger \(x \,=P O P\) means a larger \(y=S A L E S\) . However, the lottery
+is an important source of revenue for the state, and we want to be as precise as
+ possible.
+ A little additional notation will be useful subsequently. In this sample, there are
+fifty geographic areas and we use subscripts to identify each area. For example,
+\(y_{1}=1 , \! 2 8 5 . 4\) represents sales for the first area in the sample that has population
+\(x_{1}=4 3 5\) . Call the ordered pair \(( x_{1} , \; y_{1} ) \,=\, ( 4 3 5 , \; 1 2 8 5 . 4 )\) the first observation.
+Extending this notation, the entire sample containing fifty observations may be
+represented by \(( x_{1} , \, y_{1} ) , \, \dots, \, ( x_{5 0} , \, y_{5 0} )\) . The ellipses \(( \ldots)\) mean that the pattern is
+continued until the final object is encountered. We will often speak of a generic
+Begin by working with member of the sample, referring to \(( x_{i} , \, y_{i} )\) as the \(i\) th observation.
+each variable Datasets can get complicated, so it will help if you begin by working with
+ separately. each variable separately. The two panels in Figure 2.1 show histograms that give
+ a quick visual impression of the distribution of each variable in isolation of the
+other. Table 2.1 provides corresponding numerical summaries. To illustrate, for
+the population variable (POP), we see that the area with the smallest number
+contained 280 people, whereas the largest contained 39,098. The average, over
+50 Zip codes, was 9,311.04. For our second variable, sales were as low as \$189
+and as high as \$33,181.
+As Table 2.1 shows, the basic summary statistics give useful ideas of the
+structure of key features of the data. After we understand the information in each
+variable in isolation of the other, we can begin exploring the relationship between
+ the two variables.
+\clearpage
+ 2.1 Correlations and Least Squares 25
+SALES 0 Figure 2.2 A scatter
+plot of the lottery
+ 30,000 0 data. Each of the 50
+ plotting symbols
+25,000 corresponds to a \(\mathrm{Z i p}\)
+code in the study. This
+ 20,000 0 C postal areas with
+figure suggests that
+15,000 \(\circ\) \(\circ\) P larger populations
+have greater lottery
+10,000 revenues.
+5000 \(\circ8\)
+\(\circ\)
+0
+0 10,000 20,000 30,000 40,000
+POP
+ Scatter Plot and Correlation Coefficients -- Basic Summary Tools
+The basic graphical tool used to investigate the relationship between the two
+variables is a scatter plot, such as in Figure 2.2. Although we may lose the
+ exact values of the observations when graphing data, we gain a visual impression
+of the relationship between population and sales. From Figure 2.2, we see that
+ areas with larger populations tend to purchase more lottery tickets. How strong
+ is this relationship? Can knowledge of the area's population help us anticipate
+the revenue from lottery sales? We explore these two questions here.
+One way to summarize the strength of the relationship between two variables
+ is through a correlation statistic.
+Defnition . The ordinary, or Pearson, correlation coefficient is defined as
+\[
+\begin{aligned} {r=\frac{1} {( n-1 ) s_{x} s_{y}} \sum_{i=1}^{n} \left( x_{i} \,-\, \overline{{x}} \right) ( y_{i} \,-\, \overline{{y}} ) \, .} \\ \end{aligned}
+\]
+defined in Section 1.2, with similar notation tor \(s_{x}\) \(s_{y}=\sqrt{( n \,-\, 1 )^{-1} \, \sum_{i=1}^{n} \left( y_{i} \,-\, \overline{{y}} \right)^{2}}\)
+Here, we use the sample standard deviation
+Although there are other correlation statistics, the correlation coefficient
+ devised by Pearson (1895) has several desirable properties. One important prop-
+erty is that, for any dataset, \(r\) is bounded by \(- 1\) and 1, that is, \(- 1 \leq r \leq1\) .
+(Exercise 2.3 provides steps for you to check this property.) If \(r\) is greater than
+zero, the variables are said to be (positively) correlated. If \(r\) is less than zero,
+ the variables are said to be negatively correlated. The larger the coefficient is in
+ absolute value, the stronger is the relationship. In fact, if \(r=1\) , then the variables
+are perfectly correlated. In this case, all of the data lie on a straight line that
+ goes through the lower-left- and upper-right-hand quadrants. If \(r=-1 .\) then all
+\clearpage
+26 Basic Linear Regression
+ of the data lie on a line that goes through the upper-left- and lower-right-hand
+quadrants. The coefficient \(r\) is a measure of a linear relationship between two
+The coeffcient \(r\) is \({}^{a}\) variables.
+ measure of a linear The correlation coefficient is said to be location and scale invariant. Thus,
+ relationship between ehvarables enerof loca  eaateriea c \(y_{i}\) will increase by \(r\) . For
+ two variables. example, if we add \(\S1 0 0\) to the sales of each \(\mathrm{Z i p}\)
+100. However, \(\overline{{y}}\) , the average purchase price, will also increase by 100, so that
+ the deviation \(y_{i}-\overline{{y}}\) remains unchanged, or invariant. Further, the scale of each
+ variable does not matter in the calculation of \(r\) . For example, suppose we divide
+each population by 1,000 so that \(x_{i}\) now represents population in thousands.
+Thus, \(\overline{{x}}\) is also divided by 1,000 and you should check that \(s_{x}\) is also divided by
+1,000. Thus, the standardized version of \(x_{i} , \, ( x_{i} \,-\, \overline{{x}} ) / s_{x}\) , remains unchanged, or
+ invariant. Many statistical packages compute a standardized version of a variable
+by subtracting the average and dividing by the standard deviation. Now, let's use
+\(y_{i , s t d}=( y_{i} \,-\, \overline{{y}} ) / s_{y}\) and \(x_{i , s t d}=( x_{i} \,-\, \overline{{x}} ) / s_{x}\) to be the standardized versions of \(y_{i}\)
+and \(x_{i}\) , respectively. With this notation, we can express the correlation coefficient
+as \(r \,=\, ( n \,-\, 1 )^{-1} \, \sum_{i=1}^{n} x_{i , s t d} \, \times\, y_{i , s t d} .\)
+The correlation coefficient is said to be a dimensionless measure. This is
+because we have taken away dollars, and all other units of measures, by consider-
+ ing the standardized variables \(x_{i , s t d}\) and \(y_{i , s t d}\) Because the correlation coefficient
+does not depend on units of measure, it is a statistic that can readily be compared
+ The correlation across different datasets.
+coeffcient is location In the world of business, the term correlation is often synonymous with the
+and scale imvariant. It  term " relationship? For the purposes of this text, we use the term correlation
+is dimensionless.
+when referring only to linear relationships. The classic nonlinear relationship
+is \(y=x^{2}\) a quadratic relationship. Consider this relationship and the fictitious
+ dataset for \(x \, , \, \{-2 , \, 1 , \, 0 , \, 1 , \, 2 \}\) . Now, as an exercise (2.2), produce a rough graph
+of the dataset:
+\(x_{i}\) \(- 2\) 2 0 1 2
+\(i\) 1 3 4 5
+\(- 1\)
+\(y_{i}\) \(4 ~\) 1 0 1 4
+The correlation coefficient for this dataset turns out to be \(r=0\) (check this).
+Thus, despite the fact that there is a perfect relationship between \(x\) and \(y ~ (=x^{2} )\) ,
+ there is a zero correlation. Recall that location and scale changes are not relevant
+in correlation discussions, so we could easily change the values of \(x\) and \(y\) to be
+ more representative of a business dataset.
+How strong is the relationship between \(y\) and \(x\) for the lottery data? Graph-
+ically, the response is a scatter plot, as in Figure 2.2. Numerically, the main
+response is the correlation coefficient, which turns out to be \(r \,=0 . 8 8 6\) for this
+dataset. We interpret this statistic by saying that SALES and POP are (positively)
+correlated. The strength of the relationship is strong because \(r \,=0 . 8 8 6\) is close
+to one. In summary, we may describe this relationship by saying that there is a
+ strong correlation between SALES and POP.
+\clearpage
+ 2.1 Correlations and Least Squares 27
+ Method of Least Squares
+Now we begin to explore the question, Can knowledge of population help us
+understand sales? To respond to this question, we identify sales as the response
+or dependent variable. The population variable, which is used to help understand
+ sales, is called the explanatory or independent variable.
+ Suppose that we have available the sample data of fifty sales \(\{y_{1} , \, \ldots, \, y_{5 0} \}\)
+and your job is to predict the sales of a randomly selected Zip code. Without
+ knowledge of the population variable, a sensible predictor is simply \(\overline{{y}}=6 , 4 9 5\)
+the average of the available sample. Naturally, you anticipate that areas with
+ larger populations will have greater sales. That is, if you also have knowledge of
+population, then can this estimate be improved? If so, then by how much?
+To answer these questions, the first step assumes an approximate linear rela-
+tionship between \(x\) and \(y\) . To fit a line to our data set, we use the method of
+ least squares. We need a general technique so that, if different analysts agree on
+the data and agree on the fitting technique, then they will agree on the line. If
+ different analysts fit a dataset using eyeball approximations, in general, they will
+ arrive at different lines, even when using the same dataset.
+ The method begins with the line \(y=b_{0}^{*}+b_{1}^{*} x\) , where the intercept and slope,
+\(b_{0}^{*}\) and \(b_{1}^{*}\) are merely generic values. For the \(i\) th observation, \(y_{i}-\left( b_{0}^{*}+b_{1}^{*} x_{i} \right)\)
+represents the deviation of the observed value \(y_{i}\) from the line at \(x_{i}\) . The
+quantity
+\[
+\SS( b_{0}^{\ast} , \, b_{1}^{\ast} )=\sum_{i=1}^{n} \left( y_{i} \,-\left( b_{0}^{\ast}+b_{1}^{\ast} x_{i} \right) \right)^{2}
+\]
+ represents the sum of squared deviations for this candidate line. The least squares
+ method consists of determining the values of \(b_{0}^{*}\) and \(b_{1}^{*}\) that minimize \(\SS( b_{0}^{\ast} , \, b_{1}^{\ast} )\) .
+ This is an easy problem that can be solved by calculus, as follows. Taking partial
+derivatives with respect to each argument yields
+\[
+\frac{\partial} {\partial b_{0}^{*}} S S ( b_{0}^{*} , \, b_{1}^{*} )=\sum_{i=1}^{n} (-2 ) \left( y_{i} \,-\left( b_{0}^{*}+b_{1}^{*} x_{i} \right) \right)
+\]
+and
+\[
+\frac{\partial} {\partial b_{1}^{*}} S S ( b_{0}^{*} , b_{1}^{*} )=\sum_{i=1}^{n} (-2 x_{i} ) \left( y_{i}-\left( b_{0}^{*}+b_{1}^{*} x_{i} \right) \right) .
+\]
+The reader is invited to take second partial derivatives to ensure that we are
+minimizing, not maximizing, this function. Setting these quantities equal to zero
+ and canceling constant terms yields
+\[
+\begin{aligned} {\sum_{i=1}^{n} \big( y_{i} \,-\big( b_{0}^{\ast}+b_{1}^{\ast} x_{i} \big) \big)=0} \\ \end{aligned}
+\]
+
+\clearpage
+28 Basic Linear Regression
+and
+\[
+\sum_{i=1}^{n} x_{i} \left( y_{i}-\left( b_{0}^{*}+b_{1}^{*} x_{i} \right) \right)=0 ,
+\]
+which are known as the normal equations. Solving these equations yields the
+ values of \(b_{0}^{*}\) and \(b_{1}^{*}\) that minimize the sum of squares, as follows.
+Defnition. The least squares intercept and slope estimates are
+\[
+b_{1}=r \frac{s_{y}} {s_{x}} \quad\mathrm{~ a n d ~} \quad b_{0}=\overline{{y}} \,-\, b_{1} \overline{{x}} .
+\]
+The line that they determine, \(\widehat{y}=b_{0}+b_{1} x\) is called the ftted regression line.
+We have dropped the asterisk, or star, notation because \(b_{0}\) and \(b_{1}\) are no longer
+ candidate values.
+Does this procedure yield a sensible line for our Wisconsin lottery sales?
+Earlier, we computed \(r \,=0 . 8 8 6\) From this and the basic summary statis-
+tics in Table 2.1, we have \(b_{1}=0 . 8 8 6 ( 8 1 0 3 ) / 1 1 \! {,} 0 9 8=0 . 6 4 7\) and \(b_{0}=6 4 9 5-\)
+\(( 0 . 6 4 7 ) 9 3 1 1=4 6 9 . 7 .\) This yields the fitted regression line
+\[
+\widehat{y}=4 6 9 . 7+( 0 . 6 4 7 ) x \, .
+\]
+The caret, or "" hat, on top of the \(y\) reminds us that this \(\widehat{y}\) or \(\widehat{S A L E S}\) is a fitted
+value. One application of the regression line is to estimate sales for a specific
+population, say, \(x \,=\, 1 0 \mathrm{,} 0 0 0\) The estimate is the height of the regression line,
+which is \(4 6 9 . 7+( 0 . 6 4 7 ) ( 1 0 , 0 0 0 )=6 9 3 9 . 7 .\)
+Example: Summarizing Simulations. Regression analysis is a tool for sum-
+marizing complex data. In practical work, actuaries often simulate complicated
+financial scenarios; it is often overlooked that regression can be used to summa-
+rize relationships of interest.
+ To illustrate, Manistre and Hancock (2005) simulated many realizations of
+a 10-year European put option and demonstrated the relationship between two
+actuarial risk measures, the value-at-risk (VaR) and the conditional tail expec-
+ tation (CTE). For one example, these authors examined lognormally distributed
+stock returns with an initial stock price of \$100, so that in 10 years the price of
+the stock would be distributed as
+\[
+S ( Z )=1 0 0 \operatorname{e x p} \left( ( . 0 8 ) 1 0+. 1 5 \sqrt{1 0} Z \right) ,
+\]
+ based on an annual mean return of \(1 0 7_{o}\) , standard deviation of \(1 5 \, \mathcal{7}_{o}\) and the
+ outcome from a standard normal random variable \(Z\) . The put option pays the
+ difference between the strike price, that will be taken to be \$110 for this example,
+and \(S ( Z )\) The present value of this option is
+\[
+C ( Z )=\mathrm{e}^{-0 . 0 6 ( 1 0 )} \mathrm{m a x} \left( 0 , \, 1 1 0 \,-\, S ( Z ) \right) ,
+\]
+ based on a \(6 7_{o}\) discount rate.
+\clearpage
+ 2.2 Basic Linear Regression Model 29
+E
+2 conditional tail
+expectation (CTE)
+12 versus value at risk
+(VaR). Based on
+\(n=1 , 0 0 0\)
+ from a 10-year
+2 European put bond.
+Source: Manistre and
+2 Hancock (2005).
+8
+0 \(2\) \(4 ~\) 6 8 10 12
+VaR Estimates
+To estimate the VaR and CTE, for each \(i\) 1000 i.i.d. standard normal
+random variables were simulated and used to calculate 1000 present values,
+\(C_{i 1} , \ldots, \, C_{i , 1 0 0 0}\) . The 95th percentile of these present values is the estimate of
+the value at risk, denoted as \(V a R_{i}\) : The average of the highest \(5 0 ~ (=( 1-. 0 5 ) \times\)
+1,000) of the present values is the estimate of the conditional tail expectation,
+denoted as \(C T \, E_{i}\) Manistre and Hancock (2005) performed this calculation
+\(i=1 , \dots, 1 , 0 0 0\) times; the result is presented in Figure 2.3. The scatter plot
+ shows a strong but not perfect relationship between the \(V a \, R\) and the \(C T E\) , the
+ correlation coefficient turns out to be \(r \,=\, 0 . 7 8 2\) .
+ 2.2 Basic Linear Regression Model
+The scatter plot, correlation coefficient, and the fitted regression line are useful
+ devices for summarizing the relationship between two variables for a specific
+ dataset. To infer general relationships, we need models to represent outcomes of
+ broad populations.
+ This chapter focuses on a basic linear regression model. The " linearregression"
+ part comes from the fact that we fit a line to the data. The " basic"part is because we
+ use only one explanatory variable, \(x\) . This model is also known as \(\mathrm{a}\) " simple'linear
+regression. This text avoids this language because it gives the false impression
+ that regression ideas and interpretations with one explanatory variable are always
+ straightforward.
+We now introduce two sets of assumptions of the basic model, the observables
+and the error representations. They are equivalent, but each will help us as we
+later extend regression models beyond the basics:
+ Basic Linear Regression Model
+Observables Representation Sampling Assumptions
+F1.E \(y_{i}=\beta_{0}+\beta_{1} x_{i}\) .
+F2. \(\{x_{1} , \dots, \, x_{n} \}\) are nonstochastic variables.
+F3. Var \(y_{i}=\sigma^{2}\) .
+F4. \(\{y_{i} \}\) are independent random variables.
+\clearpage
+30 Basic Linear Regression
+The observables representation focuses on variables that we can see (or
+observe), \(( x_{i} , \, y_{i} )\) Inference about the distribution of \(y\) is conditional on the
+observed explanatory variables, so that we may treat \(\{x_{1} , \, \dots, \, x_{n} \}\) as nonstochas-
+tic variables (assumption F2). When considering types of sampling mechanisms
+for \(( x_{i} , \, y_{i} )\) , it is convenient to think of a stratifed random sampling scheme, where
+ values of \(\{x_{1} , \dots, \, x_{n} \}\) are treated as strata, or groups. Under stratified sampling,
+for each unique value of \(x_{i}\) , we draw a random sample from a population. To
+ illustrate, suppose you are drawing from a database of firms to understand stock
+return performance (y) and want to stratify on the basis of the size of the firm.
+If the amount of assets is a continuous variable, then we can imagine drawing a
+sample of size 1 for each firm. In this way, we hypothesize a distribution of stock
+returns conditional on firm asset size.
+ As a digression, you will often see reports that summarize results for the " top
+50 managers" or the " bestl00 universities," measured by some outcome variable.
+In regression applications, make sure that you do not select observations based on
+a dependent variable, such as the highest stock return, because this is stratifying
+ that is based on the \(y\) , not the \(x\) . Chapter \(6\) will discuss sampling procedures in
+ greater detail.
+Stratified sampling also provides motivation for assumption \(\mathrm{F 4}\) , the inde-
+pendence among responses. One can motivate assumption \(\mathrm{F 1}\) by thinking of
+\(( x_{i} , \, y_{i} )\) as a draw from a population, where the mean of the conditional distri-
+bution of \(y_{i}\) given \(\{x_{i} \}\) is linear in the explanatory variable. Assumption F3 is
+known as homoscedasticity, which we will discuss extensively in Section 5.7. See
+Goldberger (1991) for additional background on this representation.
+A fifth assumption that is often implicitly used is as follows:
+F5. \(\{y_{i} \}\) are normally distributed.
+ This assumption is not required for many statistical inference procedures because
+central limit theorems provide approximate normality for many statistics of inter-
+est. However, formal justification for some, such as \(t\) -statistics, do require this
+ additional assumption.
+In contrast to the observables representation, an alternative set of assump-
+tions focuses on the deviations, or errors, in the regression, defined as \(\varepsilon_{i}=\)
+\(y_{i}-( \beta_{0}+\beta_{1} x_{i} )\) :
+ Basic Linear Regression Model
+Error Representation Sampling Assumptions
+El. \(y_{i}=\beta_{0}+\beta_{1} x_{i}+\varepsilon_{i}\)
+E2. \(\{x_{1} , \dots, \, x_{n} \}\) are nonstochastic variables.
+E3.E \(\varepsilon_{i}=0\) and Var \(\varepsilon_{i}=\sigma^{2}\)
+E4. \(\{\varepsilon_{i} \}\) are independent random variables.
+ The error representation is based on the Gaussian theory of errors (see Stigler,
+1986, for a historical background). Assumption E1 assumes that \(y\) is in part due
+\clearpage
+2.2 Basic Linear Regression Model 31
+Table 2.2 Summary
+Data Measures Imneeso iline Variance Sample
+ Summary Measures of the
+ Population and
+ Population Parameters \(\beta_{0}\) \(\beta_{1}\) \(\sigma^{2}\)
+Sample Statistics \(b_{0}\) \(b_{1}\) \(s^{2}\)
+Figure 2.4 The
+distribution of the
+True Unknown response varies by the
+ Regression Line level of the
+ explanatory variable.
+The Center of Each Normal
+Curve Is at the Height of
+ the Regression Line
+Each Response Tends
+: to Fall Near the Height of
+ the Regression Line
+\(\mathrm{x_{1}}\) \(\mathrm{x_{2}}\) \(\mathrm{x_{3}}\)
+ to a linear function of the observed explanatory variable, \(x\) . Other unobserved
+ variables that influence the measurement of \(y\) are interpreted to be included in the
+error term, \(\varepsilon_{i}\) , which is also known as the disturbance term. The independence of
+errors, \(\mathrm{E 4}\) , can be motivated by assuming that \(\{\varepsilon_{i} \}\) is realized through a simple
+ random sample from an unknown population of errors.
+ Assumptions E1-- E4 are equivalent to F1--F4. The error representation pro-
+ vides a useful springboard for motivating goodness-of-fit measures (Section 2.3).
+However, a drawback of the error representation is that it draws the attention
+ from the observable quantities \(( x_{i} , \, y_{i} )\) to an unobservable quantity, \(\{\varepsilon_{i} \}\) . To illus-
+trate, the sampling basis, viewing \(\{\varepsilon_{i} \}\) as a simple random sample, is not directly
+verifiable because one cannot directly observe the sample \(\{\varepsilon_{i} \}\) . Moreover, the
+ assumption of additive errors in \(\mathrm{E 1}\) will be troublesome when we consider non-
+ linear regression models.
+Figure 2.4 illustrates some of the assumptions of the basic linear regression
+ model. The data \(( x_{\boldsymbol{1}} , \, y_{\boldsymbol{1}} ) , ( x_{\boldsymbol{2}} , \, y_{\boldsymbol{2}} )\) , and \(( x_{3} , \, y_{3} )\) are observed and are represented by
+ the circular opaque plotting symbols. According to the model, these observations
+should be close to the regression line \(\textrm{E} y=\beta_{0}+\beta_{1} x\) . Each deviation from the
+ line is random. We will often assume that the distribution of deviations may be
+represented by a normal curve, as in Figure 2.4.
+ The basic linear regression model assumptions describe the underlying pop-
+ ulation. Table 2.2 highlights the idea that characteristics of this population can
+ be summarized by the parameters \(\beta_{0} , \, \beta_{1}\) , and \(\sigma^{2}\) . In Section 2.1, we summarized
+ data from a sample, introducing the statistics \(b_{0}\) and \(b_{1}\) . Section 2.3 will introduce
+\(s^{2}\) the statistic corresponding to the parameter \(\sigma^{2}\) .
+\clearpage
+32 Basic Linear Regression
+Figure 2.5
+Geometric display of
+the deviation \(y\) \(y-\acute{y}\) \(\hat{y}=b_{0}+b_{1} x\)
+decomposition.
+\(\acute{y}\)
+\(\overset{\wedge} {y} \!-\! \overline{{y}}=b_{1} ( x \!-\! \overline{{x}} )\)
+\(\overline{{y}}\) \(x-\overline{{x}}\)
+\(\overline{{x}}\) \(x\)
+ 2.3 Is the Model Useful? Some Basic Summary Measures
+Although statistics is the science of summarizing data, it is also the art of arguing
+with data. This section develops some of the basic tools used to justify the basic
+ linear regression model. \(\mathrm{A}\) scatter plot may provide strong visual evidence that
+\(x\) influences \(y\) ; developing numerical evidence will enable us to quantify the
+strength of the relationship. Further, numerical evidence will be useful when we
+consider other datasets where the graphical evidence is not compelling.
+2.3.1 Partitioning the Variability
+The squared deviations, \(( y_{i} \,-\, \overline{{y}} )^{2}\) , provide a basis for measuring the spread of
+the data. If we wish to estimate the \(i\) th dependent variable without knowledge
+of \(x\) , then \(\overline{{y}}\) is an appropriate estimate and \(y_{i}-\overline{{y}}\) represents the deviation of
+the estimate. We use Total \(S S \,=\, \sum_{i=1}^{n} \left( y_{i} \,-\, \overline{{y}} \right)^{2}\) the total sum of squares, to
+represent the variation in all of the responses.
+ Suppose now that we also have knowledge of \(x\) , an explanatory variable. Using
+ the fitted regression line, for each observation we can compute the corresponding
+ftted value, \(\widehat{y}_{i} \,=\, b_{0} \,+\, b_{1} x_{i}\) . The fitted value is our estimate with knowledge of
+the explanatory variable. As before, the difference between the response and
+the fitted value, \(y_{i} \,-\, \widehat{y}_{i}\) , represents the deviation of this estimate. We now have
+two " estimates"of \(y_{i}\) ; these are \(\widehat{y}_{i}\) and \(\overline{{y}}\) . Presumably, if the regression line is
+useful, then \(\widehat{y}_{i}\) is a more accurate measure than \(\overline{{y}}\) . To judge this usefulness, we
+ algebraically decompose the total deviation as
+\[
+\begin{array} {c} {\underbrace{y_{i}-\overline{{y}}}_{\mathrm{t o t a l}}} \\ {\mathrm{d e v i a t i o n}} \\ \end{array}=\underbrace{y_{i}-\widehat{y}_{i}}_{\mathrm{d e v i a t i o n}} \begin{array} {c} {+\underbrace{\widehat{y}_{i}-\overline{{y}}}} \\ {+\ \mathrm{e x p l a i n e d}} \\ {\mathrm{d e v i a t i o n}} \\ \end{array} \tag{2.1}
+\]
+Interpret this equation as " the deviation without knowledge of \(x\) equals the
+deviation with knowledge of \(x\) plus the deviation explained by \(x\) " Figure 2.5 is
+ a geometric display of this decomposition. In the figure, an observation above
+\clearpage
+2.3 Is the Model Useful? Some Basic Summary Measures 33
+ the line was chosen, yielding a positive deviation from the fitted regression line,
+ to make the graph easier to read. \(\mathrm{A}\) good exercise is to draw a rough sketch
+ corresponding to Figure 2.5 with an observation below the fitted regression line.
+Now, from the algebraic decomposition in equation (2.1), square each side of
+ the equation and sum over all observations. After a little algebraic manipulation,
+this yields
+\[
+\begin{aligned} {\sum_{i=1}^{n} \left( y_{i} \,-\, \overline{{y}} \right)^{2}=\sum_{i \,=1}^{n} \left( y_{i} \,-\, \widehat{y_{i}} \right)^{2}+\sum_{i \,=1}^{n} \left( \widehat{y_{i}} \,-\, \overline{{y}} \right)^{2} .} \\ \end{aligned} \tag{2.2}
+\]
+We rewrite this as Total \(S S=E r r o r ~ S S-\) + Regression \(\mathit{S S}\) , where \(S \, S\) stands for
+sum of squares. We interpret
+: Total \(\mathit{S S}\) as the total variation without knowledge of \(x\)
+: Error \(S \, S\) as the total variation remaining after the introduction of \(x\)
+: Regression \(S \, S\) as the difference between Total \(S \, S\) and Error \(\mathit{S S}\) , or the total
+variation explained through knowledge of \(x\)
+When squaring the right-hand side of equation (2.1), we have the cross-product
+term \(2 \, ( y_{i} \,-\, \widehat{y}_{i} \, ) \, ( \widehat{y}_{i} \,-\, \overline{{y}} )\) . With the algebraic manipulation, one can check that the
+sum of the cross-products over all observations is zero. This result is not true for
+ all fitted lines but is a special property of the least squares fitted line.
+In many instances, the variability decomposition is reported through only a
+ single statistic.
+Defnition. The coeffcient of determination is denoted by the symbol \(R^{2}\) .
+called "R-square," and defined as follows:
+\[
+R^{2}=\cfrac{R e g r e s s i o n \; S S} {T o t a l \; S S} .
+\]
+We interpret \(R^{2}\) to be the proportion of variability explained by the regression
+line. In one extreme case where the regression line fits the data perfectly, we
+ have Error \(S S=0\) and \(R^{2}=1 .\) In the other extreme case where the regression
+line provides no information about the response, we have Regression \(S S=0\)
+and \(R^{2}=0 .\) The coefficient of determination is constrained by the inequalities
+\(0 \, \leq\, R^{2} \, \leq\, 1\) I with larger values implying a better fit.
+2.3.2 The Size of a Typical Deviation: \(\boldsymbol{s}\)
+In the basic linear regression model, the deviation of the response from the regres-
+ sion line, \(y_{i}-( \beta_{0}+\beta_{1} x_{i} ) .\) is not an observable quantity because the parameters
+\(\beta_{0}\) and \(\beta_{1}\) are not observed. However, by using estimators \(b_{0}\) and \(b_{1}\) , we can
+ approximate this deviation using
+\[
+e_{i} \,=\, y_{i} \,-\, \widehat{y}_{i} \,=\, y_{i} \,-( b_{0} \,+\, b_{1} x_{i} ) \, ,
+\]
+ known as the residual.
+\clearpage
+34 Basic Linear Regression
+Residuals will be critical to developing strategies for improving model spec-
+ification in Section 2.6. We now show how to use the residuals to estimate \(\sigma^{2}\) .
+From a first course in statistics, we know that if one could observe the deviations
+\(\varepsilon_{i}\) , then a desirable estimate of \(\sigma^{2}\) would be \(( n \,-\, 1 )^{-1} \sum_{i=1}^{n} \, \left( \varepsilon_{i} \,-\, \overline{{\varepsilon}} \right)^{2} .\) Because
+\(\{\varepsilon_{i} \}\) are not observed, we use the following.
+Defnition . An estimator of \(\sigma^{2}\) , the mean square error (MSE), is defined as
+\[
+\begin{aligned} {s^{2}=\frac{1} {n-2} \sum_{i=1}^{n} {e_{i}}^{2}} \\ \end{aligned} . \tag{2.3}
+\]
+The positive square root, \(s=\sqrt{s^{2}}\) is called the residual standard deviation.
+Comparing the definitions of \(s^{2}\) and \(( n \,-\, 1 )^{-1} \sum_{i \,=1}^{n} \, ( \varepsilon_{i} \,-\, \overline{{\varepsilon}} )^{2} ,\) you will see two
+important differences. First, in defining \(s^{2}\) , we have not subtracted the average
+residual from each residual before squaring. This is because the average residual
+is zero, a special property of least squares estimation (see Exercise 2.14). This
+\(s^{2}\) is an unbiased result can be shown using algebra and is guaranteed for all datasets.
+estimator of \(\sigma^{2}\) Second, in defining \(s^{2}\) we have divided by \(n-2\) instead of \(n-1\) . Intuitively,
+ dividing by either \(n\) or \(n-1\) tends to underestimate \(\sigma^{2}\) . The reason is that, when
+fitting lines to data, we need at least two observations to determine a line. For
+example, we must have at least three observations for there to be any variability
+about a line. How much " freedom"is there for variability about a line? We will
+ say that the error degrees of freedom is the number of observations available, \(n\)
+minus the number of observations needed to determine a line, 2 (with symbols,
+\(d f=n-2 )\) . However, as we saw in the least squares estimation subsection, we
+do not need to identify two actual observations to determine a line. The idea is
+ that if an analyst knows the line and \(n-2\) observations, then the remaining two
+observations can be determined, without variability. When dividing by \(n-2\) , it
+ can be shown that \(s^{2}\) is an unbiased estimator of \(\sigma^{2}\) :
+We can also express \(s^{2}\) in terms of the sum of squares quantities. That is,
+\[
+\begin{aligned} {s^{2}=\frac{1} {n-2} \sum_{i=1}^{n} {( y_{i}-\widehat y_{i} )^{2}}=\frac{E r r o r \ S S} {n-2}=M S E .} \\ \end{aligned}
+\]
+This leads us to the analysis of variance, or ANOVA, table:
+ANOVA Table
+Source Sum of Squares \(d f\) Mean Square
+Regression Regression \(\mathit{S S}\) \(1 ~\) Regression MS
+Error Error \(\mathit{S S}\) \(n-2\) MSE
+Total Total \(\mathit{S S}\) \(n-1\)
+\clearpage
+2.4 Properties of Regression Coeffcient Estimators 35
+ The ANOVA table is merely a bookkeeping device used to keep track of the
+ sources of variability; it routinely appears in statistical software packages as part
+ of the regression output. The mean square column figures are defined to be the
+sums of square (SS) figures divided by their respective degrees of freedom \(\left( d f \right)\) .
+In particular, the mean square for errors \(( M S E )\) equals \(s^{2}\) , and the regression sum
+ of squares equals the regression mean square. This latter property is specific to
+ the regression with one variable case; it is not true where we consider more than
+ one explanatory variable.
+The error degrees of freedom in the ANOVA table is \(n-2\) . The total degrees
+of freedom is \(n-1\) , reflecting the fact that the total sum of squares is centered
+ about the mean (at least two observations are required for positive variability).
+ The single degree of freedom associated with the regression portion means that
+the slope, plus one observation, is enough information to determine the line.
+This is because it takes two observations to determine a line and at least three
+ observations for there to be any variability about the line.
+The analysis of variance table for the lottery data is as follows:
+ANOVA Table
+Source Sum of Squares \(d f\) Mean Square
+Regression 2,527,165,015 1 2,527,165,015
+Error 690,116,755 48 14,377,432
+Total 3,217,281,770 \(4 9\)
+From this table, you can check that \(R^{2}=7 8 . 5^{\not\expandafter{\romannumeral1}} \! \! \! \acute{\romannumeral1} \! \! \! \acute{\ G}\) and \(s=3 , 7 9 2 .\)
+2.4 Properties of Regression Coefftient Estimators
+ The least squares estimates can be expressed as a weighted sum of the responses.
+To see this, define the weights
+\[
+w_{i}=\cfrac{x_{i} \ -\overline{{x}}} {s_{x}^{2} ( n-1 )} .
+\]
+ Because the sum of \(x\) -deviations : \(( x_{i} \,-\, \overline{{x}} )\) is zero, we see that \(\sum_{i=1}^{n} w_{i}=0\) . Thus,
+we can express the slope estimate
+\[
+\begin{aligned} {b_{1}=r \frac{s_{y}} {s_{x}}=\frac{1} {( n-1 ) s_{x}^{2}} \sum_{i=1}^{n} \left( x_{i}-\overline{{x}} \right) \left( y_{i}-\overline{{y}} \right)=\sum_{i=1}^{n} w_{i} \left( y_{i}-\overline{{y}} \right)=\sum_{i=1}^{n} w_{i} \, y_{i} .} \\ \end{aligned}
+\]
+4)
+ The exercises ask the reader to verify that \(b_{0}\) can also be expressed as a weighted
+sum of responses, so our discussion pertains to both regression coefficients.
+Because regression coefficients are weighted sums of responses, they can be
+ affected dramatically by unusual observations (see Section 2.6).
+\clearpage
+36 Basic Linear Regression
+Regression Because \(b_{1}\) is a weighted sum, it is straightforward to derive the expectation
+coeffcients are and variance of this statistic. By the linearity of expectations and Assumption F1,
+weighted sums of the we have
+responses.
+\[
+\begin{aligned} {\textrm{E} b_{1}=\sum_{i=1}^{n} w_{i} \textrm{E} y_{i}=\beta_{0} \sum_{i=1}^{n} w_{i}+\beta_{1} \sum_{i=1}^{n} w_{i} x_{i}=\beta_{1} .} \\ \end{aligned}
+\]
+Tht is. \(b_{1}\) is an unbiased estimator of \(\beta_{1}\) Here, the sum \(\sum_{i=1}^{n} \, w_{i} \, x_{i} \ \ =\\)
+\(\left[ s_{x}^{2} ( n \,-\, 1 ) \right]^{-1} \sum_{i \,=1}^{n} \left( x_{i} \,-\, \overline{{x}} \right) x_{i} \ =\left[ s_{x}^{2} ( n \,-\, 1 ) \right]^{-1} \sum_{i \,=1}^{n} \left( x_{i} \,-\, \overline{{x}} \right)^{2}=1 .\) From the
+definition of the weights, some easy algebra also shows that \(\sum_{i=1}^{n} w_{i}^{2}=\)
+\(1 / \left( s_{x}^{2} ( n-1 ) \right)\) . Further, the independence of the responses implies that the vari-
+ance of the sum is the sum of the variances, and thus we have
+\[
+\begin{aligned} {\mathrm{V a r ~} b_{1}=\sum_{i=1}^{n} w_{i}^{2} \mathrm{V a r ~} y_{i}=\frac{\sigma^{2}} {s_{x}^{2} ( n-1 )} .} \\ \end{aligned}
+\]
+Replacing \(\sigma^{2}\) by its estimator \(s^{2}\) and taking square roots leads to the following.
+ Defnition . The standard error of \(b_{1}\) the estimated standard deviation of \(b_{1}\) .
+ is defined as
+\[
+s e ( b_{1} )=\frac{s} {s_{x} \sqrt{n \mathrm{~}-\mathrm{~} 1}} . \tag{2.5}
+\]
+This is our measure of the reliability, or precision, of the slope estimator. Using
+equation (2.5), we see that \(s e ( b_{1} )\) is determined by three quantities, \(n , \, s\) , and \(s_{x}\) :
+A standard error is an as follows:
+estimated standard
+ deviation. - If we have more observations so that \(n\) becomes larger, then \(s e ( b_{1} )\) becomes
+ smaller, other things equal.
+: If the observations have a greater tendency to lie closer to the line so that \(s\)
+becomes smaller, then \(s e ( b_{1} )\) becomes smaller, other things equal.
+: If values of the explanatory variable become more spread out so that \(s_{x}\)
+increases, then \(s e ( b_{1} )\) becomes smaller, other things equal.
+ Smaller values of \(s e ( b_{1} )\) offer a better opportunity to detect relations between
+\(y\) and \(x\) . Figure 2.6 illustrates these relationships. Here, the scatter plot in the
+ middle has the smallest value of \(s \, e ( b_{1} )\) Compared with the middle plot, the left-
+ hand plot has a larger value of \(s\) and thus \(s e ( b_{1} )\) Compared with the right-hand
+ plot, the middle plot has a larger \(s_{x}\) and thus smaller value of \(s e ( b_{1} )\)
+Equation (2.4) also implies that the regression coefficient \(b_{1}\) is normally dis-
+tributed. That is, recall from mathematical statistics that linear combinations of
+normal random variables are also normal. Thus, if Assumption \(\mathrm{F 5}\) holds, then
+\(b_{1}\) is normally distributed. Moreover, several versions of central limit theorems
+\clearpage
+2.5 Statistical Inference 37
+Figure 2.6 These
+three scatter plots
+\(\circ\) \(\circ_{\mathrm{O}}\) \(\circ\) \(\circ\) 08 00 C \(x\) . The
+Iinearelaionshir
+\(y\)
+\(\circ\) \(\circ^{\circ}\) \(0_{0_{0}}\) \% plot on the left
+C exhibits greater
+variability about the
+line than the plot in
+the middle. The plot
+\(x\) \(x\) \(x\) on the right exhibits a
+smaller standard
+ deviation in \(x\) than the
+exists for weighted sums (see,e. Serfling, 1980).Thus, as discussed in Sectionplotinthe midle.
+1.4, if the responses \(y_{i}\) are even approximately normally distributed, then it will
+ be reasonable to use a normal approximation for the sampling distribution of
+\(b_{1}\) . Using \(s e ( b_{1} )\) as the estimated standard deviation of \(b_{1}\) , for large values of
+\(n\) we have that \(\left( b_{1}-\beta_{1} \right) / s e ( b_{1} )\) has an approximate standard normal distribu-
+tion. Although we will not prove it here, under Assumption F5 \(\left( b_{1}-\beta_{1} \right) / s e ( b_{1} )\)
+follows a \(t\) -distribution with degrees of freedom \(d f=n-2\) .
+ 2.5 Statistical Inference
+Having fit a model with a dataset, we can make a number of important statements.
+Generally, it is useful to think about these statements in three categories: (i) tests
+of hypothesized ideas, (ii) estimates of model parameters, and (ii) predictions of
+new outcomes.
+2.5.1 Is the Explanatory Variable Important? The t-Test
+We respond to the question of whether the explanatory variable is important
+by investigating whether \(\beta_{1}=0\) The logic is that if \(\beta_{1}=0\) then the basic
+linear regression model no longer includes an explanatory variable \(x\) . Thus,
+ we translate our question of the importance of the explanatory variable into a
+ narrower question that can be answered using the hypothesis-testing framework.
+This narrower question is, IS \(H_{0} : \beta_{1}=0\) valid? We respond to this question by
+looking at the test statistic:
+\[
+\mathrm{t-r a t i o}=\frac{\mathrm{e s t i m a t o r-h y p o t h e s i z e d ~ v a l u e ~ o f ~ p a r a m e t e r}} {\mathrm{s t a n d a r d ~ e r r o r ~ o f ~ t h e ~ e s t i m a t o r}} .
+\]
+provides additional
+Appendix A3.3
+details about the
+t-distribution,
+ the hypothesized value of \(\beta_{1}\) is \(\; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; 0 \; \; \; \; \; 0\) , we examine the \(t\) -ratio \(t ( b_{1} )=b_{1} / s e ( b_{1} )\) because including a graph and
+For the case of \(H_{0} : \beta_{1}=0\) . This is the appropriate standardization because,distribution table.
+under the null hypothesis and the model assumptions described in Section \(2 . 4\)
+the sampling distribution of \(t ( b_{1} )\) can be shown to be the \(t\) -distribution with \(d f=\)
+\(n-2\) - Thus, to test the null hypothesis \(H_{0}\) against the alternative \(H_{a} : \beta_{1} \neq0\)
+\clearpage
+38 Basic Linear Regression
+Table 2.3
+Decision-Making Alternative Hypothesis \(( H_{a} )\) Procedure: Reject \(H_{0}\) in favor of \(H_{a}\) if
+Procedures for
+Testing \(H_{0} : \beta_{1}=d\) \(\beta_{1} > d\)
+\[
+\begin{aligned} {t \mathrm{-r a t i o}} & {{} > t_{n-2 , 1-\alpha} .} \\ {t \mathrm{-r a t i o}} & {{} <-t_{n-2 , 1-\alpha} .} \\ {| t \mathrm{-r a t i o} |} & {{} > t_{n-2 , 1-\alpha/ 2} .} \\ \end{aligned}
+\]
+\(\beta_{1} < d\)
+\(\beta_{1} \neq d\)
+Note: The significance level is \(\alpha\) . Here, \(t_{n-2 , 1-\alpha}\) is the \(( 1-\alpha)\) th percentile
+ from the \(t\) -distribution using \(d f=n \,-2\) degrees of freedom. The test statistic
+is \(t\) -ratio \(= ( b_{1}-d ) / s e ( b_{1} )\) .
+we reject \(H_{0}\) in favor of \(H_{a}\) if \(\left| t ( b_{1} ) \right|\) exceeds a \(t\) -value. Here, this \(t\) -value is a
+ percentile from the \(t\) -distribution using \(d f=n-2\) . We denote the significance
+level as \(\alpha\) and this \(t\) -value as \(t_{n-2 , 1-\alpha/ 2}\)
+Example: Lottery Sales, Continued. For the lottery sales example, the residual
+ standard deviation is \(s \,=3 7 9 2\) From Table 2.1, we have \(s_{x}=1 1 , 0 9 8\) . Thus, the
+standard error of the slope is \(s e ( b_{1} )=3 7 9 2 / ( {1 1} {\mathrm{,} 0 9 8} \sqrt{5 0 \,-\, 1} )=0 . 0 4 8 8\) . From
+Section 2.1, the slope estimate is \(b_{1}=0 . 6 4 7\) . Thus, the \(t\) -statistic is \(t ( b_{1} )=\)
+\(0 . 6 4 7 / 0 . 0 4 8 8=1 3 . 4\) We interpret this by saying that the slope is 13.4 standard
+errors above zero. For the significance level, we use the customary value of
+\(\alpha\,=\, 5^{o} \! /_{o}\) . The 97.5th percentile from a \(t\) -distribution with \(d f=5 0-2=4 8\)
+ degrees of freedom is \(t_{4 8 , 0 . 9 7 5}=2 . 0 1 1\) . Because \(| 1 3 . 4 | > 2 . 0 1 1\) , we reject the
+ null hypothesis that the slope \(\beta_{1}=0\) in favor of the alternative that \(\beta_{1} \neq0\)
+ Making decisions by comparing a \(t\) -ratio to a \(t\) -value is called a \(t \mathrm{-} t e s t\) . Testing
+\(H_{0} : \beta_{1}=0\) versus \(H_{a} : \beta_{1} \neq0\) is just one of many hypothesis tests that can
+be performed, although it is the most common. Table 2.3 outlines alternative
+ decision-making procedures. These procedures are for testing \(H_{0} : \beta_{1}=d\) , where
+\(d\) is a user-prescribed value that may be equal to zero or any other known value.
+For example, in our Section 2.7 example, we will use \({d=1}\) to test financial
+ theories about the stock market.
+Alternatively, one can construct probability \(\left( p \right)\) values and compare these to
+given significant levels. The \(p\) -value is a useful summary statistic for the data
+ analyst to report because it allows the report reader to understand the strength of
+ the deviation from the null hypothesis. Table 2.4 summarizes the procedure for
+ calculating \(p\) -values.
+ Another interesting way of addressing the question of the importance of an
+explanatory variable is through the correlation coefficient. Remember that the
+ correlation coefficient is a measure of linear relationship between \(x\) and \(y\) . Let's
+denote this statistic by \(r ( y , \, x )\) This quantity is unaffected by scale changes
+in either variable. For example, if we multiply the \(x\) variable by the number
+\(b_{1}\) , then the correlation coefficient remains unchanged. Further, correlations are
+\clearpage
+2.5 Statistical Inference 39
+Table 2.4
+Alternative Probability Values for
+Hypothesis ( \(H_{a}\) \(\beta_{1} > d\) \(\beta_{1} < d\) \(\beta_{1} \neq d\) Testing \(H_{0} : \beta_{1}=d\)
+\(p\) -Value \(\operatorname* {P r} ( t_{n-2} \, > \, t \mathrm{-r a t i o} )\) \(\operatorname* {P r} ( t_{n-2} < t \mathrm{-r a t i o} )\) \(\operatorname* {P r} ( | t_{n-2} | \, > \, | t\) -ratio()
+Notes: Here, \(t_{n-2}\) is a \(t\) -distributed random variable with \(d f=n-2\) degrees of free-
+dom. The test statistic is \(\quad t \mathrm{-r a t i o}=( b_{1}-d ) / s e ( b_{1} )\) .
+unchanged by additive shifts. Thus, if we add a number, say, \(b_{0}\) , to each \(x\)
+ variable, then the correlation coefficient remains unchanged. Using a scale change
+and an additive shift on the \(x\) variable can be used to produce the fitted value
+\(\widehat{y}=b_{0}+b_{1} x\) . Thus, using notation, we have \(r ( y , \, x )=\vert r ( y , \, \widehat{y} ) \vert\) . We may thus
+ interpret the correlation between the responses and the explanatory variable to be
+ equal to the correlation between the responses and the fitted values. This leads,
+ then, to the following interesting algebraic fact, \(R^{2}=r^{2}\) . That is, the coefficient
+ of determination equals the correlation coefficient squared. This is much easier to
+ interpret if one thinks of \(r\) as the correlation between observed and fitted values.
+See Exercise 2.13 for steps useful in confirming this result. \(R^{2}=r^{2} .\)
+2.5.2 Confidence Intervals
+ Investigators often cite the formal hypothesis-testing mechanism to respond to the
+ question, Does the explanatory variable have a real influence on the response? \(\mathrm{A}\)
+ natural follow-up question is, To what extent does \(x\) affect \(y\) ? To a certain degree,
+ one could respond using the size of the \(t\) -ratio or the \(p\) -value. However, in many
+instances, a confdence interval for the slope is more useful.
+To introduce confidence intervals for the slope, recall that \(b_{1}\) is our point
+ estimator of the true, unknown slope \(\beta_{1}\) . Section \(2 . 4\) argued that this estimator has
+ standard error \(s e ( b_{1} )\) and that \(\left( b_{1}-\beta_{1} \right) / s e ( b_{1} )\) follows a \(t\) -distribution with \(n-2\)
+degrees of freedom. Probability statements can be inverted to yield confidence
+intervals. Using this logic, we have the following confidence interval for the
+ slope \(\beta_{1}\) :
+Defnition . A \(1 0 0 ( 1-\alpha)^{\sigma_{o}}\) confidence interval for the slope \(\beta_{1}\) is
+\[
+b_{1} \pm t_{n-2 , 1-\alpha/ 2} ~ s e ( b_{1} ) . \tag{2.6}
+\]
+As with hypothesis testing, \(t_{n-2 , 1-\alpha/ 2}\) is the \(( 1-\alpha/ 2 ) \mathrm{t h}\) percentile from the
+\(t\) -distribution with \(d f=n \,-2\) degrees of freedom. Because of the two-sided
+nature of confidence intervals, the percentile is \(1-( 1\) - confidence level)/2. In
+this text, for notational simplicity, we generally use a 95\% confidence interval,
+ so the percentile is \(1-( 1-. 0 . 9 5 ) / 2=0 . 9 7 5\) . The confidence interval provides
+ a range of reliability that measures the usefulness of the estimate.
+\clearpage
+40 Basic Linear Regression
+In Section 2.1, we established that the least squares slope estimate for the
+lottery sales example is \(b_{1}=0 . 6 4 7\) The interpretation is that if a Zip code's
+ population differs by 1,000, then we expect mean lottery sales to differ by \$647.
+How reliable is this estimate? It turns out that \(s e ( b_{1} )=0 . 0 4 8 8\) and thus an
+ approximate 95\% confidence interval for the slope is
+\[
+0 . 6 4 7 \pm( 2 . 0 1 1 ) ( . 0 4 8 8 ) ,
+\]
+or (0.549, 0.745). Similarly, if population differs by 1,000, a 95\% confidence
+interval for the expected change in sales is (549, 745). Here, we use the \(t\) -value
+\(t_{4 8 , 0 . 9 7 5}=2 . 0 1 1\) because there are \(4 8 ~ (=n ~-2 )\) degrees of freedom and, for a
+\(9 5 7_{o}\) confidence interval, we need the 97.5th percentile.
+2.5.3 Prediction Intervals
+In Section 2.1, we showed how to use least squares estimators to predict the lottery
+sales for a Zip code, outside of our sample, with a population of 10,000. Because
+prediction is such an important task for actuaries, we formalize the procedure so
+ that it can be used on a regular basis.
+ To predict an additional observation, we assume that the level of explanatory
+variable is known and is denoted by \(x_{*}\) . For example, in our previous lottery sales
+example, we used \(x_{*}=1 0 \mathrm{,} 0 0 0\) . We also assume that the additional observation
+ follows the same linear regression model as the observations in the sample.
+Using our least square estimators, our point prediction is \(\widehat{y}_{\ast}=b_{0}+b_{1} x_{\ast}\) , the
+ height of the fitted regression line at \(x_{*}\) . We may decompose the prediction error
+into two parts:
+pre
+\[
+\underbrace{y_{*}-\widehat{y}_{*}}_{\mathrm{d i c t i o n ~ e r r o r}} \,=\, \underbrace{\beta_{0}-b_{0}+( \beta_{1}-b_{1} ) \, x_{*}}_{\mathrm{r e g r e s s i o n ~ l i n e ~ a t ~} x_{*}} \,+\, \underbrace{\varepsilon_{*}}_{\mathrm{r e v i a t i o n ~ o f ~ t h e ~ a d}} .
+\]
+Iditional
+s mean
+It can be shown that the standard error of the prediction is
+\[
+s e ( p r e d )=s \sqrt{1+\frac{1} {n}+\frac{\left( x_{*}-\overline{{x}} \right)^{2}} {\left( n-1 \right) s_{x}^{2}}} .
+\]
+As with \(s e ( b_{1} )\) the terms \(n^{-1}\) and \(\left( x_{*}-\overline{{x}} \right)^{2} / \left[ ( n-1 ) s_{x}^{2} \right]\) become close to zero
+ as the sample size \(n\) becomes large. Thus, for large \(n\) , we have that \(s e ( p r e d ) \approx s\)
+reflecting that the error in estimating the regression line at a point becomes
+ negligible and deviation of the additional response from its mean becomes the
+entire source of uncertainty.
+\clearpage
+2.6 Building a Better Model: Residual Analysis 41
+ Defnition . A \(1 0 0 ( 1-\alpha)^{\sigma_{o}}\) prediction interval at \(x_{*}\) is
+\[
+\widehat{y}_{*} \pm\ t_{n-2 , 1-\alpha/ 2} \ s e ( p r e d ) , \tag{2.7}
+\]
+ where the \(t\) -value \(t_{n-2 , 1-\alpha/ 2}\) is the same as used for hypothesis testing and the
+ confidence interval.
+For example, the point prediction at \(x_{\ast}=1 0 {,} 0 0 0 \, \mathrm{i s} \, \, \widehat{y}_{\ast}=4 6 9 . 7+0 . 6 4 7 \, ( 1 0 {,} 0 0 0 )=\)
+6939.7. The standard error of this prediction is
+\[
+\begin{aligned} {s e ( p r e d )} & {{}=3 7 9 2 \sqrt{1+\frac{1} {5 0}+\frac{\left( 1 0 {,} 0 0 0-9 {,} 3 1 1 \right)^{2}} {( 5 0-1 ) ( 1 1 {,} 0 9 8 )^{2}}}} \\ \end{aligned}=3 8 2 9 . 6 .
+\]
+With a \(t\) -value equal to 2.011, this yields an approximate 95 \(\mathcal{J}_{o}\) prediction interval:
+\[
+6 9 3 9 . 7 \pm( 2 . 0 1 1 ) ( 3 8 2 9 . 6 )=6 9 3 9 . 7 \pm7 , 7 0 1 . 3=(-7 6 1 . 6 , \, \, \, 1 4 , 6 4 1 . 0 ) .
+\]
+We interpret these results by first pointing out that our best estimate of lottery
+ sales for a \(\mathrm{Z i p}\) code with a population of 10,000 is \$6,939.70. Our 95\% prediction
+ interval represents a range of reliability for this prediction. If we could see many
+Zip codes, each with a population of 10,000, on average we would expect that
+about \(1 9\) out of 20, or \(9 5 \surd_{o}\) , would have lottery sales between \(\S0\) and \$14,641.
+It is customary to truncate the lower bound of the prediction interval to zero if
+ negative values of the response are deemed to be inappropriate.
+2.6 Building a Better Model: Residual Analysis
+Quantitative disciplines calibrate models with data. Statistics takes this one step
+further, using discrepancies between the assumptions and the data to improve
+model specification. We will examine the Section 2.2 modeling assumptions in
+light of the data and use any mismatch to specify a better model; this process
+is known as diagnostic checking (like when you go to a doctor and he or she
+ performs diagnostic routines to check your health). Statistics uses
+We will begin with the Section \(2 . 2\) error representation. Under this set ofdiscrepancies between
+assumptions, the deviations \(\{\varepsilon_{i} \}\) are identically and independently distributed the assumptions and
+the data to improve
+(i.i.d) and, under assumption F5, normally distributed. To assess the validity of model specifcation.
+these assumptions, one uses (observed) residuals \(\{e_{i} \}\) as approximations for the
+(unobserved) deviations \(\{\varepsilon_{i} \}\) . The basic theme is that if the residuals are related to
+ a variable or display any other recognizable pattern, then we should be able to take
+ advantage of this information and improve our model specification. The residuals If the residuals are
+ should contain little or no information and represent only natural variation from related to a variable
+ the sampling that cannot be attributed to any specific source. Residual analysis or display any other.
+ recognizable pattern,
+is the exercise of checking the residuals for patterns. then we should be
+If detected, the discrepancies can be corrected with the appropriate adjustments of this information
+ and improve our
+ model specifcation.
+\clearpage
+42 Basic Linear Regression
+ Model Misspecifcation Issues
+(i) Lack of Independence. There may exist relationships among the devia-
+tions \(\{\varepsilon_{i} \}\) so that they are not independent.
+(ii) Heteroscedasticity. Assumption E3 that indicates that all observations
+have a common (though unknown) variability, known as homoscedas-
+ticity. Heteroscedascity is the term used when the variability varies by
+observation.
+(iii) Relationships between Model Deviations and Explanatory Variables.
+ If an explanatory variable has the ability to help explain the deviation \(\varepsilon\) ,
+ then one should be able to use this information to better predict \(y\) .
+(iv) Nonnormal Distributions. If the distribution of the deviation represents
+ a serious departure from normality, then the usual inference procedures
+ are no longer valid.
+(v) Unusual Points. Individual observations may have a large effect on the
+regression model fit, meaning that the results may be sensitive to the
+ impact of a single observation.
+This list will serve you throughout your study of regression analysis. Of course,
+ with only an introduction to basic models, we have not yet seen alternative models
+that might be used when we encounter such model discrepancies. In this book's
+Part \(\amalg\) on time series models, we will study lack of independence among data
+ ordered over time. Chapter 5 will consider heteroscedasticity in further detail. The
+ introduction to multiple linear regression in Chapter 3 will be our first look at han-
+ dling relationships between \(\{\varepsilon_{i} \}\) and additional explanatory variables. We have,
+however, already had an introduction to the effect of normal distributions, seeing
+that \(q \, q\) plots can detect nonnormality and that transformations can help induce
+ approximate normality. In this section, we discuss the effects of unusual points.
+ Much of residual analysis is done by examining a standardized residual, a
+residual divided by its standard error. An approximate standard error of the resid-
+ ual is \(s\) ; in Chapter 3, we will give a precise mathematical definition. There are
+two reasons we often examine standardized residuals in lieu of basic residu-
+als. First, if responses are normally distributed, then standardized residuals are
+ approximately realizations from a standard normal distribution. This provides a
+reference distribution to compare values of standardized residuals. For example,
+if a standardized residual exceeds two in absolute value, this is considered unusu-
+ally large and the observation is called an outlier. Second, because standardized
+residuals are dimensionless, we get carryover of experience from one dataset to
+ another. This is true regardless of whether the normal reference distribution is
+ applicable.
+ Outliers and High Leverage Points. Another important part of residual analy-
+sis is the identification of unusual observations in a dataset. Because regression
+estimates are weighted averages with weights that vary by observation, some
+\clearpage
+2.6 Building a Better Model: Residual Analysis 43
+ Variables 19 Base Points \(\mathrm{A}\) \(\mathbf{B}\) CTabi 2.5 19 a
+Points Plus Three
+\(x\) 1.51.72.02.22.52.52.72.93.03.5 \(3 . 4\) \(9 . 5\) 9.5Typesof Umusual
+Observations
+\(y\) 3.02.53.53.03.13.63.23.94.04.08.08.02.5
+\(x\) 3.84.24.34.64.05.15.15.25.5
+\(y\) 4.24.14.8 4.25.15.15.14.85.3
+9 Figure 2.7 Scatter
+8 oA oB plot of 19 base plus 3 \(\mathrm{C}\) .
+7 unusual points,
+labeled A, B and
+6
+y 5
+\(2 ~\) : \(\circ\underset{\circ} {\underbrace{\circ}} \overset{\otimes} {\otimes}\) 0000 oC
+\(4 ~\)
+3 0
+0 \(2 ~\) \(4 ~\) 6 8 10
+\(x\)
+observations are more important than others. This weighting is more important
+ than many users of regression analysis realize. In fact, the example here demon-
+strates that a single observation can have a dramatic effect in a large dataset.
+There are two directions in which a data point can be unusual, the horizontal
+and vertical directions. \(\mathrm{B y}\) - unusual, I mean that an observation under consid-
+eration seems to be far from the majority of the dataset. An observation that is
+unusual in the vertical direction is called an outlier. An observation that is unusual
+ in the horizontal directional is called a high leverage point. An observation may
+ be both an outlier and a high leverage point.
+@ EMPIRICAL
+ExpePo
+\(1 9\) points plus three points, labeled \(\mathrm{A , \ B}\) , and \(\mathrm{C}\) given in Figure 2.7 and"OutlierExample"
+ Table 2.5. Think of the first nineteen points as " good"observations that represent
+ some type of phenomena. We want to investigate the effect of adding a single
+aberrant point.
+To investigate the effect of each type of aberrant point, Table 2.6 summarizes
+the results of four separate regressions. The first regression is for the nineteen
+base points. The other three regressions use the nineteen base points plus each
+ type of unusual observation.
+Table 2.6 shows that a regression line provides a good fit for the nineteen
+base points. The coefficient of determination, \(R^{2}\) , indicates that about 89\% of
+ the variability has been explained by the line. The size of the typical error, \(s\) , is
+about 0.29, small compared to the scatter in the \(y\) -values. Further, the \(t\) -ratio for
+ the slope coefficient is large.
+\clearpage
+44 Basic Linear Regression
+Table 2.6 Results.
+ from Four Data \(b_{0}\) \(b_{1}\) \(s\) \(R^{2} ( \mathcal{V}_{\! o} )\) \(t ( b_{1} )\)
+Regressions
+19 Base Points 1.869 0.611 0.288 89.0 11.71
+19 Base Points \(+ \mathrm{A}\) 1.750 0.693 0.846 53.7 4.57
+19 Base Points \(+ \mathrm{B}\) 1.775 \(0 . 6 4 0\) 0.285 94.7 18.01
+19 Base Points \(+ \mathrm{C}\) 3.356 0.155 0.865 10.3 1.44
+When the outlier point \(\mathrm{A}\) is added to the nineteen base points, the situation
+ deteriorates dramatically. The \(R^{2}\) drops from 89\% to 53.7\%, and \(s\) increases from
+about 0.29 to about 0.85. The fitted regression line itself does not change that
+much even though our confidence in the estimates has decreased.
+An outlier is unusual in the \(y\) -value, but "- unusualin the \(y\) -value" depends on
+ the \(x\) -value. To see this, keep the \(y\) -value of point \(\mathrm{A}\) the same but increase the
+\(x\) -value and call the point \(\mathrm{B}\) .
+When the point \(\mathrm{B}\) is added to the nineteen base points, the regression line
+provides a better fit. Point \(\mathrm{B}\) is close to being on the line of the regression fit
+ generated by the nineteen base points. Thus, the fitted regression line and the size
+of the typical error, \(s\) , do not change much. However, \(R^{2}\) increases from 89\%
+ to nearly 95 percent. If we think of \(R^{2}\) as \(1-( E r r o r ~ S S ) / ( T o t a l ~ S S ) ,\) by adding
+point \(\mathrm{B}\) we have increased Total \(S \, S\) , the total squared deviations in the \(y^{\prime}\) s even
+ though leaving Error SS relatively unchanged. Point \(\mathrm{B}\) is not an outlier, but it is
+a high leverage point.
+To show how influential this point is, drop the \(y\) -value considerably and call
+this the new point \(\mathrm{C}\) When this point is added to the nineteen base points,
+the situation deteriorates dramatically. The \(R^{2}\) coefficient drops from 89\% to
+\(1 0 7_{o}\) , and the \(s\) more than triples, from 0.29 to 0.87. Further, the regression line
+coefficients change dramatically.
+Most users of regression at first do not believe that one point in twenty can
+have such a dramatic effect on the regression fit. The fit of a regression line can
+ always be improved by removing an outlier. If the point is a high leverage point 
+and not an outlier, it is not clear whether the fit will improve when the point is
+removed.
+Simply because you can dramatically improve a regression fit by omitting an
+ observation does not mean you should always do so! The goal of data analysis is
+to understand the information in the data. Throughout the text, we will encounter
+ many datasets where the unusual points provide some of the most interesting
+information about the data. The goal of this subsection is to recognize the effects
+ of unusual points; Chapter \(5\) will provide options for handling unusual points in
+ your analysis.
+All quantitative disciplines, such as accounting, economics, linear program-
+\(\operatorname* {m i n g}\) , and so on, practice the art of sensitivity analysis. Sensitivity analysis is a
+ description of the global changes in a system due to a small local change in an
+\clearpage
+2.6 Building a Better Model: Residual Analysis 45
+Table 2.7
+Data \(b_{0}\) \(b_{1}\) \(s\) \(R^{2} ( \ \% )\) \(t ( b_{1} )\) Regression Results
+with and without
+ With Kenosha \(4 6 9 . 7\) 0.662 3792 \(7 8 . 5\) \(1 3 . 2 6\) Kenosha
+\(0 . 6 4 7\)
+ Without Kenosha \(- 4 3 . 5\) 2728 88.3 18.82
+SALES Figure 2.8 Scatter
+30,000 0 plot of SALES versus
+0 POP, with the outlier
+corresponding to
+ 25,000 Kenosha Kenosha marked.
+20,000 0 C \(\circ\)
+15,000 \(\circ\) 0 \(\circ\) 0
+10,000 \(\circ\) 0
+5000 \(\circ8\)
+0
+0 10000 20000 30000 40000
+POP
+element of the system. Examining the effects of individual observations on the
+regression fit is a type of sensitivity analysis.
+Example: Lottery Sales, Continued. Figure 2.8 exhibits an outlier; the point in
+ the upper-left-hand side of the plot represents a \(\mathrm{Z i p}\) code that includes Kenosha,
+Wisconsin. Sales for this Zip code are unusually high given its population.
+Kenosha is close to the Illinois border; residents from Illinois probably par-
+ticipate in the Wisconsin lottery, thus effectively increasing the potential pool of
+ sales in Kenosha. Table 2.7 summarizes the regression fit both with and without
+this Zip code.
+For the purposes of inference about the slope, the presence of Kenosha does
+not alter the results dramatically. Both slope estimates are qualitatively similar
+ and the corresponding \(t\) -statistics are very high, well above cutoffs for statistical
+ significance. However, there are dramatic differences when assessing the quality
+ of the fit. The coefficient of determination, \(R^{2}\) increased from 78.5\% to 88.3\%
+when deleting Kenosha. Moreover, our typical deviation \(s\) dropped by more
+than \$1,000. This is particularly important if we want to tighten our prediction
+intervals.
+To check the accuracy of our assumptions, it is also customary to check the
+normality assumption. One way of doing this is with the \(q \, q\) plot, introduced
+\clearpage
+46 Basic Linear Regression
+Figure 2.9 The \(q q\) Sample Quantiles Sample Quantiles
+plots of Wisconsin 0 8,000 o
+lottery residuals. The 15,000 0 2,000 \(\infty\)
+left-hand panel is 6,000 0
+ based on all 50 points. 10,000 4,000
+The right-hand panel
+ is based on 49 points,
+residuals from a 5,000 \(\infty^{\circ}\) 0
+regression after
+removing Kenosha. 0 2,000
+5,000 o 0 \(\omicron\circ\) 6,000 \(\circ\) 0 \(\omicron^{\mathrm{c}}\)
+4,000
+0
+T T
+2 1 0 1 2 2 1 0 1 2
+Theoretical Quantiles Theoretical Quantiles
+in Section 1.2. The two panels in Figures 2.9 are \(q \, q\) plots with and without
+ the Kenosha Zip code. Recall that points close to linear indicate approximate
+normality. In the right-hand panel of Figure 2.9, the sequence does appear to be
+ linear, so residuals are approximately normally distributed. This is not the case in
+ the left-hand panel, where the sequence of points appears to climb dramatically for
+large quantiles. The interesting thing is that the nonnormality of the distribution
+ is due to a single outlier, not to a pattern of skewness that is common to all the
+observations.
+2.7 Application: Capital Asset Pricing Model
+In this section, we study a financial application, the capital asset pricing model
+(CAPM). The name is something of a misnomer in that the model is really about
+returns based on capital assets, not on the prices themselves. The types of assets
+that we examine are equity securities that are traded on an active market, such
+as the New York Stock Exchange (NYSE). For a stock on the exchange, we can
+relate returns to prices through the following expression:
+Return = Price at the end of a period + dividends -- price at the begining of a period
+ price at the beginning of a period
+If we can estimate the returns that a stock generates, then knowledge of the
+ price at the beginning of a generic financial period allows us to estimate the value
+at the end of the period (ending price plus dividends). Thus, we follow standard
+practice and model returns of a security.
+ An intuitively appealing idea, and one of the basic characteristics of the CAPM,
+ is that there should be a relationship between the performance of a security and the
+market. One rationale is simply that if economic forces are such that the market
+improves, then those same forces should act on an individual stock, suggesting
+ that it also improve. As noted previously, we measure performance of a security
+\clearpage
+2.7 Application: Capital Asset Pricing Model 47
+ through the return. To measure performance of the market, several market indices
+exist that summarize the performance of each exchange. We will use the equally
+weighted index of the Standard \(\&\) Poor's 500. The S\&P500 is the collection of
+the 500 largest companies traded on the NYSE, where " lage" is identified by
+Standard \(\&\) Poor's, a financial services rating organization. The equally weighted
+ index is defined by assuming that a portfolio is created by investing \$1.00 in each
+ of the 500 companies.
+ Another rationale for a relationship between security and market returns comes
+from financial economics theory. This is the CAPM theory, attributed to Sharpe
+(1964) and Lintner (1965) and based on the portfolio diversification ideas of
+ Markowitz (1959). Other things equal, investors would like to select a return with
+ a high expected value and a low standard deviation, the latter being a measure of
+risk. One of the desirable properties of using standard deviations as a measure
+of riskiness is that it is straightforward to calculate the standard deviation of a
+portfolio. One needs to know only the standard deviation of each security and
+the correlations among securities. A notable security is a risk-free one, that is,
+a security that theoretically has a zero standard deviation. Investors often use a
+ 30-day U.S. Treasury bill as an approximation of a risk-free security, arguing that
+ the probability of default of the U.S. government within 30 days is negligible.
+Positing the existence of a risk-free asset and some other mild conditions, under
+the CAPM theory there exists an efficient frontier called the securities market
+\(l i n e\) This frontier specifies the minimum expected return that investors should
+ demand for a specified level of risk. To estimate this line, we can use the equation
+\[
+\textrm{E} r=\beta_{0}+\beta_{1} r_{m} ,
+\]
+where \(r\) is the security return and \(r_{m}\) is the market return. We interpret \(\beta_{1} r_{m}\) as a
+ measure of the amount of security return attributed to the behavior of the market.
+Testing economic theory, or models arising from any discipline, involves
+collecting data. The CAPM theory is about ex ante (before-the-fact) returns even
+though we can only test with ex post (after-the-fact) returns. Before the fact,
+the returns are unknown and there is an entire distribution of returns. After the
+fact, there is only a single realization of the security and market return. Because
+ at least two observations are required to determine a line, CAPM models are
+estimated using security and market data gathered over time. In this way, several
+ observations can be made. For the purposes of our discussions, we follow standard
+ practice in the securities industry and examine monthly prices.
+ Data @ EMPIRICAL
+To illustrate, consider monthly returns over the five-year period from January Filename is
+1986 to December 1990, inclusive. Specifically, we use the security returns from"CAPM"
+the Lincoln National Insurance Corporation as the dependent variable (y) and
+the market returns from the index of the S\&P500 as the explanatory variable
+\(( x )\) At the time, the Lincoln was a large, multiline insurance company, with
+headquarters in the Midwest, specifically in Fort Wayne, Indiana. Because it was
+\clearpage
+48 Basic Linear Regression
+Table 2.8 Summary
+Statistics of 60 Standard
+Monthly Observations Mean Median Deviation Minimum Maximum
+LINCOLN 0.0051 0.0075 0.0859 0.2803 0.3147
+MARKET 0.0074 0.0142 0.0525 0.2205 0.1275
+Source: Center for Research on Security Prices, University of Chicago.
+Figure 2.10 Time Monthly Return
+ series plot of returns 0.3 LINCOLN]
+from Lincoln National 0.2 MARKET
+Corporation and the
+market. There are 60
+monthly returns over 0.1
+ the period January
+193-Decembe 0.0
+0.1
+0.2
+0.3
+1986 1987 1988 1989 1990 1991
+Year
+well known for its prudent management and stability, it is a good company to
+ begin our analysis of the relationship between the market and an individual stock.
+We begin by interpreting some of basic summary statistics, in Table 2.8, in
+terms of financial theory. First, an investor in Lincoln will be concerned that
+the five-year average return, \(\overline{{y}}=0 . 0 0 5 1 0\) is less than the return of the mar-
+ket, \(\overline{{x}}=0 . 0 0 7 4 1\) . Students of interest theory recognize that monthly returns can
+be converted to an annual basis using geometric compounding. For example,
+ the annual return of Lincoln is \(( 1 . 0 0 5 1 )^{1 2}-1=0 . 0 6 2 9 4 6\) or roughly 6.29\%.
+This is compared to an annual return of \(9 . 2 6 \not{0} \ (=( 1 0 0 ( ( 1 . 0 0 7 4 1 )^{1 2}-1 ) )\) for the
+market. A measure of risk, or volatility, that is used in finance is the standard devi-
+ation. Thus, interpret \(\boldsymbol{s}_{y} \,=\, 0 . 0 8 5 9 > \, 0 . 0 5 2 5 4=\boldsymbol{s}_{x}\) to mean that an investment in
+Lincoln is riskier than the whole market. Another interesting aspect of Table 2.8
+ is that the smallest market return, \(- 0 . 2 2 0 5 2\) is 4.338 standard deviations below
+ its average ) \(\left( (-0 . 2 2 0 5 2 \,-\, 0 . 0 0 7 4 1 ) / 0 . 0 5 2 5 4=-4 . 3 3 8 \right)\) This is highly unusual
+with respect to a normal distribution.
+We next examine the data over time, as is given graphically in Figure 2.10,
+which shows scatter plots of the returns versus time, called time series plots. In
+Figure 2.10, one can clearly see the smallest market return, and a quick glance at
+ the horizontal axis reveals that this unusual point is in October 1987, the time of
+ the well-known market crash.
+The scatter plot in Figure 2.11 graphically summarizes the relationship
+ between Lincoln's return and the return of the market. The market crash is clearly
+\clearpage
+2.7 Application: Capital Asset Pricing Model 49
+LINCOLN Figure 2.11 Scatter
+0.4 plot of Lincoln's
+return versus the S\&P
+0.3 500 return. The
+0.2 regression line is
+ superimposed,
+0.1 ( enabling us to identify
+the market crash and
+0.0 C 1990 outliers two outliers.
+October 1987 crash
+0.1 \(\circ\) 00
+0.2
+0.3 \(\circ\)
+0.3 0.2 0.1 0.0 0.1 0.2
+MARKET
+evident in Figure 2.11 and represents a high leverage point. With the regression
+line (described subsequently) superimposed, the two outlying points that can be
+seen in Figure 2.10 are also evident. Despite these anomalies, the plot in Fig-
+ure 2.11 does suggest that there is a linear relationship between Lincoln and
+ market returns.
+ Unusual Points
+To summarize the relationship between the market and Lincoln's return, a regres-
+sion model was fit. The fitted regression is
+\[
+\widehat{L I N C O L N}=-0 . 0 0 2 1 4+0 . 9 7 3 M A R K E T .
+\]
+ The resulting estimated standard error, \(s \,=\, 0 . 0 6 9 6\) is lower than the standard
+ deviation of Lincoln's returns, \(s_{y} \,=\, 0 . 0 8 5 9\) Thus, the regression model explains
+some of the variability of Lincoln's returns. Further, the \(t\) -statistic associated
+with the slope \(b_{1}\) turns out to be \(t ( b_{1} )=5 . 6 4 .\) which is significantly large. One
+ disappointing aspect is that the statistic \(R^{2}=3 5 . 4^{\mathcal{G}_{0}}\) can be interpreted to mean
+ that the market explains only slightly more than a third of the variability. Thus,
+even though the market is clearly an important determinant, as evidenced by the
+high \(t\) -statistic, it provides only a partial explanation of the performance of the
+Lincoln's returns.
+In the context of the market model, we may interpret the standard deviation
+of the market, \(s_{x}\) , as nondiversifable risk. Thus, the risk of a security can be
+decomposed into two components, the diversifiable component and the market
+component, which is nondiversifiable. The idea is that, by combining several
+securities, we can create a portfolio of securities that, in most instances, will
+reduce the riskiness of our holdings when compared with a single security.
+Again, the rationale for holding a security is that we are compensated through
+higher expected returns by holding a security with higher riskiness. To quantify
+\clearpage
+50 Basic Linear Regression
+ the relative riskiness, it is not hard to show that
+\[
+s_{y}^{2}=b_{1}^{2} s_{x}^{2}+s^{2} \cfrac{n-2} {n-1} . \tag{2.8}
+\]
+The riskiness of a security results from the riskiness due to the market plus
+the riskiness due to a diversifiable component. Note that the riskiness due to the
+ market component, \(s_{x}^{2}\) , is larger for securities with larger slopes. For this reason,
+investors think of securities with slopes \(b_{1}\) greater than one as " aggressive" and
+slopes less than one as " defensive."
+Sensitivity Analysis
+The foregoing summary immediately raises two additional issues. First, what
+is the effect of the October 1987 crash on the fitted regression equation? We
+ know that unusual observations, such as the crash, may potentially influence the
+fit a great deal. To this end, the regression was rerun without the observation
+ corresponding to the crash. The motivation for this is that the October 1987 crash
+represents a combination of highly unusual events (the interaction of several
+ automated trading programs operated by the large stock brokerage houses) that
+we do not want to represent using the same model as our other observations.
+Deleting this observation, the fitted regression is
+\[
+\widehat{L I N C O L N}=-0 . 0 0 1 8 1 \,+\, 0 . 9 5 6 M A R K E T ,
+\]
+with \(R^{2}=2 6 . 4^{\mathcal{V}_{0}}\) . \(t ( b_{1} )=4 . 5 2 , \, \, \, s=0 . 0 7 0 2\) ,and \(s_{y} \,=\, 0 . 0 8 1 1\) . We interpret
+these statistics in the same fashion as the fitted model including the October
+1987 crash. It is interesting to note, however, that the proportion of variability
+explained actually decreases when excluding the influential point. This serves
+to illustrate an important point. High leverage points are often looked on with
+ dread by data analysts because they are, by definition, unlike other observations
+ in the dataset and require special attention. However, when fitting relationships
+ among variables, they also represent an opportunity because they allow the data
+analyst to observe the relationship between variables over broader ranges than
+otherwise possible. The downside is that the relationships may be nonlinear or
+follow an entirely different pattern when compared to the relationships observed
+ in the main portion of the data.
+The second question raised by the regression analysis is what can be said
+about the unusual circumstances that gave rise to the unusual behavior of
+Lincoln's returns in October and November 1990. A useful feature of regres-
+sion analysis is to identify and raise the question; it does not resolve it. Because
+the analysis clearly pinpoints two highly unusual points, it suggests that the data
+ analyst should go back and ask some specific questions about the sources of the
+data. In this case, the answer is straightforward. In October 1990, the Travelers'
+Insurance Company, a competitor, announced that it would take a large write-
+ off in its real estate portfolio because of an unprecedented number of mortgage
+defaults. The market reacted quickly to this news, and investors assumed that
+\clearpage
+2.8 Illustrative Regression Computer Output 51
+other large publicly traded life insurers would also soon announce large write-
+ offs. Anticipating this news, investors tried to sell their portfolios of, for example,
+Lincoln's stock, thus causing the price to plummet. However, it turned out that
+investors overreacted to the news and that Lincoln's portfolio of real estate was
+indeed sound. Thus, prices quickly returned to their historical levels.
+2.8 Illustrative Regression Computer Output
+Computers and statistical software packages that perform specialized calculations
+ play a vital role in modern-day statistical analyses. Inexpensive computing capa-
+ bilities have allowed data analysts to focus on relationships of interest. Specifying
+ models that are attractive merely for their computational simplicity is much less
+ important now than in times before the widespread availability of inexpensive
+computing. An important theme of this text is to focus on relationships of interest
+ and to rely on widely available statistical software to estimate the models that we
+specify.
+With any computer package, generally the most difficult parts of operating
+the package are the input, using the commands, and interpreting the output. You
+will find that most modern statistical software packages accept spreadsheet or
+text-based files, which makes input of data relatively easy. Personal computer
+ statistical software packages have menu-driven command languages with easily
+accessible on-line help facilities. Once you decide what to do, finding the right
+commands is relatively easy.
+This section provides guidance in interpreting the output of statistical pack-
+ages. Most statistical packages generate similar output. Below, three examples
+of standard statistical software packages, EXCEL, SAS, and \(\mathrm{R}\) are given. The
+ annotation symbol " [.]"'marks a statistical quantity that is described in the legend.
+ Thus, this section provides a link between the notation used in the text and output
+ from some of the standard statistical software packages.
+EXCEL Output
+Regression Statistics
+Multiple \(\mathtt{R}\) 0.886283 [d]
+\(\mathtt{R}\) Square 0.785497 [k]
+Adjusted R Square 0.781028 [1]
+Standard Error 3791.758 [j]
+Observations 50[a]
+ ANOVA
+df Ss MS \(\mathtt{F}\) Significance \(\mathtt{F}\)
+Regression 1[m] 2527165015 [p] 2527165015 [s] 175.773[u] 1.15757E-17[v]
+Residual 48[n] 690116754.8[q] 14377432.39[t]
+Total 49[o] 3217281770 [r]
+Coefficients Standard Error t stat P-value
+Intercept 469.7036[b] 702.9061896[d] 0.668230846[f] 0.507187[h]
+\(\mathtt{X}\) Variable 1 0.647095[c] 0.048808085[e] 13.25794257[g] 1.16E-17[i]
+\clearpage
+52 Basic Linear Regression
+SAS Output
+The SAS System
+The REG Procedure
+Dependent Variable: SALEs
+Analysis of Variance
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+Model 1[m] 2527165015[p] 2527165015 [s] 175.77[u]<.0001[v]
+Error 48[n] 6901l6755[q] 14377432 [t]
+Corrected Total 49[o] 3217281770 [r]
+Root MSE 3791.75848 [j] R-Square 0.7855[k]
+Dependent Mean 6494.82900[e] Adj R-Sq 0.7810[1]
+Coeff Var 58.38119 [F]
+Parameter Estimates
+Parameter Standard
+Variable Label DF Estimate Error t Value Pr>It|
+Intercept Intercept 1 469.70360[b] 702.90619[d] 0.67[f] 0.5072 [h]
+POP POP 1 0.64709[c] 0.04881[e] 13.26 [g] <.0001[i]
+R Output
+Analysis of Variance Table
+Response: SALES
+Df Sum Sq Mean Sq F value Pr(>F)
+POP 1[m] 2527165015[p] 2527165015[s] 175.77304 [u] <2.22e-16 [v]***
+Residuals 48[n] 6901l6755[q] 14377432 [t]
+Call: lm(formula = SALES \textasciitilde{} POP)
+Residuals:
+Min 1Q Median 3Q Max
+-6047 -1461 -670 486 18229
+Coefficients:
+Estimate Std. Error t value Pr \(( > \mid{\mathtt t} \mid\) )
+(Intercept) 469.7036[b] 702.9062[c] 0.67[f] 0.51 [h]
+POP 0.6471[c] 0.0488 [e] 13.26[g] <2e-16 ***[i]
+Signif. codes: 0 *** 0.001 ** 0.01 * 0.05 . 0.1 1
+Residual standard error: 3790[j] on 48[n] degrees of freedom
+Multiple R-Squared: 0.785[k], Adjusted R-squared: 0.781[l]
+\(\mathtt{F}\) -statistic: 176[u] on 1[m] and 48[n] DF, p-value: <2e-16[v]
+\clearpage
+2.8 Illustrative Regression Computer Output 53
+Legend Annotation Defnition, Symbol
+[a] Number of observations \(n\) .
+[b] The estimated intercept \(b_{0}\)
+[c] The estimated slope \(b_{1}\) .
+[d] The standard error of the intercept, \(s e ( b_{0} )\)
+[e] The standard error of the intercept, \(s \, e ( b_{1} )\)
+[f] The \(t\) -ratio associated with the intercept, \(t ( b_{0} )=b_{0} / s e ( b_{0} )\) .
+[g] The \(t\) -ratio associated with the slope, \(t ( b_{1} )=b_{1} / s e ( b_{1} ) .\)
+[h] The \(p\) -value associated with the intercept; here, \(p \,-\, v a l u e=\, P \, r ( | t_{n-2} | >\)
+\(\left| t ( b_{0} ) \right| )\) , where \(t ( b_{0} )\) is the realized value (0.67 here) and \(t_{n-2}\) has a
+\(t\) -distribution with \(d f=n \,-2\) .
+[i] The \(p\) -value associated with the slope; here, \(p \,-\, v a l u e=\, P \, r ( | t_{n-2} | >\)
+\(\left| t ( b_{1} ) \right| )\) , where \(t ( b_{1} )\) is the realized value (13.26 here) and \(t_{n-2}\) has a
+\(t\) -distribution with \(d f=n \,-2\) .
+[j] The residual standard deviation, \(s\) .
+[k] The coefficient of determination, \(R^{2}\)
+[l] The coefficient of determination adjusted for degrees of freedom, \(R_{a}^{2}\) (This
+term will be defined in Chapter 3.)
+[m] Degree of freedom for the regression component: 1, for one explanatory
+variable.
+[n] Degree of freedom for the error component, \(n-2 ,\) for regression with one
+ explanatory variable.
+[o] Total degrees of freedoms, \(n-1 .\)
+[p] The regression sum of squares, Regression \(S \, S\)
+[q] The error sum of squares, Error \(S \, S\) .
+[r] The total sum of squares, Total Ss.
+[s] The regression mean square, Regression M S = Regression SS/1, for one
+ explanatory variable.
+[t] The error mean square, \(s^{2}=E r r o r\) MS = Error \(S S / ( n-2 )\) , for one
+ explanatory variable.
+[u] The F-ratio = (Regression MS)/(Error MS). (This term will be defined
+ in Chapter 3.)
+[v] The \(p\) -value associated with the \(\boldsymbol{F}\) -ratio. (This term will be defined in
+Chapter 3.)
+[w] The observation number, \(i\) :
+[x] The value of the explanatory variable for the \(i\) th observation, \(x_{i}\)
+[y] The response for the \(i\) th observation, \(y_{i}\) .
+[z] The fitted value for the \(i\) th observation, \(\widehat{y_{i}}\) .
+[A] The standard error of the fit, \(s e ( \widehat{y}_{i} )\) .
+[B] The residual for the \(i\) th observation, \(e_{i}\) .
+[C] The standardized residual for the \(i\) th observation, \(e_{i} / s \, e ( e_{i} )\) The standard
+error \(s \, e ( e_{i} )\) will be defined in Section 5.3.1.
+[D] The multiple correlation coefficient is the square root of the coefficient of
+ determination, \(R=\sqrt{R^{2}}\) . This will be defined in Chapter 3.
+\clearpage
+54 Basic Linear Regression
+[E] The average response, \(\overline{{y}}\)
+[F] The coefficient of variation of the response is \(s_{y} / \overline{{y}} .\) SAS prints out \(1 0 0 s_{y} / \overline{{y}}\)
+2.9 Further Reading and References
+Relatively few applications of regression are basic in the sense that they use
+only one explanatory variable; the purpose of regression analysis is to reduce
+ complex relationships among many variables. Section 2.7 described an important
+exception to this general rule, the CAPM finance model; see Panjer et al. (1998)
+for additional actuarial descriptions of this model. Campbell et al. (1997) give a
+financial econometrics perspective.
+ Chapter References
+Anscombe, Frank (1973). Graphs in statistical analysis. American Statistician 27, 17-- 21.
+Campbell, John \(\mathrm{Y .}\) , Andrew W. Lo, and A. Craig MacKinlay (1997). The Econometrics of
+Financial Markets. Princeton University Press, Princeton, New Jersey.
+ Frees, Edward W., and Tom W. Miller (2003). Sales forecasting using longitudinal data models.
+International Journal of Forecasting 20, 97- 111.
+Goldberger, Arthur (1991). A Course in Econometrics. Harvard University Press, Cambridge,
+Massachusetts.
+ Koch, Gary J. (1985). A basic demonstration of the \([-1 , 1 ]\) range for the correlation coefficient.
+American Statistician 39, 201- 2.
+Lintner, J. (1965). The valuation of risky assets and the selection of risky investments in stock
+ portfolios and capital budgets. Review of Economics and Statistics 47, no. 1, 13-- 37.
+Manistre, B. John, and Geoffrey H. Hancock (2005). Variance of the CTE estimator. North
+American Actuarial Journal 9, no. 2, 129- 56.
+Markowitz, Harry (1959). Portfolio Selection: Effcient Diversifcation of Investments. John
+Wiley and Sons, New York.
+Panjer, Harry H., Phelim P. Boyle, Samuel H. Cox, Daniel Dufresne, Hans U. Gerber, Heinz H.
+ Mueller, Hal W. Pedersen, Stanley R. Pliska, Michael Sherris, Elias S. Shiu, and Ken S. Tan
+(1998). Financial Economics: With Applications to Investment, Insurance and Pensions.
+Society of Actuaries, Schaumburg, Illinois.
+Pearson, Karl (1895). Royal Society Proceedings 58, 241.
+ Serfling, Robert J. (1980). Approximation Theorems of Mathematical Statistics. John Wiley
+and Sons, New York.
+Sharpe, William F. (1964). Capital asset prices: A theory of market equilibrium under condi-
+tions of risk. Journal of Finance 19, no. 3, 425-- 42.
+Stigler, Steven M. (1986). The History of Statistics: The Measurement of Uncertainty before
+1900. Harvard University Press, Cambridge, Massachusetts.
+2.10 Exercises
+Sections 2.1-- 2.2
+ 2.1. Consider the following dataset
+\(i\) 1 2 3
+\(x_{i}\) 2 \(- 6\) 7.
+\(y_{i}\) 3 4 6
+\clearpage
+2.10 Exercises 55
+Fit a regression line using the method of least squares. Determine \(r , \, b_{1}\) .
+and \(b_{0}\) .
+2.2. A Perfect Relationship, yet Zero Correlation. Consider the quadratic
+relationship \(y=x^{2}\) , with data
+\(i\) 1 234 5
+\(x_{i}\) \(- 2\) \(- 1\) 0 12.
+\(y_{i}\) \(4\) 10 1 4
+ a. Produce a rough graph for this dataset.
+b. Check that the correlation coefficient is \(r=0\) .
+2.3. Boundedness of the Correlation Coeffcient. Use the following steps to
+ show that \(r\) is bounded by \(- 1\) and 1 (These steps are due to Koch, 1990).
+a. Let \(a\) and \(c\) be generic constants. Verify
+\[
+\begin{aligned} {0} & {{} \leq\frac{1} {n-1} \sum_{i=1}^{n} \left( a \frac{x_{i}-\overline{{x}}} {s_{x}}-c \frac{y_{i}-\overline{{y}}} {s_{y}} \right)^{2}} \\ {} & {{}=a^{2}+c^{2}-2 a c r .} \\ \end{aligned}
+\]
+b. Use the results in part (a) to show \(2 a c ( r \,-\, 1 ) \leq( a \,-\, c )^{2}\) .
+c. By taking \(a=c ,\) use the result in part (b) to show \(r \, \leq\, 1\) .
+d. By taking \(a=-c\) , use the results in part (b) to show \(r \geq-1\) .
+e. Under what conditions is \(r=-1\) ? Under what conditions is \(r=1 ?\)
+2.4. Regression Coeffcients Are Weighted Sums. Show that the intercept
+term, \(b_{0}\) , can be expressed as a weighted sum of the dependent variables.
+That is, show that \(b_{0}=\sum_{i=1}^{n} w_{i , 0} y_{i}\) . Further, express the weights in terms
+of the slope weights, \(w_{i}\) .
+2.5. Another Expression for the Slope as a Weighted Sum.
+ a. Using algebra, establish an alternative expression
+\[
+b_{1}={\frac{\sum_{i=1}^{n} {w e i g h t_{i} °} \times s l o p e_{i}} {\sum_{i=1}^{n} {w e i g h t_{i}}}} .
+\]
+Here, slope; is the slope between \(( x_{i} , \, y_{i} )\) and \(( \bar{x} , \, \bar{y} )\) . Give a precise form
+ for the weight weight: as a function of the explanatory variable \(x\) .
+b. Suppose that \(\bar{x} \,=4 , \, \bar{y} \,=3 , \, x_{1}=2\) and \(y_{1}=6 .\) Determine the slope and
+weight for the first observation, that is, \(s l o p e_{1}\) and weight .
+2.6. Consider two variables, \(y\) and \(x\) . Do a regression of \(y\) on \(x\) to get a slope
+coefficient that we call \(b_{1 , x , y}\) . Do another regression of \(x\) on \(y\) to get a
+slope coefficient that we call \(b_{1 , \, y , \, x}\) . Show that the correlation coefficient
+between \(x\) and \(y\) is the geometric mean of the two slope coefficients up to
+sign; that is, show that \(\left\vert r \right\vert=\sqrt{b_{1 , \, x \, , \, y} b_{1 , \, y , \, x}}\) .
+2.7. Regression through the Origin. Consider the model \(y_{i}=\beta_{1} x_{i} \,+\, \varepsilon_{i}\) , that
+ is, regression with one explanatory variable without the intercept term. This
+model is called regression through the origin because the true regression
+line \(\textrm{E} y=\beta_{1} x\) passes through the origin (the point \(( 0 , 0 )\) . For this model,
+\clearpage
+56 Basic Linear Regression
+the least squares estimate of \(\beta_{1}\) is that number \(b_{1}\) that minimizes the sum
+ of squares \(\mathrm{S S} ( b_{1}^{*} )=\sum_{i=1}^{n} \big( y_{i} \,-\, b_{1}^{*} x_{i} \big)^{2}\) .
+a. Verify that
+\[
+b_{1}=\frac{\sum_{i=1}^{n} x_{i} \, y_{i}} {\sum_{i=1}^{n} x_{i}^{2}} .
+\]
+b. Consider the model \(y_{i}=\beta_{1} z_{i}^{2}+\varepsilon_{i}\) a quadratic model passing through
+the origin. Use the result from part (a) to determine the least squares
+estimate of \(\beta_{1}\) .
+2.8. a. Show that
+\[
+\begin{aligned} {s_{y}^{2}=\frac{1} {n-1} \sum_{i=1}^{n} \left( y_{i}-\overline{{y}} \right)^{2}=\frac{1} {n-1} \left( \sum_{i=1}^{n} y_{i}^{2}-n \, \overline{{y}}^{2} \right) .} \\ \end{aligned}
+\]
+b. Follow the same steps to show \(\sum_{i \mathop{=} 1}^{n} \left( y_{i} \,-\, \overline{{y}} \right) ( x_{i} \,-\, \overline{{x}} )=\sum_{i \mathop{=} 1}^{n} x_{i} \, y_{i} \,-\)
+\(n \overline{{x}} ~ \overline{{y}}\) .
+c. Show that
+\[
+b_{1}=\frac{{\sum_{i=1}^{n} \left( y_{i} \,-\, \overline{{y}} \right) \left( x_{i} \,-\, \overline{{x}} \right)}} {{\sum_{i=1}^{n} \left( x_{i} \,-\, \overline{{x}} \right)^{2}}} .
+\]
+ d. Establish the commonly used formula
+\[
+b_{1}=\frac{\sum_{i=1}^{n} x_{i} \, y_{i} \,-n \overline{{x}} \, \, \overline{{y}}} {\sum_{i=1}^{n} x_{i}^{2} \,-n \overline{{x}}^{2}} .
+\]
+2.9. Interpretation of Coeffcients Associated with a Binary Explanatory
+Variable. Suppose that \(x_{i}\) only takes on the values \(\; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; 0 \; \; \; \; 0\) and 1. Out of the
+\(n\) observations, \(n_{1}\) take on the value \(x=0\) The \(n_{1}\) observations have an
+ average \(y\) value of \(\overline{{y}}_{1}\) The remaining \(n-n_{1}\) observations have value \(x=1\)
+@ EMPIRICAL and an average \(y\) value of \(\overline{{y}}_{2}\) . Use Exercise 2.8 to show that \(b_{1}=\overline{{y}}_{2}-\overline{{y}}_{1}\) .
+Filename is 2.10. Nursing Home Utilization. This exercise considers nursing home data
+"WiscNursingHome" provided by the Wisconsin Department of Health and Family Services
+(DHFS) and described in Exercise 1.2.
+ Part 1: Use cost-report year 2000 data, and do the following analysis.
+a. Correlations
+\(\mathrm{a ( i )}\) .Calculate the correlation between TPY and LOGTPY. Comment
+on your result.
+a(ii). Calculate the correlation among TPY, NUMBED, and
+SQRFOOT. Do these variables appear highly correlated?
+ a(iii). Calculate the correlation between TPY and NUMBED/10. Com-
+ment on your result.
+b.Scatter plots. Plot TPY versus NUMBED and TPY versus SQRFOOT.
+Comment on the plots.
+c. Basic linear regression.
+\(\mathrm{c ( i )}\) . Fit a basic linear regression model using TPY as the outcome
+variable and NUMBED as the explanatory variable. Summarize
+the fit by quoting the coefficient of determination, \(R^{2}\) , and the
+\(t\) -statistic for NUMBED.
+\clearpage
+2.10 Exercises 57
+c(ii). Repeat \(\mathrm{c ( i )}\) using SQRFOOT instead of NUMBED. In terms of
+\(R^{2}\) , which model fits better?
+c(iii). Repeat \(\mathrm{c ( i )}\) , using LOGTPY for the outcome variable and
+LOG(NUMBED) as the explanatory variable.
+\(\mathrm{c ( i v )}\) . Repeat c(iii) using LOGTPY for the outcome variable and
+LOG(SQRFOOT) as the explanatory variable.
+Part 2: Fit the model in Part \(\mathrm{1 . c} ( 1 )\) using 2001 data. Are the patterns
+ stable over time?
+Sections 2.3-- 2.4
+2.11. Suppose that, for a sample size of \(n=3\) you have \(e_{2}=2 4\) and \(e_{3}=-1\) .
+Determine \(e_{1}\) .
+2.12. Suppose that \(r \,=0 , \, n \,=\, 1 5\) , and \(s_{y}=1 0\) . Determine \(\mathit{S}\) .
+2.13. The Correlation Coeffiient and the Coeffiient of Determination. Use
+the following steps to establish a relationship between the coefficient of
+ determination and the correlation coefficient.
+a. Show that \(\widehat{y}_{i} \,-\, \overline{{y}}=b_{1} ( x_{i} \,-\, \overline{{x}} )\)
+c. Use part (b) to establish \(R^{2}=r^{2}\) \(S S=\sum_{i=1}^{n} \left( \widehat{y}_{i} \,-\, \overline{{y}} \right)^{2}=b_{1}^{2} s_{x}^{2} ( n \,-\, 1 ) .\)
+b. Use part (a) to show that Regress
+2.14. Show that the average residual is zero, that is, show that \(n^{-1} \sum_{i=1}^{n} e_{i}=0\)
+2.15. Correlation between Residuals and Explanatory Variables. Consider
+ a generic sequence of pairs of numbers \(( x_{1} , \, y_{1} ) , \, \dots, \, ( x_{n} , \, y_{n} )\) with the cor-
+ relation coefficient computed as \(r ( y , \, x )=\left[ ( n \,-\, 1 ) s_{y} s_{x} \right]^{-1} \sum_{i=1}^{n} \left( y_{i} \,-\, \overline{{y}} \right)\)
+\(( x_{i} \,-\, \overline{{x}} )\) .
+a. Suppose that either \(\overline{{y}}=0 , \overline{{x}}=0\) or both \(\overline{{x}}\) and \(\overline{{y}}=0\) . Then, check
+ that \(r ( y , \, x )=0\) implies \(\sum_{i=1}^{n} \, y_{i} \, x_{i} \,=0\) and vice versa.
+b. Show that the correlation between the residuals and the explanatory
+variables is zero. Do this by using part (a) of Exercise 2.13 to show
+that \(\sum_{i=1}^{n} \, x_{i} \, e_{i} \,=\, 0\) and then apply part (a).
+c. Show that the correlation between the residuals and fitted values is
+zero. Do this by showing that \(\sum_{i \mathop=1}^{n} \, \widehat{y}_{i} \, e_{i} \,=\, 0\) and then apply part (a).
+2.16. Correlation and \(t\) -Statistics. Use the following steps to establish a rela-
+ tionship between the correlation coefficient and the \(t\) -statistic for the slope.
+\(\mathrm{a}\) . Use algebra to check that
+\[
+R^{2}=1-\frac{n-2} {n-1} \frac{s^{2}} {s_{y}^{2}} .
+\]
+ b. Use part (a) to establish the following quick computational formula
+for \(s\) .
+\[
+s \:=\: s_{y} \sqrt{( 1 \:-\: r^{2} ) \frac{n \:-\: 1} {n \:-\: 2}} .
+\]
+c. Use part (b) to show that 
+\[
+t ( b_{1} )=\sqrt{n-2} \frac{r} {\sqrt{1-r^{2}}} .
+\]
+
+\clearpage
+58 Basic Linear Regression
+Sections 2.6-- 2.7
+ 2.17. Effects of an Unusual Point. You are analyzing a data set of size \(n \,=\, 1 0 0\)
+ You have just performed a regression analysis using one predictor variable
+ and notice that the residual for the 10th observation is unusually large.
+a. Suppose that, in fact, it turns out that \(e_{1 0}=8 s\) . What percentage of the
+error sum of squares, Error \(S \, S\) , is due to the 10th observation?
+b. Suppose that \(e_{1 0}=4 s\) What percentage of the error sum of squares.
+Error \(S \, S\) is due to the 10th observation?
+c. Suppose that you reduce the dataset to size \(n=2 0\) After running the
+regression, it turns out that we still have \(1 0=4 s\) . What percentage of
+the error sum of squares, Error \(\mathit{S S}\) , is due to the 10th observation?
+2.18. Consider a dataset consisting of 20 observations with the following sum-
+mary statistics: \(\overline{{x}}=0 , \; \overline{{y}}=9 , \; s_{x}=1\) , and \(s_{y}=1 0\) You run a regression
+ using using one variable and determine that \(s=7 .\) Determine the standard
+error of a prediction at \(x_{*}=1\)
+@ EMPIRICAL 2.19. Summary Statistics Can Hide Important Relationships. The data in
+Filename is Table 2.9 is due to Anscombe (1973). The purpose of this exercise is to
+"AnscombesData" demonstrate how plotting data can reveal important information that is not
+evident in numerical summary statistics.
+ a. Compute the averages and standard deviations of each column of data.
+Check that the averages and standard deviations of each of the \(x\)
+columns are the same, within two decimal places, and similarly for
+each of the \(y\) columns.
+b. Run four regressions, (i) \(y_{1}\) on \(x_{1}\) (ii) \(y_{2}\) on \(x_{1}\) , (iii) \(y_{3}\) on \(x_{1}\) , and
+\(( \mathrm{i v} ) ~ y_{4} ~ \mathrm{o n} ~ x_{2}\) . Verify, for each of the four regressions fits, that \(b_{0} \approx3 . 0\)
+\(b_{1} \approx0 . 5 , \, s \approx1 . 2 3 7\) , and \(R^{2} \approx0 . 6 7 7 ,\) within two decimal places.
+c. Produce scatter plots for each of the four regression models that you
+fit in part (b).
+d. Discuss the fact that the fitted regression models produced in part
+(b) imply that the four datasets are similar, though the four scatter plots
+ produced in part (c) yield a dramatically different story.
+Table 2.9
+Anscombe's (1973) Obs
+Data num \(x_{1}\) \(y_{1}\) \(y_{2}\) \(y_{3}\) \(x_{2}\) \(y_{4}\)
+1 10 8.04 9.14 7.46 8 6.58
+2 8 6.95 8.14 6.77 8 5.76
+3 13 7.58 8.74 12.74 8 7.71
+4 9 8.81 8.77 7.11 8 8.84
+5 11 8.33 9.26 7.81 8 8.47
+6 14 9.96 8.10 8.84 8 7.04
+7 6 7.24 6.13 6.08 8 5.25
+8 4 4.26 3.10 5.39 8 5.56
+9 12 10.84 9.13 8.15 8 7.91
+10 7 4.82 7.26 6.42 8 6.89
+11 5 5.68 4.74 5.73 19 12.50
+\clearpage
+2.10 Exercises 59
+2.20. Nursing Home Utilization. This exercise considers nursing home data@ EMPiRicAL
+provided by the Wisconsin Department of Health and Family Services Filename is
+(DHFS) and described in Exercises 1.2 and 2.10. "WiscNursingHome"
+You decide to examine the relationship between total patient years
+(LOGTPY) and the number of beds (LOGNUMBED), both in logarith-
+mic units, using cost-report year 2001 data.
+a. Summary statistics. Create basic summary statistics for each variable
+ Summarize the relationship through a correlation statistic and a scatter
+ plot.
+b. Fit the basic linear model. Cite the basic summary statistics,
+include the coefficient of determination, the regression coefficient for
+LOGNUMBED, and the corresponding \(t\) -statistic.
+c. Hypothesis testing. Test the following hypotheses at the \(5\) level
+of significance using a \(t\) -statistic. Also compute the corresponding
+\(p\) -value.
+\(\mathrm{c ( i )}\) . Test \(H_{0} : \beta_{1}=0\) versus \(H_{a} : \beta_{1} \neq0 .\)
+c(ii). Test \(H_{0} : \beta_{1}=1\) versus \(H_{a} : \beta_{1} \neq1 .\)
+\(\mathrm{c}\) (iii). Test \(H_{0} : \beta_{1}=1\) versus \(H_{a} : \beta_{1} > 1 .\)
+\(\mathrm{c ( i v )}\) . Test \(H_{0} : \beta_{1}=1\) versus \(H_{a} : \beta_{1} < 1\) .
+d. You are interested in the effect that a marginal change in
+LOGNUMBED has on the expected value of LOGTPY.
+\(\mathrm{d ( i )}\) .Suppose that there is a marginal change in LOGNUMBED of 2.
+Provide a point estimate of the expected change in LOGTPY.
+d(ii). Provide a 95\% confidence interval corresponding to the point
+estimate in part \(\mathrm{d ( i )}\) .
+d(ii). Provide a 99\% confidence interval corresponding to the point
+estimate in part \(\mathrm{d ( i )}\) .
+e. At a specified number of beds estimate \(x_{*}=1 0 0\) do these things:
+\(\mathrm{e ( i )}\) .Find the predicted value of LOGTPY.
+e(ii). Obtain the standard error of the prediction.
+e(iii). Obtain a 95\% prediction interval for your prediction.
+\(\mathrm{e ( i v )}\) .: Convert the point prediction in part \(\mathrm{e ( i )}\) and the prediction inter-
+val obtained in part e(iii) into total person years (through expo-
+nentiation).
+\(\mathrm{e ( v )}\) .Obtain a prediction interval as in part \(\mathrm{e ( i v )}\) , corresponding to a
+ 90\% level (in lieu of 95\%). @ EMPIRICAL
+2.21. Initial Public Offerings. As a financial analyst, you want to convince a Filename is
+client of the merits of investing in firms that have just entered a stock "IPO"
+exchange, as an initial public offering (IPO). Thus, you gather data on 116
+firms that priced during the six-month time frame of January 1 through
+ June 1, 1998. By looking at this recent historical data, you are able to
+ compute RETURN, the firm's one-year return (as a percentage).
+You are also interested in looking at financial characteristics of the firm
+ that may help you understand (and predict) the return. You initially examine
+ REVENUE, the firm's 1997 revenues in millions of dollars. Unfortunately,
+\clearpage
+60 Basic Linear Regression
+Table 2.10 Initial
+Public Offering Standard
+ Summary Statistics Mean Median Deviation Minimum Maximum
+RETURN 0.106 -0.130 0.824 0.938 4.333
+REV 134.487 39.971 261.881 0.099 1455.761
+LnREV 3.686 3.688 1.698 -2.316 7.283
+PRICEIPO 13.195 13.000 4.694 4.000 29.000
+this variable was not available for six firms. Thus, the statistics here are
+ for the 110 firms that have both REVENUES and RETURNS. In addition,
+Table 2.10 provides information on the (natural) logarithmic revenues,
+denoted as LnREV, and the initial price of the stock, denoted as PRICEIPO.
+a. You hypothesize that larger firms, as measured by revenues, are more
+stable and thus should enjoy greater returns. You have determined that
+the correlation between RETURN and REVENUE is \(- 0 . 0 1 7 5 .\)
+\(\mathrm{a ( i )}\) .Calculate the least squares fit using REVENUE to predict
+RETURN. Determine \(b_{0}\) and \(b_{1}\) .
+a(ii). For Hyperion Telecommunications, REVENUE is 95.55 (mil-
+ lions of dollars). Calculate the fitted RETURN using the regres-
+ sion fit in part \(\mathrm{a ( i )}\) .
+b. Table 2.11 summarizes a regression using logarithmic revenues and
+returns.
+b(i). Suppose instead that you use LnREVs to predict RETURN.
+Calculate the fitted RETURN under this regression model. Is
+this equal your answer in part a(ii)?
+ b(ii). Do logarithmic revenues significantly affect returns? To this end,
+ provide a formal test of hypothesis. State your null and alterna-
+tive hypotheses, decision-making criterion, and your decision-
+ making rule. Use a 10\% level of significance.
+b(iii). You conjecture that, other things equal, that firms with greater
+revenues will be more stable and thus enjoy a larger initial return.
+Thus, you wish to consider the null hypothesis of no relation
+ between LnREV and RETURN versus the alternative hypothesis
+ that there is a positive relation between LnREV and RETURN.
+To this end, provide a formal test of hypothesis. State your
+null and alternative hypotheses, decision-making criterion, and
+ decision-making rule. Use a 10\% level of significance.
+ c.Determine the correlation between LnREV and RETURN. Be sure to
+state whether the correlation is positive, negative, or zero.
+ d. You are considering investing in a firm that has LnRE \(\mathrm{V}=2\) (so revenues
+are \(e^{2}=7 . 3 8 9\) millions of dollars).
+d(i). Using the fitted regression model, determine the least squares
+point prediction.
+d(ii). Determine the 95\% prediction interval corresponding to your
+ prediction in part \(\mathrm{d ( i )}\) .
+\clearpage
+2.10 Exercises 61
+Table 2.11
+Standard Regression Results
+ Variable Coefficient Error \(t\) -Statistic from a Model Fit with
+Logarithmic
+INTERCEPT 0.438 0.186 2.35 Revenues
+LnREV \(- 0 . 0 9 0\) 0.046 \(- 1 . 9 7\)
+Notes: \(s \,=\, 0 . 8 1 3 6\) and \(R^{2}=0 . 0 3 4 5 2\)
+e. The \(R^{2}\) from the fitted regression model is a disappointing 3.5\%. Part of 
+ the difficulty is due to observation number 59, the Inktomi Corporation.
+Inktomi sales are 12th smallest of the data set, with \(\mathrm{L n R E V}=1 . 7 6\)
+(so revenues are \(e^{1 . 7 6}=5 . 7 9\) millions of dollars), yet it has the highest
+first-year return, with \(\mathrm{R E T U R N}=4 3 3 . 3 3 .\)
+\(\mathrm{e ( i )}\) . Calculate the residual for this observation.
+e(ii). What proportion of the unexplained variability (error sum of
+ squares) does this observation account for?
+\(\mathrm{\Theta( i i i )}\) Define the idea of a high leverage observation.
+\(\mathrm{e ( i v )}\) .: Would this observation be considered a high leverage observa-
+tion? Justify your answer. @ EMPIRICAL
+2.22. National Life Expectancies. We continue the analysis begun in Exercise Filename is
+1.7 by examining the relation between \(\boldsymbol{y}=\boldsymbol{L} \boldsymbol{I} \boldsymbol{F} \boldsymbol{E} \boldsymbol{X} \boldsymbol{P}\) and \(x \,=\, F E R T I L I T Y\) ."UNLifeExpectancy"
+ shown in Figure 2.12. Fit a linear regression model of LIFEEXP using the
+ explanatory variable \(x \,=\, F E R T I L I T Y .\)
+: Figure 2.12 Plot of 
+FERTILITY versus
+\(\S\) T 8 \(\omicron_{\infty}^{\circ}\) C LIFEEXP.
+2 0 Q 8
+1
+88
+: 0 0
+00:0
+o 0
+3 : \(\omicron^{\circ}\) .0.0
+1
+1 2 3 \(4 ~\) 5 6 7
+FERTILITY
+ a. The United States has a FERTILITY rate of 2.0. Determine the fitted
+life expectancy.
+b. The island nation Dominica did not report a FERTILITY rate and thus
+was not included in the regression. Suppose that its FERTILITY rate
+is 2.0. Provide a 95\% prediction interval for the life expectancy in
+Dominica.
+c. China has a FERTILITY rate of 1.7 and a life expectancy of 72.5
+ Determine the residual under the model. How many multiples of \(s\) is
+ this residual from zero?
+\clearpage
+62 Basic Linear Regression
+d.Suppose that your prior hypothesis is that the FERTILITY slope is --6.0
+ and you wish to test the null hypothesis that the slope has increased
+(i.e., the slope is greater than \(- 6 . 0\) . Test this hypothesis at the \(5 7_{o}\)
+ level of significance. Also compute an approximate \(p\) -value.
+ 2.11 Technical Supplement -- Elements of Matrix Algebra
+Examples are an excellent tool for introducing technical topics such as regression.
+However, this chapter has also used algebra as well as basic probability and
+statistics to give you further insights into regression analysis. Going forward,
+we will be studying multivariate relationships. With many things happening
+concurrently in several dimensions, algebra is no longer useful for providing
+insights. Instead, we will need matrix algebra. This supplement provides a brief
+ introduction to matrix algebra to allow you to study the linear regression chapters
+ of this text. It re-introduces basic linear regression to give you a feel for things that
+will be coming up in subsequent chapters when we extend basic linear regression
+ to the multivariate case. Appendix A3 defines additional matrix concepts.
+ 2.11.1 Basic Definitions
+A matrix is a rectangular array of numbers arranged in rows and columns (the
+ plural of matrix is matrices). For example, consider the income and age of three
+people:
+\[
+\mathbf{A}=\begin{array} {c c} {\quad C o l \ 1} & {C o l \ 2} \\ {R o w \ 1} \\ {R o w \ 2 \left( \begin{matrix} {6 , 0 0 0} & {2 3} \\ {1 3 , 0 0 0} & {4 7} \\ {1 1 , 0 0 0} & {3 5} \\ \end{matrix} \right)} \\ \end{array} .
+\]
+Here, column \(1\) represents income, and column \(2\) represents age. Each row
+corresponds to an individual. For example, the first individual is 23 years old
+with an income of \$6,000.
+The number of rows and columns is called the dimension of the matrix. For
+example, the dimension of the matrix \(\mathbf{A}\) above is \(3 \times2\) (read \(3 \mathrm{\iota\iota\ b y \iota\iota\iota\iota}\) . This
+stands for three rows and two columns. If we were to represent the income and
+ age of 100 people, then the dimension of the matrix would be \(1 0 0 \times2\) .
+It is convenient to represent a matrix using the notation
+\[
+\mathbf{A}=\left( \begin{matrix} {a_{1 1}} & {a_{1 2}} \\ {a_{2 1}} & {a_{2 2}} \\ {a_{3 1}} & {a_{3 1}} \\ \end{matrix} \right) .
+\]
+Here, \(a_{i j}\) is the symbol for the number in the ith row and \(j\) th column of \({\bf A}\) . In
+general, we work with matrices of the form
+\[
+\mathbf{A}=\left( \begin{matrix} {a_{1 1}} & {a_{1 2}} & {\cdots} & {a_{1 k}} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {a_{n 1}} & {a_{n 2}} & {\cdots} & {a_{n k}} \\ \end{matrix} \right) .
+\]
+In this case, the matrix A has dimension \(n \times k\) .
+\clearpage
+2.11 Technical Supplement - Elements of Matrix Algebra 63
+A vector is a special matrix. A row vector is a matrix containing only 1 row
+( \(n=1\) ). A column vector is a matrix containing only one column ( \(k=1\) . For
+example,
+\[
+\mathrm{c o l u m n ~ v e c t o r} \to\left( \begin{matrix} {2} \\ {3} \\ {4} \\ {5} \\ {6} \\ \end{matrix} \right) \quad\mathrm{r o w ~ v e c t o r} \to\left( \begin{matrix} {2} & {3} & {4} & {5} & {6} \\ \end{matrix} \right) .
+\]
+Notice that the row vector takes much less room on a printed page than the
+corresponding column vector. A basic operation that relates these two quantities
+ is the transpose. The transpose of a matrix A is defined by interchanging the rows
+ and columns and is denoted by \({\mathbf{A}^{\prime}} \ ( \mathrm{o r} \ {\mathbf{A}^{T}} )\) ). For example,
+\[
+\begin{array} {c c} {\mathbf{A}=\left( \begin{matrix} {6 0 0 0} & {2 3} \\ {1 3 {,} 0 0 0} & {4 7} \\ {1 1 {,} 0 0 0} & {3 5} \\ \end{matrix} \right)} & {\mathbf{A}^{\prime}=\left( \begin{matrix} {6 0 0 0} & {1 3 {,} 0 0 0} & {1 1 {,} 0 0 0} \\ {2 3} & {4 7} & {3 5} \\ \end{matrix} \right) .} \\ \end{array}
+\]
+Thus, if \({\bf A}\) has dimension \(n \times k\) then \(\mathbf{A^{\prime}}\) has dimension \(k \times n\) .
+2.11.2 Some Special Matrices
+(i) A square matrix is a matrix where the number of rows equals the number
+of columns; that is, \(n=k\) .
+(ii) The diagonal numbers of a square matrix are the numbers of a matrix
+ where the row number equals the column number, for example, \(a_{1 1} , \, a_{2 2}\) ,
+ and so on. A diagonal matrix is a square matrix where all nondiagonal
+numbers are equal to \(0\) . For example,
+\[
+\mathbf{A}=\left( \begin{matrix} {-1} & {0} & {0} \\ {0} & {2} & {0} \\ {0} & {0} & {3} \\ \end{matrix} \right) .
+\]
+(iii) An identity matrix is a diagonal matrix where all the diagonal numbers
+ are equal to 1. This special matrix is often denoted by \(\mathbf{I}\)
+(iv) A symmetric matrix is a square matrix \(\mathbf{A}\) such that the matrix remains
+unchanged if we interchange the roles of the rows and columns. More
+formally, a matrix \({\bf A}\) is symmetric if \(\mathbf{A}=\mathbf{A^{\prime}}\) . For example,
+\[
+{\bf A}=\left( \begin{matrix} {1} & {2} & {3} \\ {2} & {4} & {5} \\ {3} & {5} & {1 0} \\ \end{matrix} \right)={\bf A}^{\prime} .
+\]
+Note that a diagonal matrix is a symmetric matrix.
+ 2.11.3 Basic Operations
+ Scalar Multiplication
+Let \({\bf A}\) be a \(n \times k\) matrix and let \(c\) be a real number. That is, a real number is a
+\(1 \times1\) matrix and is also called a scalar. Multiplying a scalar \(c\) by a matrix \(\mathbf{A}\) is
+\clearpage
+ 64 Basic Linear Regression
+denoted by \(c {\bf A}\) and defined by
+\[
+c \mathbf{A}=\left( \begin{matrix} {c a_{1 1}} & {c a_{1 2}} & {\cdots} & {c a_{1 k}} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {c a_{n 1}} & {c a_{n 2}} & {\cdots} & {c a_{n k}} \\ \end{matrix} \right) .
+\]
+For example, suppose that \(c=1 0\) and
+\[
+\mathbf{A}=\left( \! \! \begin{array} {c c} {1} & {2} \\ {6} & {8} \\ \end{array} \! \! \right) \quad\mathrm{t h e n} \quad\mathbf{B}=c \mathbf{A}=\left( \! \! \begin{array} {c c} {1 0} & {2 0} \\ {6 0} & {8 0} \\ \end{array} \! \! \right) .
+\]
+ Note that \(c \mathbf{A}=\mathbf{A} c\) .
+ Addition and Subtraction of Matrices
+Let \(\mathbf{A}\) and \({\bf B}\) be matrices with dimensions \(n \times k\) . Use \(a_{i j}\) and \(b_{i j}\) to denote the
+numbers in the ith row and \(j\) th column of \(\mathbf{A}\) and \({\bf B}\) , respectively. Then, the
+matrix \(\mathbf{C}=\mathbf{A}+\mathbf{B}\) is defined to be the matrix with \(( a_{i j}+b_{i j} )\) in the \(i\) th row and
+\(j\) th column. Similarly, the matrix \(\mathbf{C}=\mathbf{A}-\mathbf{B}\) is defined to be the matrix with
+\(( a_{i j} \,-\, b_{i j} )\) in the \(i\) th row and \(j\) th column. Symbolically, we write this as the
+following:
+\[
+\mathrm{I f} \ \ \ \mathbf{A}=\left( a_{i j} \right)_{i j} \ \ \ \mathrm{a n d} \ \ \ \mathbf{B}=\left( b_{i j} \right)_{i j} \, , \, \mathrm{t h e n}
+\]
+\[
+\mathbf{C}=\mathbf{A}+\mathbf{B}=\left( a_{i j} \,+\, b_{i j} \right)_{i j} \ \ \mathrm{~ a n d ~} \ \ \mathbf{C}=\mathbf{A}-\mathbf{B}=\left( a_{i j} \,-\, b_{i j} \right)_{i j} .
+\]
+For example, consider
+\[
+\mathbf{A}=\left( \! \! \begin{array} {c c} {2} & {5} \\ {4} & {1} \\ \end{array} \! \! \right) \ \ \ \ \mathbf{B}=\left( \! \! \begin{array} {c c} {4} & {6} \\ {8} & {1} \\ \end{array} \! \! \right) .
+\]
+Then
+\[
+\mathbf{A}+\mathbf{B}=\left( \! \! \begin{array} {c c} {6} & {1 1} \\ {1 2} & {2} \\ \end{array} \! \! \right) \ \ \ \ \mathbf{A}-\mathbf{B}=\left( \! \! \begin{array} {c c} {-2} & {-1} \\ {-4} & {0} \\ \end{array} \! \! \right) .
+\]
+Basic Linear Regression Example of Addition and Subtraction. Now, recall
+ that the basic linear regression model can be written as \(n\) equations:
+\[
+y_{1}=\beta_{0}+\beta_{1} x_{1}+\varepsilon_{1}
+\]
+:
+\[
+y_{n}=\beta_{0}+\beta_{1} x_{n}+\varepsilon_{n} .
+\]
+We can define
+\[
+\mathbf{y}=\left( \begin{matrix} {y_{1}} \\ {\vdots} \\ {y_{n}} \\ \end{matrix} \right) \quad\boldsymbol{\varepsilon}=\left( \begin{matrix} {\varepsilon_{1}} \\ {\vdots} \\ {\varepsilon_{n}} \\ \end{matrix} \right) \quad\quad\mathrm{a n d} \quad\textrm{E} \mathbf{y}=\left( \begin{matrix} {\beta_{0}+\beta_{1} x_{1}} \\ {\vdots} \\ {\beta_{0}+\beta_{1} x_{n}} \\ \end{matrix} \right) .
+\]
+With this notation, we can express the \(n\) equations more compactly as \(\mathbf{y} \!=\! \textrm{E} \mathbf{y} \!+\! \boldsymbol{\varepsilon}\) .
+\clearpage
+ 2.11 Technical Supplement - Elements of Matrix Algebra 65
+ Matrix Multiplication
+In general, if \(\mathbf{A}\) is a matrix of dimension \(n \times c\) and \({\bf B}\) is a matrix of dimension
+\(c \times k\) , then \(\mathbf{C}=\mathbf{A} \mathbf{B}\) is a matrix of dimension \(n \times k\) and is defined by
+\[
+\begin{aligned} {\mathbf{C}=\mathbf{A} \mathbf{B}=} & {{} \left( \sum_{s=1}^{c} a_{i \, s} b_{s j} \right)_{i j} .} \\ \end{aligned}
+\]
+For example consider the \(2 \times2\) matrices
+\[
+\mathbf{A}=\left( \begin{matrix} {2} & {5} \\ {4} & {1} \\ \end{matrix} \right) \quad\mathrm{a n d} \quad\mathbf{B}=\left( \begin{matrix} {4} & {6} \\ {8} & {1} \\ \end{matrix} \right) .
+\]
+The matrix AB has dimension \(2 \times2 .\) To illustrate the calculation, consider the
+number in the first row and second column of AB. By the rule presented ear-
+lier, with \(i \ =1\) and \(j=2\) the corresponding element of AB is \(\sum_{s=1}^{2} a_{1 s} b_{s 2}=\)
+\(a_{1 1} b_{1 2} \,+\, a_{1 2} b_{2 2}=2 ( 6 )+\, 5 ( 1 )=1 7 .\) The other calculations are summarized as
+\[
+\mathbf{A B}=\left( \begin{matrix} {2 ( 4 )+5 ( 8 )} & {2 ( 6 )+5 ( 1 )} \\ {4 ( 4 )+1 ( 8 )} & {4 ( 6 )+1 ( 1 )} \\ \end{matrix} \right)=\left( \begin{matrix} {4 8} & {1 7} \\ {2 4} & {2 5} \\ \end{matrix} \right) .
+\]
+As another example, suppose
+\[
+\mathbf{A}=\left( \begin{matrix} {1} & {2} & {4} \\ {0} & {5} & {8} \\ \end{matrix} \right) \quad\mathbf{B}=\left( \begin{matrix} {3} \\ {5} \\ {2} \\ \end{matrix} \right) .
+\]
+Because \({\bf A}\) has dimension \(2 \times3\) and \({\bf B}\) has dimension \(3 \times1\) this means that the
+ product AB has dimension \(2 \times1\) The calculations are summarized as
+\[
+\mathbf{A B}=\left( \begin{matrix} {1 ( 3 )+2 ( 5 )+4 ( 2 )} \\ {0 ( 3 )+5 ( 5 )+( 2 )} \\ \end{matrix} \right)=\left( \begin{matrix} {2 1} \\ {4 1} \\ \end{matrix} \right) .
+\]
+For some additional examples, we have
+\[
+\left( \begin{matrix} {4} & {2} \\ {5} & {8} \\ \end{matrix} \right) \left( \begin{matrix} {a_{1}} \\ {a_{2}} \\ \end{matrix} \right)=\left( \begin{matrix} {4 a_{1}+2 a_{2}} \\ {5 a_{1}+8 a_{2}} \\ \end{matrix} \right) .
+\]
+\[
+2 \quad3 \quad5 \bigr) \left( \begin{matrix} {2} \\ {3} \\ {5} \\ \end{matrix} \right)=2^{2}+3^{2}+5^{2}=3 8 \quad\ \left( \begin{matrix} {2} \\ {3} \\ {5} \\ \end{matrix} \right) \left( \begin{matrix} {2} & {3} & {5} \\ \end{matrix} \right)=\left( \begin{matrix} {4} & {6} & {1 0} \\ {6} & {9} & {1 5} \\ {1 0} & {1 5} & {2 5} \\ \end{matrix} \right) .
+\]
+In general, you see that \(\mathbf{A B} \neq\mathbf{B} \mathbf{A}\) in matrix multiplication, unlike multiplication
+of scalars (real numbers). Further, we remark that the identity matrix serves
+the role of " one"in matrix multiplication, in that \(\mathbf{A I}=\mathbf{A}\) and \(\mathbf{I A}=\mathbf{A}\) for any
+matrix \({\bf A}\) providing that the dimensions are compatible to allow matrix multipli-
+cation.
+\clearpage
+66 Basic Linear Regression
+ Basic Linear Regression Example of Matrix Multiplication. Define
+\[
+\mathbf{X}=\left( \! \! \begin{array} {c c} {1} & {x_{1}} \\ {\vdots} & {\vdots} \\ {1} & {x_{n}} \\ \end{array} \! \! \right) \ \ \mathrm{a n d} \ \ \boldsymbol{\beta}=\left( \! \! \begin{array} {c} {\beta_{0}} \\ {\beta_{1}} \\ \end{array} \! \! \right) , \mathrm{t o ~ g e t ~} \mathbf{X} \boldsymbol{\beta}=\left( \! \! \begin{array} {c} {\beta_{0}+\beta_{1} x_{1}} \\ {\vdots} \\ {\beta_{0}+\beta_{1} x_{n}} \\ \end{array} \! \! \right)=\mathrm{E} \ \mathbf{y} .
+\]
+Thus, this yields the familiar matrix expression of the regression model,
+\(\mathbf{y}=\mathbf{X} \boldsymbol{\beta}+\boldsymbol{\varepsilon}\) . Other useful quantities include
+\[
+\mathbf{y}^{\prime} \mathbf{y}=\left( \! \! \begin{array} {c c c} {y_{1}} & {\cdots} & {y_{n}} \\ \end{array} \! \! \right) \left( \! \! \begin{array} {c} {y_{1}} \\ {\vdots} \\ {y_{n}} \\ \end{array} \! \! \right)=y_{1}^{2}+\cdots+y_{n}^{2}=\sum_{i=1}^{n} y_{i}^{2} ,
+\]
+\[
+\mathbf{X}^{\prime} \mathbf{y}=\left( \! \! \begin{array} {c c c} {1} & {\cdots} & {1} \\ {x_{1}} & {\cdots} & {x_{n}} \\ \end{array} \! \! \right) \left( \! \! \begin{array} {c} {y_{1}} \\ {\vdots} \\ {y_{n}} \\ \end{array} \! \! \right)=\left( \! \! \begin{array} {c} {\sum_{i=1}^{n} y_{i}} \\ {\sum_{i=1}^{n} x_{i} \, y_{i}} \\ \end{array} \! \! \right) ,
+\]
+and
+\[
+\mathbf{X}^{\prime} \mathbf{X}=\left( \begin{matrix} {1} & {\cdots} & {1} \\ {x_{1}} & {\cdots} & {x_{n}} \\ \end{matrix} \right) \left( \begin{matrix} {1} & {x_{1}} \\ {\vdots} & {\vdots} \\ {1} & {x_{n}} \\ \end{matrix} \right)=\left( \begin{matrix} {n} & {\sum_{i=1}^{n} x_{i}} \\ {\sum_{i=1}^{n} x_{i}} & {\sum_{i=1}^{n} x_{i}^{2}} \\ \end{matrix} \right) .
+\]
+Note that \(\mathbf{X}^{\prime} \mathbf{X}\) is a symmetric matrix.
+Matrix Inverses
+In matrix algebra, there is no concept of " division." Instead, we extend the concept
+of " reciprocals"of real numbers. To begin, suppose that \(\mathbf{A}\) is a square matrix of
+dimension \(k \times k\) and let \(\mathbf{I}\) be the \(k \times k\) identity matrix. If there exists a \(k \times k\)
+matrix \({\bf B}\) such that \(\mathbf{A} \mathbf{B}=\mathbf{I}=\mathbf{B} \mathbf{A}\) , then \({\bf B}\) is called the inverse of \(\mathbf{A}\) and is written
+\[
+{\bf B}={\bf A}^{-1} .
+\]
+Now, not all square matrices have inverses. Further, even when an inverse exists,
+ it may not be easy to compute by hand. One exception to this rule are diagonal
+matrices. Suppose that \({\bf A}\) is diagonal matrix of the form
+\[
+\mathbf{A}=\left( \! \! \begin{array} {c c c} {a_{1 1}} & {\cdots} & {0} \\ {\vdots} & {\ddots} & {\vdots} \\ {0} & {\cdots} & {a_{k k}} \\ \end{array} \! \! \right) . \; \; \; \mathrm{T h e n} \; \; \; \mathbf{A}^{-1} \!=\! \left( \! \! \begin{array} {c c c} {{\frac{1} {a_{1 1}}}} & {\cdots} & {0} \\ {\vdots} & {\ddots} & {\vdots} \\ {0} & {\cdots} & {{\frac{1} {a_{k k}}}} \\ \end{array} \! \! \right) .
+\]
+For example,
+\[
+\begin{array} {c c c c} {\left( \begin{matrix} {2} & {0} \\ {0} & {-1 9} \\ \end{matrix} \right)} & {\left( \begin{matrix} {\frac{1} {2}} & {0} \\ {0} & {-\frac{1} {1 9}} \\ \end{matrix} \right)} & {=} & {\left( \begin{matrix} {1} & {0} \\ {0} & {1} \\ \end{matrix} \right)} \\ {\bf{A}} & {\bf{A}^{-1}} & {=} & {\bf{I}} \\ \end{array} .
+\]
+
+\clearpage
+2.11 Technical Supplement - Elements of Matrix Algebra 67
+In the case of a matrix of dimension \(2 \times2\) , the inversion procedure can be
+ accomplished by hand easily even when the matrix is not diagonal. In the \(2 \times2\)
+case, we suppose that if
+\[
+\mathbf{A}=\left( \! \! \begin{array} {c c} {a} & {b} \\ {c} & {d} \\ \end{array} \! \! \right) , \quad\mathrm{t h e n} \quad\mathbf{A}^{-1} {=} \frac{1} {a d \,-\, b c} \left( \! \! \begin{array} {c c} {d} & {-b} \\ {-c} & {a} \\ \end{array} \! \! \right) .
+\]
+Thus, for example, if
+\[
+\mathbf{A}=\left( \begin{matrix} {2} & {2} \\ {3} & {4} \\ \end{matrix} \right) \ \ \ \mathrm{t h e n} \ \ \ \mathbf{A}^{-1} {=} \frac{1} {2 ( 4 )-2 ( 3 )} \left( \begin{matrix} {4} & {-2} \\ {-3} & {2} \\ \end{matrix} \right)=\left( \begin{matrix} {2} & {-1} \\ {-3 / 2} & {1} \\ \end{matrix} \right) .
+\]
+As a check, we have
+\[
+{\bf A} {\bf A}^{-1}=\left( {\begin{matrix} {2} & {2} \\ {3} & {4} \\ \end{matrix}} \right) \left( {\begin{matrix} {2} & {-1} \\ {-3 / 2} & {1} \\ \end{matrix}} \right)=\left( {2 ( 2 )-2 ( 3 / 2 )} & {2 (-1 )+2 ( 1 )} \\ {3 ( 2 )-4 ( 3 / 2 )} & {3 (-1 )+4 ( 1 )} \\ \end{matrix} \right)=\left( {\begin{matrix} {1} & {0} \\ {0} & {1} \\ \end{matrix}} \right)={\bf I} .
+\]
+Basic Linear Regression Example of Matrix Inverses. With
+\[
+\mathbf{X}^{\prime} \mathbf{X}=\! \left( \begin{matrix} {n} & {\sum_{i=1}^{n} x_{i}} \\ {\sum_{i=1}^{n} x_{i}} & {\sum_{i=1}^{n} x_{i}^{2}} \\ \end{matrix} \right) ,
+\]
+we have
+\[
+\left( \mathbf{X}^{*} \mathbf{X} \right)^{-1} \!=\! \! \frac{1} {n \, \sum_{i=1}^{n} x_{i}^{2}-\left( \sum_{i=1}^{n} x_{i} \right)^{2}} \left( \begin{matrix} {\sum_{i=1}^{n} x_{i}^{2}} & {-\sum_{i=1}^{n} x_{i}} \\ {-\sum_{i=1}^{n} x_{i}} & {n} \\ \end{matrix} \right) .
+\]
+To simplify this expression, recall that \(\overline{{x}}=n^{-1} \sum_{\substack{i=1}}^{n} x_{i}\) . Thus,
+\[
+{\bf( X^{\prime} {\bf X} )}^{-1} \!=\! \frac{1} {\sum_{i=1}^{n} x_{i}^{2}-n \overline{{x}}^{2}} \left( \begin{matrix} {n^{-1} \sum_{i=1}^{n} x_{i}^{2}} & {-\overline{{x}}} \\ {-\overline{{x}}} & {1} \\ \end{matrix} \right) . \tag{2.9}
+\]
+ Section 3.1 will discuss the relation \(\mathbf{b}=\left( \mathbf{X}^{\prime} \mathbf{X} \right)^{-1} \mathbf{X}^{\prime} \mathbf{y}\) To illustrate the calcu-
+lation, we have
+\[
+\mathbf{b}=\left( \mathbf{X}^{\prime} \mathbf{X} \right)^{-1} \mathbf{X}^{\prime} \mathbf{y}=\! \! \frac{1} {\sum_{i=1}^{n} x_{i}^{2}-n \overline{{x}}^{2}} \left( \! \! \begin{array} {c c} {n^{-1} \sum_{i=1}^{n} x_{i}^{2}} & {-\overline{{x}}} \\ {-\overline{{x}}} & {1} \\ \end{array} \! \! \right) \left( \! \! \begin{array} {c} {\sum_{i=1}^{n} y_{i}} \\ {\sum_{i=1}^{n} x_{i} y_{i}} \\ \end{array} \! \! \right)
+\]
+\[
+= \frac{1} {\sum_{i=1}^{n} x_{i}^{2}-n \overline{x}^{2}} \left( \begin{aligned} {\sum_{i=1}^{n} \left( \overline{y} x_{i}^{2}-\overline{x} x_{i} \, y_{i} \right)} \\ {\sum_{i=1}^{n} x_{i} \, y_{i}-n \overline{x} \, y} \\ \end{aligned} \right)=\left( \begin{matrix} {b_{0}} \\ {b_{1}} \\ \end{matrix} \right) .
+\]
+
+\clearpage
+68 Basic Linear Regression
+From this expression, we may see
+\[
+b_{1}=\frac{\sum_{i=1}^{n} x_{i} \, y_{i} \,-n \overline{{x}} \, \overline{{y}}} {\sum_{i=1}^{n} x_{i}^{2}-n \overline{{x}}^{2}} ,
+\]
+and
+\[
+b_{0}=\frac{\overline{{y}} \sum_{i=1}^{n} x_{i}^{2}-\overline{{x}} \sum_{i=1}^{n} x_{i} \, y_{i}} {\sum_{i=1}^{n} x_{i}^{2}-n \overline{{x}}^{2}}=\frac{\overline{{y}} \left( \sum_{i=1}^{n} x_{i}^{2}-n \overline{{x}}^{2} \right)-\overline{{x}} \left( \sum_{i=1}^{n} x_{i} \, y_{i}-n \overline{{x}} \, y \right)} {\sum_{i=1}^{n} x_{i}^{2}-n \overline{{x}}^{2}}=\overline{{y}}-b_{1} \overline{{x}} .
+\]
+These are the usual expressions for the slope \(b_{1}\) (Exercise 2.8) and intercept \(b_{0}\) .
+ 2.11.4 Random Matrices
+Expectations. Consider a matrix of random variables
+\[
+{\bf U}=\left( \begin{matrix} {u_{1 1}} & {u_{1 2}} & {\cdots} & {u_{1 c}} \\ {u_{2 1}} & {u_{2 2}} & {\cdots} & {u_{2 c}} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {u_{n 1}} & {u_{n 2}} & {\cdots} & {u_{n c}} \\ \end{matrix} \right) .
+\]
+When we write the expectation of a matrix, this is shorthand for the matrix
+ of expectations. Specifically, suppose that the joint probability function of \(u_{1 1}\)
+\(u_{1 2} , \, \ldots, \, u_{1 c} , \, \ldots, \, u_{n 1} , \, \ldots, \, u_{n c}\) is available to define the expectation operator.
+Then we define
+\[
+\textrm{E} \mathbf{U}=\left( \begin{matrix} {\mathrm{E} u_{1 1}} & {\mathrm{E} u_{1 2}} & {\cdots} & {\mathrm{E} u_{1 c}} \\ {\mathrm{E} u_{2 1}} & {\mathrm{E} u_{2 2}} & {\cdots} & {\mathrm{E} u_{2 c}} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {\mathrm{E} u_{n 1}} & {\mathrm{E} u_{n 2}} & {\cdots} & {\mathrm{E} u_{n c}} \\ \end{matrix} \right) .
+\]
+As an important special case, consider the joint probability function for the
+ random variables \(y_{1} , \dots, \, y_{n}\) and the corresponding expectations operator. Then
+\[
+\textrm{E} \mathbf{y}=\mathrm{E} \left( \begin{matrix} {y_{1}} \\ {\vdots} \\ {y_{n}} \\ \end{matrix} \right)=\left( \begin{matrix} {\textrm{E} y_{1}} \\ {\vdots} \\ {\textrm{E} y_{n}} \\ \end{matrix} \right) .
+\]
+\(\mathrm{B y}\) the linearity of expectations, for a nonrandom matrix \(\mathbf{A}\) and vector \({\bf B}\) , we have
+\(\textrm{E} ( \mathbf{A} \textbf{y}+\mathbf{B} )=\mathbf{A} \textrm{E} \textbf{y}+\mathbf{B}\) .
+Variances. We can also work with second moments of random vectors. The
+ variance of a vector of random variables is called the variance-covariance matrix.
+It is defined by
+\[
+\mathrm{V a r ~} \mathbf{y}=\mathrm{E} ( ( \mathbf{y}-\mathrm{E} \, \mathbf{y} ) ( \mathbf{y}-\mathrm{E} \, \mathbf{y} )^{\prime} ) . \tag{2.10}
+\]
+
+\clearpage
+2.11 Technical Supplement - Elements of Matrix Algebra 69
+That is, we can express
+\[
+\begin{aligned} {\mathrm{V a r ~} \mathbf{y}} & {{}=\mathrm{E} \left( \left( \begin{matrix} {y_{1}-\mathrm{E} \, y_{1}} \\ {\vdots} \\ {y_{n}-\mathrm{E} \, y_{n}} \\ \end{matrix} \right) \bigl( y_{1}-\mathrm{E} \, y_{1}} & {\cdots} & {y_{n}-\mathrm{E} \, y_{n} \, \bigr) \right)} \\ {} & {{}=\left( \begin{matrix} {\mathrm{V a r ~} y_{1}} & {\mathrm{C o v} ( y_{1} , \, y_{2} )} & {\cdots} & {\mathrm{C o v} ( y_{1} , \, y_{n} )} \\ {\mathrm{C o v} ( y_{2} , \, y_{1} )} & {\mathrm{V a r ~} y_{2}} & {\cdots} & {\mathrm{C o v} ( y_{2} , \, y_{n} )} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {\mathrm{C o v} ( y_{n} , \, y_{1} )} & {\mathrm{C o v} ( y_{n} , \, y_{2} )} & {\cdots} & {\mathrm{V a r ~} y_{n}} \\ \end{matrix} \right) ,} \\ \end{aligned}
+\]
+because \(\mathrm{E} ( ( y_{i} \,-\mathrm{E} \, y_{i} ) ( y_{j} \,-\mathrm{E} \, y_{j} ) )=\mathrm{C o v} ( y_{i} , \, y_{j} )\) for \(i \neq j\) and \(\mathrm{C o v} ( y_{i} , \, y_{i} )=\)
+Var \(y_{i}\) .
+In the case that \(y_{1} , \dots, \, y_{n}\) are mutually uncorrelated, we have that \(\mathrm{C o v} ( y_{i}\)
+\(y_{j} )=0\) for \(i \neq j\) and thus
+\[
+\mathrm{V a r ~} \mathbf{y}=\! \left( \! \! \begin{array} {c c c c} {\mathrm{V a r ~} y_{1}} & {0} & {\cdots} & {0} \\ {0} & {\mathrm{V a r ~} y_{2}} & {\cdots} & {0} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {0} & {0} & {\cdots} & {\mathrm{V a r ~} y_{n}} \\ \end{array} \! \! \right) .
+\]
+Further, if the variances are identical so that Var \(y_{i}=\sigma^{2}\) then we can write
+Var \(\mathbf{y}=\sigma^{2} \mathbf{I}\) where \(\mathbf{I}\) is the \(n \times n\) identity matrix. For example, if \(y_{1} , \dots, \, y_{n}\) are
+i.i.d., then Var \(\mathbf{y}=\sigma^{2} \mathbf{I} .\)
+From equation (2.10), it can be shown that
+\[
+\mathrm{V a r} \left( {\bf A y+B} \right)=\mathrm{V a r} \left( {\bf A y} \right)={\bf A} \left( {\mathrm{V a r} \; {\bf y}} \right) {\bf A^{\prime}} . \tag{2.11}
+\]
+For example, if \({' {\bf A}=( a_{1} , \, a_{2} , \, \ldots, \, a_{n} )}={\bf a}^{\prime} \, \mathrm{a n d} \, {\bf B=} \, {\bf0} ,\) then equation (2.11) reduces
+to
+\[
+\begin{aligned} {\mathrm{V a r} \left( \sum_{i=1}^{n} a_{i} \, y_{i} \right)} & {{}=\mathrm{V a r} \left( \mathbf{a}^{\prime} \, \mathbf{y} \right)=\mathbf{a}^{\prime} \left( \mathrm{V a r} \, \mathbf{y} \right) \mathbf{a}=\left( a_{1} , \, a_{2} , \, \dots, \, a_{n} \right) \left( \mathrm{V a r} \, \mathbf{y} \right) \left( \begin{matrix} {a_{1}} \\ {\vdots} \\ {a_{n}} \\ \end{matrix} \right)} \\ {} & {{}=\sum_{i=1}^{n} a_{i}^{2} \mathrm{V a r} \, \, y_{i} \, \,+\, \, 2 \sum_{i=2}^{n} \sum_{j=1}^{i-1} a_{i} a_{j} \mathrm{C o v} ( y_{i} , \, y_{j} ) .} \\ \end{aligned}
+\]
+ Defnition -- Multivariate Normal Distribution. A vector of random variables
+\(\mathbf{y}=( y_{1} , \, \ldots, \, y_{n} )^{\prime}\) is said to be multivariate normal if all linear combinations of
+ the form \(\sum_{i=1}^{n} a_{i} \, y_{i}\) are normally distributed. In this case, we write \({\bf y} \sim N ( {\boldsymbol\mu} , \, \Sigma) ,\)
+where \(\boldsymbol{\mu}=\operatorname{E} {\bf y}\) is the expected value of \({\bf y}\) and \(\Sigma=\mathrm{V a r} \, {\bf y}\) is the variance-covariance
+matrix of \({\bf y}\) . From the definition, we have that \(\mathbf{y} \sim N ( \boldsymbol{\mu} , \, \Sigma)\) implies that \(\mathbf{a}^{\prime} \mathbf{y} \sim\)
+mean \(\mu\sum_{i=1}^{n} a_{i}\) and variance \(\sigma^{2} \sum_{i=1}^{n} a_{i}^{2}\) \(\sum_{i=1}^{n} a_{i} \, y_{i}\) is distributed normally with
+\(N ( \mathbf{a}^{\prime} \boldsymbol{\mu} , \, \mathbf{a}^{\prime} \boldsymbol{\Sigma} \mathbf{a} )\) Thus, if \(y_{i}\) are i.i.d., then
+\clearpage
+
+\end{document}

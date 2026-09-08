@@ -1,0 +1,208 @@
+{
+  "title": "Regression and the Normal Distribution — Section-by-Section Comparative Matrix",
+  "fields": [
+    {
+      "name": "section_number",
+      "description": "chapter section identifier",
+      "example": "1.2"
+    },
+    {
+      "name": "section_title",
+      "description": "title of the section",
+      "example": "Fitting Data to a Normal Distribution"
+    },
+    {
+      "name": "central_concept",
+      "description": "the main statistical idea introduced",
+      "example": "normal curve approximation"
+    },
+    {
+      "name": "key_definition",
+      "description": "a term formally defined in this section",
+      "example": "standard deviation"
+    },
+    {
+      "name": "key_formula",
+      "description": "a named equation presented in this section",
+      "example": "f(y) = 1/(sigma*sqrt(2*pi)) * exp(-(y-mu)^2/(2*sigma^2))"
+    },
+    {
+      "name": "example_dataset",
+      "description": "the illustrative dataset used",
+      "example": "Massachusetts Bodily Injury Claims"
+    },
+    {
+      "name": "sample_size",
+      "description": "n for the illustrative dataset, if given",
+      "example": "272"
+    },
+    {
+      "name": "transformation_used",
+      "description": "data transformation discussed, if any",
+      "example": "logarithmic"
+    },
+    {
+      "name": "statistical_measure",
+      "description": "summary statistic emphasized",
+      "example": "75th percentile"
+    },
+    {
+      "name": "actuarial_application",
+      "description": "how the section content connects to actuarial/financial practice",
+      "example": "pricing of automobile insurance"
+    },
+    {
+      "name": "key_figure_or_table",
+      "description": "named figure/table referenced",
+      "example": "Table 1.2"
+    },
+    {
+      "name": "skewness_direction",
+      "description": "skew direction discussed for the example, if any",
+      "example": "right-skewed"
+    },
+    {
+      "name": "takeaway",
+      "description": "one-sentence pedagogical takeaway",
+      "example": "Logs often symmetrize insurance loss data."
+    }
+  ],
+  "data": [
+    {
+      "section_number": "1.1",
+      "section_title": "What Is Regression Analysis?",
+      "central_concept": "regression as a method for studying relationships between a variable of interest and explanatory variables",
+      "key_definition": "explanatory variable",
+      "key_formula": "N/A",
+      "example_dataset": "Galton's 1885 Parent-Child Height Data",
+      "sample_size": "928",
+      "transformation_used": "N/A",
+      "statistical_measure": "cross-tabulated frequency table",
+      "actuarial_application": "framing regression as the dominant statistical method underlying actuarial/financial risk modeling",
+      "key_figure_or_table": "Table 1.1",
+      "skewness_direction": "N/A",
+      "takeaway": "Regression quantifies how a response is explained by other measured variables, illustrated first by Galton's height data.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_013 - 1.tex",
+      "page": "N/A"
+    },
+    {
+      "section_number": "1.2",
+      "section_title": "Fitting Data to a Normal Distribution",
+      "central_concept": "using the normal curve to summarize a distribution with two parameters",
+      "key_definition": "mean; median; standard deviation; percentile",
+      "key_formula": "f(y) = 1/(sigma*sqrt(2*pi)) * exp(-(y-mu)^2/(2*sigma^2))  (eq. 1.1)",
+      "example_dataset": "Massachusetts Automobile Bodily Injury Claims (Rempala and Derrig, 2005)",
+      "sample_size": "272",
+      "transformation_used": "logarithmic (claims already given in logs of thousands of dollars)",
+      "statistical_measure": "mean 0.481, median, std dev 1.101, 25th/75th percentiles",
+      "actuarial_application": "summarizing insurance claim severity distributions for pricing/reserving",
+      "key_figure_or_table": "Table 1.2; Figure 1.2; Figure 1.3",
+      "skewness_direction": "mildly left-skewed after log transform",
+      "takeaway": "Two parameters, mu and sigma^2, can approximate an entire claims distribution via the normal curve.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_013 - 1.tex",
+      "page": "N/A"
+    },
+    {
+      "section_number": "1.3",
+      "section_title": "Power Transforms",
+      "central_concept": "Box-Cox family of power transforms used to symmetrize skewed data",
+      "key_definition": "Box-Cox transform; positively/negatively skewed distribution",
+      "key_formula": "y^(lambda) = (y^lambda - 1)/lambda for lambda != 0; ln(y) for lambda = 0",
+      "example_dataset": "simulated 500 chi-square(2) observations; MA bodily injury claims in dollars",
+      "sample_size": "500",
+      "transformation_used": "square root, logarithmic, and negative reciprocal transforms (lambda = 1/2, 0, -1)",
+      "statistical_measure": "visual symmetry of histogram",
+      "actuarial_application": "many insurance claims distributions are right-skewed and benefit from log transforms before regression",
+      "key_figure_or_table": "Figure 1.6; Figure 1.7",
+      "skewness_direction": "right-skewed (raw); best symmetrized by log transform",
+      "takeaway": "The logarithmic transform (lambda=0) is a special case of the Box-Cox family and typically best symmetrizes right-skewed insurance data.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_013 - 1.tex",
+      "page": "N/A"
+    },
+    {
+      "section_number": "1.4",
+      "section_title": "Sampling and the Role of Normality",
+      "central_concept": "formal sampling assumptions underlying statistical inference",
+      "key_definition": "statistic; sampling/data-generating process; the four Basic Sampling Assumptions",
+      "key_formula": "E(y_i)=mu; Var(y_i)=sigma^2; {y_i} independent; {y_i} normally distributed",
+      "example_dataset": "N/A (general framework)",
+      "sample_size": "N/A",
+      "transformation_used": "N/A",
+      "statistical_measure": "mean ybar and variance s_y^2 used to infer population mu, sigma^2",
+      "actuarial_application": "justifies statistical inference procedures (e.g., t-statistics) used in actuarial estimation",
+      "key_figure_or_table": "N/A",
+      "skewness_direction": "N/A",
+      "takeaway": "Normality is only one of four sampling assumptions, and is not required for many inference procedures because of central limit theorems.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_013 - 1.tex",
+      "page": "N/A"
+    },
+    {
+      "section_number": "1.5",
+      "section_title": "Regression and Sampling Designs",
+      "central_concept": "distinguishing designed (experimental) studies from observational studies",
+      "key_definition": "dependent/explanatory variable terminology; experimental data; observational data; confounding variable",
+      "key_formula": "N/A",
+      "example_dataset": "RAND Health Insurance Experiment (Manning et al., 1987); Galton parent-child height data",
+      "sample_size": "14 insurance plans across 6 cities, 1974-1977",
+      "transformation_used": "N/A",
+      "statistical_measure": "statistical control for confounders (e.g., family diet)",
+      "actuarial_application": "actuarial/social-science data are almost always observational, so causal inference requires statistical rather than experimental control",
+      "key_figure_or_table": "Table 1.3",
+      "skewness_direction": "N/A",
+      "takeaway": "Because actuarial data are observational rather than designed, regression is used for statistical control rather than establishing causality.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_013 - 1.tex",
+      "page": "N/A"
+    },
+    {
+      "section_number": "1.6",
+      "section_title": "Actuarial Applications of Regression",
+      "central_concept": "the traditional actuarial triad (pricing, reserving, solvency testing) as regression applications",
+      "key_definition": "adverse selection",
+      "key_formula": "N/A",
+      "example_dataset": "private passenger automobile insurance pricing by sex, age, location, vehicle purpose",
+      "sample_size": "N/A",
+      "transformation_used": "N/A",
+      "statistical_measure": "N/A",
+      "actuarial_application": "pricing (classification/adverse selection), reserving, and solvency testing",
+      "key_figure_or_table": "N/A",
+      "skewness_direction": "N/A",
+      "takeaway": "Flat-rate pricing that ignores explanatory variables invites adverse selection, which regression-based classification corrects.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_013 - 1.tex",
+      "page": "N/A"
+    },
+    {
+      "section_number": "1.8",
+      "section_title": "Exercises",
+      "central_concept": "applied end-of-chapter exercises requiring descriptive statistics, histograms, qq-plots, and log transforms",
+      "key_definition": "N/A",
+      "key_formula": "N/A",
+      "example_dataset": "MEPS Health Expenditures; Wisconsin Nursing Home Utilization; AutoClaims; Hospital Costs; AutoBI; NAIC Expenses; UN Life Expectancy",
+      "sample_size": "2,000 (MEPS); 362/355 facilities (Nursing Home); 6,773 (AutoClaims); 500 (Hospital Costs); 1,340 (AutoBI); 500 (NAICExpense); 185 (UNLifeExpectancy)",
+      "transformation_used": "natural log and square root transforms requested throughout",
+      "statistical_measure": "descriptive statistics, histograms, box plots, qq-plots",
+      "actuarial_application": "direct practice datasets for actuarial regression coursework",
+      "key_figure_or_table": "N/A",
+      "skewness_direction": "typically right-skewed prior to log transform",
+      "takeaway": "The exercises apply Sections 1.1-1.4's normality-fitting and transform techniques across seven real actuarial/health datasets.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_013 - 1.tex",
+      "page": "N/A"
+    },
+    {
+      "section_number": "1.9",
+      "section_title": "Technical Supplement: Central Limit Theorem",
+      "central_concept": "formal Central Limit Theorem and the Edgeworth approximation for skewness correction",
+      "key_definition": "Central Limit Theorem; Edgeworth Approximation",
+      "key_formula": "lim P(sqrt(n)/sigma * (ybar - mu) <= x) = Phi(x)",
+      "example_dataset": "N/A (theoretical)",
+      "sample_size": "n=25 to 50 cited as adequate in practice",
+      "transformation_used": "N/A",
+      "statistical_measure": "rescaled sample mean ybar approaching standard normal",
+      "actuarial_application": "justifies approximate normality of regression coefficients, which are weighted averages",
+      "key_figure_or_table": "N/A",
+      "skewness_direction": "Edgeworth term explicitly corrects for skewness E(ybar-mu)^3",
+      "takeaway": "The CLT justifies normal approximations for weighted averages like regression coefficients even when raw data are not normal.",
+      "source_id": "Regression Modeling with Actuarial and Financial Applications_013 - 1.tex",
+      "page": "N/A"
+    }
+  ]
+}

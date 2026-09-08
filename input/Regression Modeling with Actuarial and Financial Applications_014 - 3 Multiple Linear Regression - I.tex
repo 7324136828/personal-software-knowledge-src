@@ -1,0 +1,1595 @@
+% Compile this UTF-8 document with XeLaTeX or LuaLaTeX.
+\documentclass[11pt]{article}
+\usepackage{fontspec}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage[margin=1in]{geometry}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+\begin{document}
+\section*{3 Multiple Linear Regression - I}
+{\small Source: Regression Modeling with Actuarial and Financial Applications (Frees)/Regression Modeling with Actuarial and Financial Applications.pdf\par}
+\medskip
+3
+ Multiple Linear Regression \(- \mathbf{I}\)
+ Chapter Preview. This chapter introduces linear regression in the case of several explana-
+ tory variables, known as multiple linear regression. Many basic linear regression concepts
+extend directly, including goodness-of-fit measures such as \(R^{2}\) and inference using \(t\)
+ statistics. Multiple linear regression models provide a framework for summarizing highly
+complex, multivariate data. Because this framework requires only linearity in the param-
+eters, we are able to fit models that are nonlinear functions of the explanatory variables,
+ thus providing a wide scope of potential applications.
+ 3.1 Method of Least Squares
+ Chapter 2 dealt with the problem of a response depending on a single explanatory
+variable. We now extend the focus of that chapter and study how a response may
+ depend on several explanatory variables.
+@ EMPIRICAL
+Filename is Example: Term Life Insurance. Like all firms, life insurance companies con-
+"TermLife" tinually seek new ways to deliver products to the market. Those involved in
+ product development want to know who buys insurance and how much they buy.
+In economics, this is known as the demand side of a market for products. Ana-
+lysts can readily get information on characteristics of current customers through
+company databases. Potential customers, those who do not have insurance with
+ the company, are often the main focus for expanding market share.
+In this example, we examine the Survey of Consumer Finances (SCF), a
+nationally representative sample that contains extensive information on assets,
+liabilities, income, and demographic characteristics of those sampled (potential
+U.S. customers). We study a random sample of 500 households with positive
+incomes that were interviewed in the 2004 survey. We initially consider the
+subset of \(n \,=2 7 5\) families that purchased term life insurance. We address the
+second portion of the demand question and determine family characteristics that
+influence the amount of insurance purchased. Chapter 11 will consider the first
+portion, whether a household purchases insurance, through models where the
+ response is a binary random variable.
+For term life insurance, the quantity of insurance is measured by the policy
+FACE, the amount that the company will pay in the event of the death of the
+70
+\clearpage
+3.1 Method of Least Squares 71
+ Table 3.1 Term Life
+Standard Summary Statistics
+Variable Mean Median Deviation Minimum Maximum
+FACE 747,581 150,000 1,674,362 800 14,000,000
+INCOME 208,975 65,000 824,010 260 10,000,000
+EDUCATION 14.524 16.000 2.549 2.000 17.000
+NUMHH 2.960 3.000 1.493 1.000 9.000
+LNFACE 11.990 11.918 1.871 6.685 16.455
+LNINCOME 11.149 11.082 1.295 5.561 16.118
+named insured. Characteristics that will turn out to be important include annual
+INCOME; the number of years of EDUCATION of the survey respondent, and
+ the number of household members, NUMHH.
+In general, we will consider datasets where there are \(k\) explanatory variables
+ and one response variable in a sample of size \(n\) . That is, the data consist of
+\[
+\left\{\begin{aligned} {x_{1 1}} & {{} , \, x_{1 2} , \, \ldots, \, x_{1 k} , \, y_{1}} \\ {x_{2 1}} & {{} , \, x_{2 2} , \, \ldots, \, x_{2 k} , \, y_{2}} \\ {} & {{}} \\ {x_{n 1}} & {{} , \, x_{n 2} , \, \ldots, \, x_{n k} , \, y_{n}} \\ \end{aligned} \right\} .
+\]
+The \(i\) th observation corresponds to the \(i\) th row, consisting of \(\left( x_{i 1} , \, x_{i \, 2} , \, \ldots, \, x_{i \, k} , \, y_{i} \right)\) .
+For this general case, we take \(k+1\) measurements on each entity. For the insur-
+ance demand example, \(k=3\) and the data consists of \(( x_{1 1} , \, x_{1 2} , \, x_{1 3} , \, y_{1} ) , \, \ldots\)
+\(\left( x_{2 7 5 , 1} , \, x_{2 7 5 , 2} , \, x_{2 7 5 , 3} , \, y_{2 7 5} \right)\) . That is, we use four measurements from each of the
+\(n \,=2 7 5\) households.
+ Summarizing the Data
+We begin the data analysis by examining each variable in isolation of the others. Begin the data
+Table 3.1 provides basic summary statistics of the four variables. For FACE and analysis by examining
+INCOME, we see that the mean is much greater than the median, suggesting thateach variable in.
+the distribution is skewed to the right. Histograms (not reported here) show thatisolation of the others.
+this is the case. It will be useful to also consider their logarithmic transforms,
+LNFACE and LNINCOME, respectively, which are also reported in Table 3.1.
+ The next step is to measure the relationship between each \(x\) on \(y\) , beginning
+with the scatter plots in Figure 3.1. The left-hand panel is a plot of FACE versus
+INCOME; with this panel, we see a large clustering in the lower-left-hand corner
+corresponding to households that have both small incomes and face amounts
+of insurance. Both variables have skewed distributions and their joint effect is
+ highly nonlinear. The right-hand panel presents the same variables but using
+logarithmic transforms. In Figure 3.1, we see a relationship that can be more
+readily approximated with a line.
+ The term life data are multivariate in the sense that several measurements are
+ taken on each household. It is difficult to produce a graph of observations in three
+\clearpage
+72 Multiple Linear Regression -- I
+Table 3.2 Term Life
+Correlations NUMHH EDUCATION LNINCOME
+EDUCATION \(- 0 . 0 6 4\)
+LNINCOME 0.179 0.343
+LNFACE 0.288 0.383 0.482
+Figure 3.1 Income FACE (n m \(\circ\) \(\check{\circ}\) B 809 \(\omicron^{\mathrm{O}}\)
+versus face amount of 14 16 \(\circ\)
+ term life insurance. 12
+The left panel is a plot 10 14 : \(\vartheta_{\infty}\) 0
+ of face versus income, 8 0 12 \(\omicron^{\circ}\) \(\mathcal{S}\) 0 Oa
+ showing a highly
+ nonlinear pattern. In 6 \(\diamond^{\textsc{c}}\) 10 0 00
+ the right-hand panel, 4 H \(\oint\) \(\circ\)
+face versus income is
+ in natural logarithmic 2
+units, suggesting a 0 0
+linear (although
+variable) pattern. 01 2 3 5 6 8 6 810121416
+INCOME (in millions) LNINCOME
+ or more dimensions on a two-dimensional platform, such as a piece of paper,
+ that is not confusing, misleading, or both. To summarize graphically multivariate
+data in regression applications, consider using a scatterplot matrix such as in
+Figure 3.2. Each square of this figure represents a simple plot of one variable
+versus another. For each square, the row variable gives the units of the vertical
+ axis and the column variable gives the units of the horizontal axis. The matrix
+is sometimes called a half scatterplot matrix because only the lower-left-hand
+elements are presented.
+The scatterplot matrix can be numerically summarized using a correlation
+matrix. Each correlation in Table 3.2 corresponds to a square of the scatterplot
+ matrix in Figure 3.2. Analysts often present tables of correlations because they
+are easy to interpret. However, remember that a correlation coefficient merely
+measures the extent of linear relationships. Thus, a table of correlations provides
+ a sense of linear relationships but may miss a nonlinear relationship that can be
+revealed in a scatterplot matrix.
+ The scatterplot matrix and corresponding correlation matrix are useful devices
+for summarizing multivariate data. They are easy to produce and to interpret. Still,
+each device captures only relationships between pairs of variables and cannot
+ quantify relationships among several variables.
+ Method of Least Squares
+Consider this question: can knowledge of education, household size, and income
+ help us understand the demand for insurance? The correlations in Table 3.2 and
+the graphs in Figures 3.1 and 3.2 suggest that each variable, EDUCATION,
+NUMHH, and LNINCOME, may be a useful explanatory variable of LNFACE
+\clearpage
+3.1 Method of Least Squares 73
+Figure 3.2
+Scatterplot matrix of
+four variables. Each
+6 square is a scatter plot.
+NUMHH
+10 1E EDUCATION
+:
+:
+0
+16
+12 1 LNINCOME
+10 :
+6 :
+16 LIE 888 D LNFACE 12
+1 14
+14
+12
+10
+:
+:
+0 0
+2 4 6 8 5 10 15 6810121416 81012 14 16
+when taken individually. It seems reasonable to investigate the joint effect of
+ these variables on a response.
+The geometric concept of a plane is used to explore the linear relationship
+ between a response and several explanatory variables. Recall that a plane extends
+the concept of a line to more than two dimensions. \(\mathrm{A}\) plane may be defined
+ through an algebraic equation such as
+\[
+y \,=\, b_{0} \,+\, b_{1} x_{1} \,+\, \cdots\,+\, b_{k} \, x_{k} .
+\]
+ This equation defines a plane in \(k+1\) dimensions. Figure 3.3 shows a plane
+in three dimensions. For this figure, there is one response variable, LNFACE,
+and two explanatory variables, EDUCATION and LNINCOME (NUMHH is
+held fixed). It is difficult to graph more than three dimensions in a meaningful
+way.
+We need a way to determine a plane from the data. The difficulty is that in
+ most regression analysis applications, the number of observations, \(n\) , far exceeds
+ the number of observations required to fit a plane, \(k+1\) . Thus, it is generally
+ not possible to find a single plane that passes through all \(n\) observations. As in
+Chapter \(2 ,\) we use the method of least squares to determine a plane from the data.
+\clearpage
+74 Multiple Linear Regression -- I
+E
+\[
+\sum_{n=1}^{1 2} \left[ \begin{matrix} {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ \end{matrix} \right] \left\{\begin{matrix} \sqrt{2} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ \end{matrix} \right] \left( \begin{matrix} \end{matrix} \right) \left( \begin{matrix} \sqrt{2} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ {\sqrt{2}} \\ \end{matrix} \right) \left( \begin{matrix} \end{matrix} \right) \left( \begin{matrix} \end{matrix} \right) 1} \\ {\left\{\begin{matrix} \left( \begin{matrix} \end{matrix} \left( \begin{matrix} \end{matrix} \right) \left( \left( \begin{matrix} \end{matrix} \left( \left( \begin{matrix} \end{matrix} \end{matrix} \right) \right) \right) \right)} \\ {\left\{\begin{matrix} \left( \left( \left( \begin{matrix} \end{matrix} \right) \left( \left( \left( \left( \left( \left( \left( \left( \left( \left1 \right) \right) \right) \right) \right) \right) \right) \right) \right)} \\ \end{matrix} \right)} \\ {\left\{\begin{matrix} \left( \begin{matrix} \end{matrix} \right) \left( \begin{matrix} \left( \left( \begin{matrix} \end{matrix} \right) \right) \right) \left( \left( \begin{matrix} \left( \left( \begin{matrix} \end{matrix} \right) \right) 1} \\ \end{matrix} \right) \right. ( \begin{matrix} \end{matrix} \right) 1 \right. \right. \begin{matrix} \end{matrix} \right) ( \begin{matrix} \end{matrix} \right) \right.
+\]
+ example of a
+three-dimensional
+The method of least squares is based on determining the values of \(b_{0}^{*}\)
+\(b_{1}^{*} , \dots, b_{k}^{*}\) that minimize the quantity
+\[
+S S \big( b_{0}^{*} , b_{1}^{*} , \dots, b_{k}^{*} \big)=\sum_{i=1}^{n} \left( y_{i}-\left( b_{0}^{*}+b_{1}^{*} x_{i 1}+\dots+b_{k}^{*} x_{i k} \right) \right)^{2} . \tag{3.1}
+\]
+We drop the asterisk notation and use \({b_{0}} , {b_{1}} , \dots, {b_{k}}\) to denote the best values,
+ known as the least squares estimates. With the least squares estimates, define the
+ least squares, or fited , regression plane as
+\[
+{\widehat y} \,=b_{0} \,+\, b_{1} x_{1} \,+\, \cdots\,+\, b_{k} x_{k} .
+\]
+The least squares estimates are determined by minimizing \(\SS( b_{0}^{\ast} , \, b_{1}^{\ast} , \ldots, \, b_{k}^{\ast} )\) It
+is difficult to write down the resulting least squares estimators using a simple
+formula unless one resorts to matrix notation. Because of their importance in
+applied statistical models, an explicit formula for the estimators is provided
+here. However, these formulas have been programmed into a wide variety of
+statistical and spreadsheet software packages. The fact that these packages are
+ readily available allows data analysts to concentrate on the ideas of the estimation
+ procedure instead of focusing on the details of the calculation procedures.
+As an example, a regression plane was fit to the term life data where three
+ explanatory variables, \(x_{1}\) for EDUCATION, \(x_{2}\) for NUMHH, and \(x_{3}\) for LNIN-
+COME, were used. The resulting fitted regression plane is
+\[
+\widehat{y} \,=\, 2 . 5 8 4 \,+\, 0 . 2 0 6 x_{1} \,+\, 0 . 3 0 6 x_{2} \,+\, 0 . 4 9 4 x_{3} . \tag{3.2}
+\]
+ Matrix Notation
+ Assume that the data are of the form \(\left( x_{i \, 0} , \, x_{i \, 1} , \, \ldots, \, x_{i \, k} , \, y_{i} \right)\) where \(i=1 , \dots, n\) .
+Here, the variable \(x_{i \, 0}\) is associated with the " intercept"term. That is, in most
+applications, we assume that \(x_{i 0}\) is identically equal to \(1\) and thus need not be
+explicitly represented. However, there are important applications where this is
+not the case; thus, to express the model in general notation, it is included here.
+\clearpage
+3.1 Method of Least Squares 75
+ The data are represented in matrix notation using
+\[
+\mathbf{y}=\left( \begin{matrix} {y_{1}} \\ {y_{2}} \\ {\vdots} \\ {y_{n}} \\ \end{matrix} \right) \ \ \ \mathrm{a n d} \ \ \ \mathbf{X}=\left( \begin{matrix} {x_{1 0}} & {x_{1 1}} & {\cdots} & {x_{1 k}} \\ {x_{2 0}} & {x_{2 1}} & {\cdots} & {x_{2 k}} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {x_{n 0}} & {x_{n 1}} & {\cdots} & {x_{n k}} \\ \end{matrix} \right) .
+\]
+Here, \({\bf y}\) is the \(n \times1\) vector of responses and \({\bf X}\) is the \(n \times( k+1 )\) matrix of
+explanatory variables. We use the matrix algebra convention that lower- and
+uppercase bold letters represent vectors and matrices, respectively. (If you need
+ to brush up on matrices, review Section 2.11.)
+ Example: Term Life Insurance, Continued. Recall that \(y\) represents the loga-
+rithmic face; \(x_{1}\) , years of education; \(x_{2}\) , number of household members; and \(x_{3}\) :
+logarithmic income. Thus, there are \(k=3\) explanatory variables and \(n \,=2 7 5\)
+ households. The vector of responses and the matrix of explanatory variables are
+\[
+\mathbf{y}=\left( \begin{matrix} {y_{1}} \\ {y_{2}} \\ {\vdots} \\ {y_{2 7 5}} \\ \end{matrix} \right)=\left( \begin{matrix} {9 . 9 0 4} \\ {1 1 . 7 7 5} \\ {\vdots} \\ {9 . 2 1 0} \\ \end{matrix} \right) \quad\mathrm{a n d}
+\]
+\[
+\mathbf{X}=\left( \begin{matrix} {1} & {x_{1 1}} & {x_{1 2}} & {x_{1 3}} \\ {1} & {x_{2 1}} & {x_{2 2}} & {x_{2 3}} \\ {\vdots} & {\vdots} & {\vdots} & {\vdots} \\ {1} & {x_{2 7 5 , 1}} & {x_{2 7 5 , 2}} & {x_{2 7 5 , 3}} \\ \end{matrix} \right)=\left( \begin{matrix} {1} & {1 6} & {3} & {1 0 . 6 6 9} \\ {1} & {9} & {3} & {9 . 3 9 3} \\ {\vdots} & {\vdots} & {\vdots} & {\vdots} \\ {1} & {1 2} & {1} & {1 0 . 5 4 5} \\ \end{matrix} \right) .
+\]
+For example, for the first observation in the dataset, the dependent variable is
+\(y_{1}=9 . 9 0 4\) (corresponding to \(\operatorname{e x p} ( 9 . 9 0 4 )=\S2 0 , 0 0 0 )\) for a survey respondent
+with 16 years of education living in a household with 3 people with logarithmic
+income of 10.669 (exp(10.669) = \$43,000).
+Under the least squares estimation principle, our goal is to choose the coeff-
+cients \(b_{0}^{\ast} , \, b_{1}^{\ast} , \dots, \, b_{k}^{\ast}\) to minimize the sum of squares function \(\SS( b_{0}^{\ast} , \, b_{1}^{\ast} , \ldots, \, b_{k}^{\ast} )\) .
+Using calculus, we return to equation (3.1), take partial derivatives with respect
+to each coefficient, and set these quantities equal to zero:
+\[
+\begin{aligned} {\frac{\partial} {\partial b_{j}^{*}} S S \big( b_{0}^{*} , b_{1}^{*} , \dots, b_{k}^{*} \big)} & {{}=\sum_{i=1}^{n} (-2 x_{i j} ) \left( y_{i}-\left( b_{0}^{*}+b_{1}^{*} x_{i 1}+\dots+b_{k}^{*} x_{i k} \right) \right)} \\ {} & {{}=0 , \; \; \; \mathrm{f o r} \; \; j=0 , 1 , \dots, k .} \\ \end{aligned}
+\]
+This is a system of \(k+1\) equations and \(k+1\) unknowns that can be readily
+ solved using matrix notation, as follows.
+We may express the vector of parameters to be minimized as \({\bf b}^{*}=( b_{0}^{*}\) .
+\(b_{1}^{*} , \dots, b_{k}^{*} )^{\prime}\) Using this, the sum of squares can be written as \(S S ( {\bf b^{*}} )=( {\bf y}-{\bf X b^{*}} )^{\prime}\)
+\clearpage
+76 Multiple Linear Regression -- I
+\(( \mathbf{y}-\mathbf{X b}^{*} )\) . Thus, in matrix form, the solution to the minimization problem can
+be expressed as \(( \partial/ \partial{\bf b}^{*} ) S S ( {\bf b}^{*} )={\bf0}\) . This solution satisfies the normal equations
+\[
+\mathbf{X}^{\prime} \mathbf{X} \mathbf{b}=\mathbf{X}^{\prime} \mathbf{y} . \tag{3.3}
+\]
+Here, the asterisk notation (*) has been dropped to denote the fact that \(\mathbf{b}=\)
+\(( b_{0} , \, b_{1} , \, \dots, \, b_{k} )^{\prime}\) represents the best vector of values in the sense of minimizing
+\(S S ( \mathbf{b^{*}} )\) over all choices of \(\mathbf{b^{*}}\) .
+ The least squares estimator \(\mathbf{b}\) need not be unique. However, assuming that the
+ explanatory variables are not linear combinations of one another, we have that
+\(\mathbf{X}^{\prime} \mathbf{X}\) is invertible. In this case, we can write the unique solution as
+\[
+\mathbf{b}=\left( \mathbf{X}^{\prime} \mathbf{X} \right)^{-1} \mathbf{X}^{\prime} \mathbf{y} . \tag{3.4}
+\]
+To illustrate, for the term life example, equation (3.2) yields
+\[
+\mathbf{b}=\left( \begin{matrix} {b_{0}} \\ {b_{1}} \\ {b_{2}} \\ {b_{3}} \\ \end{matrix} \right)=\left( \begin{matrix} {2 . 5 8 4} \\ {0 . 2 0 6} \\ {0 . 3 0 6} \\ {0 . 4 9 4} \\ \end{matrix} \right) .
+\]
+ 3.2 Linear Regression Model and Properties of Estimators
+In the previous section, we learned how to use the method of least squares to
+fit a regression plane with a dataset. This section describes the assumptions
+underpinning the regression model and some of the resulting properties of the
+regression coefficient estimators. With the model and the fitted data, we will be
+ able to draw inferences about the sample dataset to a larger population. Moreover,
+we will later use the regression model assumptions to help us improve the model
+ specification in Chapter \(5\) .
+3.2.1 Regression Function
+ Most of the assumptions of the multiple linear regression model carry over directly
+from the basic linear regression model assumptions introduced in Section 2.2.
+The primary difference is that we now summarize the relationship between the
+response and the explanatory variables through the regression function
+\[
+\textrm{E} y=\beta_{0} x_{0}+\beta_{1} x_{1}+\cdots+\beta_{k} x_{k} , \tag{3.5}
+\]
+which is linear in the parameters \(\beta_{0} , \ldots, \beta_{k} .\) Henceforth, we will use \(x_{0}=1\) for
+ the variable associated with the parameter \(\beta_{0}\) ; this is the default in most statistical
+ packages, and most applications of regression include the intercept term \(\beta_{0}\) The
+Interpret \(\beta_{\mathrm{j}}\) to be the intercept is the expected value of \(y\) when all of the explanatory variables are
+expected change in \({\bf y}\) equal to zero. Although rarely of interest, the term \(\beta_{0}\) serves to set the height of
+ per unit change in \(\mathrm{x_{j}}\) the fitted regression plane.
+ assuming all other In contrast, the other betas are typically important parameters from a regression
+explanatory variables
+are held fred. study. To help interpret them, we initially assume that \(x_{j}\) varies continuously and
+\clearpage
+ 3.2 Linear Regression Model and Properties of Estimators 77
+is not related to the other explanatory variables. Then, we can interpret \(\beta_{j}\) as
+the expected change in \(y\) per unit change in \(x_{j}\) , assuming all other explanatory
+variables are held fixed. That is, from calculus, you will recognize that \(\beta_{j}\) can be
+interpreted as a partial derivative. Specifically, using equation (3.5), we have
+\[
+\beta_{j}=\frac{\partial} {\partial x_{j}} \mathrm{E} ~ y .
+\]
+3.2.2 Regression Coefficient Interpretation
+Let us examine the regression coefficient estimates from the term life insurance
+example and focus initially on the \(s i g n\) of the coefficients. For example, from
+equation (3.2), the coefficient associated with NUMHH is \(b_{2}=0 . 3 0 6 > 0 .\) If
+we consider two households that have the same income and the same level
+of education, then the larger household (in terms of NUMHH) is expected to
+ demand more term life insurance under the regression model. This is a sensible
+ interpretation, as larger households have more dependents for which term life
+ insurance can provide needed financial assets in the event of the untimely death
+of a breadwinner. The positive coefficient associated with income \(b_{3}=0 . 4 9 4 )\)
+ is also plausible; households with larger incomes have more disposable dollars to
+ purchase insurance. The positive sign associated with EDUCATION ( \(b_{1}=0 . 2 0 6 )\)
+is also reasonable; more education suggests that respondents are more aware of
+their insurance needs, other things being equal.
+You will also need to interpret the amount of the regression coefficient.
+Consider first the EDUCATION coefficient. Using equation (3.2), fitted val-
+ues of \(\widehat{L N F A C E}\) were calculated by allowing EDUCATION to vary and keeping
+NUMHH and LNINCOME fixed at the sample averages. The results are as
+follows:
+Effects of Small Changes in Education
+EDUCATION 14 14.1 14.2 14.3
+\(\widehat{L N F A C E}\) 11.883 11.904 11.924 11.945
+\(\widehat{F A C E}\) 144,803 147,817 150,893 154,034
+FACE \% Change 2.081 2.081 2.081
+ As EDUCATION increases, \(\widehat{L N F A C E}\) increases. Further, the amount of \(\widehat{L N F A C E}\)
+increase is a constant 0.0206. This comes directly from equation (3.2); as EDU-
+CATION increases by 0.1 years, we expect the demand for insurance to increase
+by 0.0206 logarithmic dollars, holding NUMHH and LNINCOME fixed. This
+interpretation is correct, but most product development directors are not overly
+ fond of logarithmic dollars. To return to dollars, fitted face values can be calculated
+through exponentiation as \(\widehat{F A C E}=\operatorname{e x p} ( \widehat{L N F A C E} )\) Moreover, the percentage
+change can be computed; for example, \(1 0 0 \times( 1 4 7 , 8 1 7 / 1 4 4 , 8 0 3-1 ) \approx2 . 0 8 7 o .\)
+\clearpage
+78 Multiple Linear Regression -- I
+This provides another interpretation of the regression coefficient; as EDUCA-
+TION increases by 0.1 years, we expect the demand for insurance to increase by
+\(2 . 0 8 7_{o}\) . This is a simple consequence of calculus, using 3ln \(y / \partial x \,=\left( \partial y / \partial x \right) / y\) :
+that is, a small change in the logarithmic value of \(y\) equals a small change in \(y\)
+ as a proportion of \(y\) . It is because of this calculus result that we use natural logs
+ instead of common logs in regression analysis. Because this table uses a discrete
+change in EDUCATION, the 2.08\% differs slightly from the continuous result
+\(0 . 2 0 6 \times\) (change in EDUCATION) = 2.06\%. However, this proximity is usually
+regarded as suitable for interpretation purposes.
+Continuing this logic, consider small changes in logarithmic income.
+Effects of Small Changes in Logarithmic Income
+LNINCOME 11 11.1 11.2 11.3
+INCOME 59,874 66,171 73,130 80,822
+INCOME \(\gamma_{o}\) Change 10.52 10.52 10.52
+LNFACE 11.957 12.006 12.055 12.105
+\(\widehat{F A C E}\) 155,831 163,722 172,013 180,724
+\(\widehat{F A C E}\) \% Change 5.06 5.06 5.06
+\(\widehat{F A C E}\) \% Change/INCOME \(\gamma_{o}\) Change 0.482 0.482 0.482
+We can use the same logic to interpret the LNINCOME coefficient in equation
+(3.2). As logarithmic income increases by 0.1 units, we expect the demand for
+insurance to increase by 5.06\%. This takes care of logarithmic units in the \(y\)
+but not the \(x\) . We can use the same logic to say that as logarithmic income
+increases by 0.1 units, INCOME increases by 10.52\%. Thus, a 10.52\% change
+in INCOME corresponds to a 5.06\% change in FACE. To summarize, we say
+that, holding NUMHH and EDUCATION fixed, we expect that a \(1 7 o\) increase in
+INCOME is associated with a 0.482\% increase in \(\widehat{F A C E}\) (as earlier, this is close
+ to the parameter estimate \(b_{3}=0 . 4 9 4 )\) . The coefficient associated with income is
+known as an elasticity in economics. In economics, elasticity is the ratio of the
+ percentage change in one variable to the percentage change in another variable.
+Mathematically, we summarize this as
+\[
+\frac{\partial\, \operatorname{l n} \, y} {\partial\, \operatorname{l n} \, x}=\left( \frac{\partial\, \, y} {y} \right) \bigg/ \bigg( \frac{\partial\, \, x} {x} \bigg) .
+\]
+ 3.2.3 Model Assumptions
+As in Section 2.2 for a single explanatory variable, there are two sets of assump-
+ tions that one can use for multiple linear regression. They are equivalents sets,
+each having comparative advantages as we proceed in our study of regression.
+ The observables representation focuses on variables of interest \(( x_{i \, 1} , \, \dots, \, x_{i \, k} , \, y_{i} )\) .
+\clearpage
+ 3.2 Linear Regression Model and Properties of Estimators 79
+ The error representation provides a springboard for motivating our goodness-of-
+fit measures and study of residual analysis. However, the latter set of assumptions
+ focuses on the additive errors case and obscures the sampling basis of the model.
+ Multiple Linear Regression Model Sampling Assumptions
+ Observables Representation Error Representation
+F1.E \(y_{i} \,=\, \beta_{0} \,+\, \beta_{1} x_{i 1} \,+\, \cdots\,+\, \beta_{k} x_{i k} .\) E1. \(y_{i} \,=\, \beta_{0} \,+\, \beta_{1} x_{i 1} \,+\, \cdots\,+\, \beta_{k} x_{i k} \,+\, \varepsilon_{i} \, .\)
+F2. \(\{x_{i 1} , \, \dots, \, x_{i k} \}\) E2. \(\{x_{i 1} , \, \dots, \, x_{i k} \}\)
+ are nonstochastic variables. are nonstochastic variables.
+F3. Var \(y_{i}=\sigma^{2}\) . E3.E \(\varepsilon_{i}=0\) and Var \(\varepsilon_{i}=\sigma^{2}\) .
+F4. \(\{y_{i} \}\) are independent random variables. E4. \(\{\varepsilon_{i} \}\) are independent random variables.
+F5. \(\{y_{i} \}\) are normally distributed. E5. \(\{\varepsilon_{i} \}\) are normally distributed.
+ To further motivate Assumptions F2 and \(\mathrm{F 4}\) we usually assume that our data
+have been realized as the result of a stratified sampling scheme, where each
+ unique value of \(\{x_{i \, 1} , \, \dots, \, x_{i \, k} \}\) is treated as a stratum. That is, for each value of
+\(\{x_{i 1} , \, \dots, \, x_{i k} \}\) , we draw a random sample of responses from a population. Thus,
+responses in each stratum are independent from one another, as are responses
+ from different strata. Chapter \(6\) will discuss this sampling basis in further detail.
+3.2.4 Properties of Regression Coefficient Estimators
+Section 3.1 described the least squares method for estimating regression coef-
+ficients. With the regression model assumptions, we can establish some basic
+properties of these estimators. To do this, from Section 2.11.4, we have that the
+expectation of a vector is the vector of expectations, so that
+\[
+\textrm{E}_{\mathbf{y}}=\left( \begin{matrix} {\textrm{E}_{1}} \\ {\textrm{E}_{2}} \\ {\vdots_{\phantom{\Big|}}} \\ {\textrm{E}_{n}} \\ \end{matrix} \right) .
+\]
+Further, basic matrix multiplication shows that
+\[
+\mathbf{X} \boldsymbol{\beta}=\left( \begin{matrix} {1} & {x_{1 1}} & {\cdots} & {x_{1 k}} \\ {1} & {x_{2 1}} & {\cdots} & {x_{2 k}} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {1} & {x_{n , 1}} & {\cdots} & {x_{n , k}} \\ \end{matrix} \right) \left( \begin{matrix} {\beta_{0}} \\ {\beta_{1}} \\ {\vdots} \\ {\beta_{k}} \\ \end{matrix} \right)=\left( \begin{matrix} {\beta_{0}+\beta_{1} x_{1 1}+\cdots+\beta_{k} x_{1 k}} \\ {\beta_{0}+\beta_{1} x_{2 1}+\cdots+\beta_{k} x_{2 k}} \\ {\vdots} \\ {\beta_{0}+\beta_{1} x_{n 1}+\cdots+\beta_{k} x_{n k}} \\ \end{matrix} \right) .
+\]
+Because the \(i\) th row of assumption F1 is E \(y_{i}=\beta_{0}+\beta_{1} x_{i 1}+\cdots+\beta_{k} x_{i k}\) , we
+can rewrite this assumption in matrix formulation as \(\textrm{E}_{\mathbf{y}}=\mathbf{X} \boldsymbol{\beta}\) . We are now in a
+ position to state the first important property of least squares regression estimators.
+Property 1. Consider a regression model and let Assumptions F1--F4hold.
+Then, the estimator \(\mathbf{b}\) defined in equation (3.4) is an unbiased estimator of the
+ parameter vector \(\boldsymbol{\beta}\) .
+\clearpage
+80 Multiple Linear Regression -- I
+To establish Property 1, we have that
+\[
+\mathrm{\boldmath~ E ~ b}=\mathrm{\boldmath~ E ~} \left( {\left( {{\bf X^{\prime} X}} \right)^{-1}} {\bf X^{\prime}} \right)={\left( {{\bf X^{\prime} X}} \right)^{-1}} {\bf X^{\prime}} \mathrm{\boldmath~ E ~} \mathbf y={\left( {{\bf X^{\prime} X}} \right)^{-1}} {\bf X^{\prime}} \left( {{\bf X \beta}} \right)=\beta,
+\]
+using matrix multiplication rules. This chapter assumes that \(\mathbf{X}^{\prime} \mathbf{X}\) is invertible.
+One can also show that the least squares estimator need only be a solution of
+ the normal equations for unbiasedness (not requiring that \(\mathbf{X}^{\prime} \mathbf{X}\) be invertible, see
+Section 4.7.3). Thus, \(\mathbf{b}\) is said to be an unbiased estimator of \(\boldsymbol{\beta}\) . In particular,
+E \(b_{j}=\beta_{j}\) for \(j=0 , 1 , \dots, k\) .
+ Because independence implies zero covariance, from Assumption F4 we have
+\(\mathrm{C o v} ( y_{i} , \, y_{j} )=0\) for \(i \neq j\) From this, Assumption F3 and the definition of the
+variance of a vector, we have
+\[
+\begin{aligned} {\mathrm{V a r ~} \mathbf{y}} & {{}=\left( \begin{matrix} {\mathrm{V a r ~} y_{1}} & {\mathrm{C o v} ( y_{1} , y_{2} )} & {\cdots} & {\mathrm{C o v} ( y_{1} , y_{n} )} \\ {\mathrm{C o v} ( y_{2} , \, y_{1} )} & {\mathrm{V a r ~} y_{2}} & {\cdots} & {\mathrm{C o v} ( y_{2} , \, y_{n} )} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {\mathrm{C o v} ( y_{n} , \, y_{1} )} & {\mathrm{C o v} ( y_{n} , \, y_{2} )} & {\cdots} & {\mathrm{V a r ~} y_{n}} \\ \end{matrix} \right)} \\ {} & {{}=\left( \begin{matrix} {\sigma^{2}} & {0} & {\cdots} & {0} \\ {0} & {\sigma^{2}} & {\cdots} & {0} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {0} & {0} & {\cdots} & {\sigma^{2}} \\ \end{matrix} \right)=\sigma^{2} \mathbf{I} .} \\ \end{aligned}
+\]
+where \(\textbf{I}\) is an an \(n \times n\) identity matrix. We are now in a position to state the
+second important property of least squares regression estimators.
+Property \({\bf2}\) . Consider a regression model and let Assumptions F1-F4 hold.
+Then, the estimator \(\textbf{b}\) defined in equation (3.4) has variance Var \(\mathbf{b}=\)
+\(\sigma^{2} {( \mathbf{X}^{\prime} \mathbf{X} )}^{-1}\)
+To establish Property 2, we have
+\[
+\begin{aligned} {\mathrm{V a r ~ b}} & {{}=\mathrm{V a r} \left( {{( {\bf X}^{\prime} {\bf X} )}^{-1}} {\bf X}^{\prime} {\bf y} \right)=\left[ {( {\bf X}^{\prime} {\bf X} )}^{-1} {\bf X}^{\prime} \right] \mathrm{V a r} \left( {\bf y} \right) \left[ {\bf X} {{( {\bf X}^{\prime} {\bf X} )}^{-1}} \right]} \\ {} & {{}=\left[ {{( {\bf X}^{\prime} {\bf X} )}^{-1}} {\bf X}^{\prime} \right] \sigma^{2} {\bf I} \left[ {\bf X} {{( {\bf X}^{\prime} {\bf X} )}^{-1}} \right]=\sigma^{2} {{( {\bf X}^{\prime} {\bf X} )}^{-1}} {\bf X}^{\prime} {{\bf X} ( {{\bf X}^{\prime} {\bf X} )}^{-1}}=\sigma^{2} {( {\bf X}^{\prime} {\bf X} )}^{-1}} \\ \end{aligned}
+\]
+1
+ as required. This important property will allow us to measure the precision of the
+estimator \(\mathbf{b}\) when we discuss statistical inference. Specifically, by the definition
+ of the variance of a vector (see Section 2.11.4),
+\[
+\mathrm{V a r ~ b}=\left( \begin{matrix} {\mathrm{V a r} \; b_{0}} & {\mathrm{C o v} ( b_{0} , \, b_{1} )} & {\cdots} & {\mathrm{C o v} ( b_{0} , \, b_{k} )} \\ {\mathrm{C o v} ( b_{1} , \, b_{0} )} & {\mathrm{V a r} \; b_{1}} & {\cdots} & {\mathrm{C o v} ( b_{1} , \, b_{k} )} \\ {\vdots} & {\vdots} & {\ddots} & {\vdots} \\ {\mathrm{C o v} ( b_{k} , \, b_{0} )} & {\mathrm{C o v} ( b_{k} , \, b_{1} )} & {\cdots} & {\mathrm{V a r} \; b_{k}} \\ \end{matrix} \right)={\boldsymbol\sigma}^{2} {( {\bf X}^{\prime} {\bf X} )}^{-1} .
+\]
+.6)
+Thus, for example, Var \(b_{j}\) is \(\sigma^{2}\) times the \(( j+1 )\) st diagonal entry of \(\left( \mathbf{X}^{\prime} \mathbf{X} \right)^{-1}\) .
+As another example, \(\mathrm{C o v} ( b_{0} , b_{j} )\) is \(\sigma^{2}\) times the element in the first row and
+\(( j+1 )\) st column of (X'X)-1
+\clearpage
+3.3 Estimation and Goodness of Fit 81
+Although alternative methods are available that are preferable for specific
+ applications, the least squares estimators have proved effective for many routine
+ data analyses. One desirable characteristic of least squares regression estimators
+ is summarized in the following well-known result.
+Gauss-Markov Theorem. Consider the regression model and let Assump-
+ tions F1-- F4hold. Then, in the class of estimators that are linear functions of
+the responses, the least squares estimator \(\mathbf{b}\) defined in equation (3.4) is the
+ minimum variance unbiased estimator of the parameter vector \(\boldsymbol{\beta}\) .
+We have already seen in Property 1 that the least squares estimators are The Gauss-Markov
+unbiased. The Gauss-Markov theorem states that the least squares estimator is theorem states that the
+ the most precise in that it has the smallest variance. (In a matrix context, minimumleast squares.
+estimator is the most
+ variance means that if \(\mathbf{b^{*}}\) is any other estimator, then the difference of the variance precise in that it has
+matrices, Var \(\mathbf{b^{*} \mathrm{-} V a r} ~ \mathbf{b}\) , is nonnegative definite.) the smallest variance.
+An additional important property concerns the distribution of the least squares
+regression estimators.
+Property 3. Consider a regression model and let Assumptions F1-F5 hold.
+Then, the least squares estimator \(\mathbf{b}\) defined in equation (3.4) is normally
+distributed.
+To establish Property 3, we define the weight vectors, \(\mathbf{w}_{i} \,=\, {( \mathbf{X}^{\prime} \mathbf{X} )}^{-1} ( 1\)
+\(x_{i 1} , \dots, \, x_{i k} )^{\prime}\) With this notation, we note that 
+\[
+\mathbf{b=} \mathbf{( X^{\prime} X )}^{-1} \mathbf{X}^{\prime} \mathbf{y}=\sum_{i=1}^{n} \mathbf{w}_{i} \, y_{i} \, ,
+\]
+ so that \(\mathbf{b}\) is a linear combination of responses. With Assumption F5, the responses
+ are normally distributed. Because linear combinations of normally distributed
+random variables are normally distributed, we have the conclusion of Property 3.
+This result underpins much of the statistical inference that will be presented in
+Sections 3.4 and 4.2.
+3.3 Estimation and Goodness of Fit
+ Residual Standard Deviation
+Additional properties of the regression coefficient estimators will be discussed
+when we focus on statistical inference. We now continue our estimation discus-
+ sion by providing an estimator of the other parameter in the linear regression
+ model, \(\sigma^{2}\) .
+ Our estimator for \(\sigma^{2}\) can be developed using the principle of replacing theoret-
+ ical expectations by sample averages. In examining \(\sigma^{2}=\operatorname{E} \left( y-\operatorname{E} y \right)^{2}\) , replac-
+ing the outer expectation by a sample average suggests using the estimator
+\(n^{-1} \sum_{i \mathop=1}^{n} ( y_{i} \textrm{-E} y_{i} )^{2}\) . Because we do not observe E \(y_{i}=\beta_{0}+\beta_{1} x_{i 1}+\cdots+\)
+\clearpage
+82 Multiple Linear Regression -- I
+\(\beta_{k} x_{i k}\) , we use in its place the corresponding observed quantity \(b_{0}+b_{1} x_{i 1}\)
+\({+\cdots+b_{k} x_{i \, k}=\widehat{y}_{i}}\) This leads to the following:
+Defnition . An estimator of \(\sigma^{2}\) , the mean square error (MSE), is defined as
+\[
+\begin{aligned} {s^{2}=\frac{1} {n-( k+1 )} \sum_{i=1}^{n} \left( y_{i} \,-\, \widehat{y_{i}} \right)^{2} .} \\ \end{aligned} \tag{3.7}
+\]
+The positive square root, \(s=\sqrt{s^{2}}\) is called the residual standard deviation.
+This expression generalizes the definition in equation (2.3), which is valid for
+\(k=1\) It turns out that, by using \(n-( k+1 )\) instead of \(n\) in the denominator of
+equation (3.7), \(s^{2}\) is an unbiased estimator of \(\sigma^{2}\) Essentially, by using \(\widehat{y_{i}}\) instead
+of \(\textrm{E} y_{i}\) in the definition, we have introduced some small dependencies among
+the deviations from the responses \(y_{i} \,-\, \widehat{y}_{i}\) , thus reducing the overall variability.
+To compensate for this lower variability, we also reduce the denominator in the
+ definition of \(s^{2}\) .
+To provide further intuition on the choice of \(n-( k+1 )\) in the definition
+of \(s^{2}\) , we introduced the concept of residuals in the context of multiple linear
+regression. From Assumption E1, recall that the random errors can be expressed
+as \(\varepsilon_{i} \,=\, y_{i} \,-( \beta_{0}+\beta_{1} x_{i 1}+\cdots+\beta_{k} x_{i k} ) .\) Because the parameters \(\beta_{0} , \ldots, \beta_{k}\) are
+not observed, the errors themselves are not observed. Instead, we examine the
+" estimatederrors," or residuals, defined by \(e_{i} \,=\, y_{i} \,-\, \widehat{y}_{i}\) .
+Unlike errors, there exist certain dependencies among the residuals. One
+dependency is due to the algebraic fact that the average residual is zero. Fur-
+ther, there must be at least \(k+2\) observations for there to be variation in the
+fit of the plane. If we have only \(k+1\) observations, we can fit a plane to the
+ data perfectly, resulting in no variation in the fit. For example, if \(k=1\) , because
+two observations determine a line, then at least three observations are required
+to observe any deviation from the line. Because of these dependencies, we have
+only \(n-( k+1 )\) free, or unrestricted, residuals to estimate the variability about
+ the regression plane.
+ The positive square root of \(s^{2}\) is our estimator of \(\sigma\) . Using residuals, it can be
+expressed as
+\[
+s \,=\sqrt{\frac{1} {n \,-\, ( k \,+1 )} \sum_{i=1}^{n} e_{i}^{2}} . \tag{3.8}
+\]
+Because it is based on residuals, we refer to \(s\) as the residual standard deviation.
+ The quantity \(s\) is a measure of our " typicalerror." For this reason, \(s\) is also called
+ the standard error of the estimate.
+The Coefficient of Determination: \(R^{2}\)
+To summarize the goodness of fit of the model, as in Chapter \(2\) we partition the
+variability into pieces that are " plained" and "" un\&plained" by the regression
+\clearpage
+3.3 Estimation and Goodness of Fit 83
+ fit. Algebraically, the calculations for regression using many variables are similar
+ to the case of using only one variable. Unfortunately, when dealing with many
+variables, we lose the easy graphical interpretation such as in Figure 2.4.
+Begin with the total sum of squared deviations, Total \(S S \,=\, \sum_{i=1}^{n} \left( y_{i} \,-\, \overline{{y}} \right)^{2}\)
+ as our measure of the total variation in the dataset. As in equation (2.1), we may
+then interpret the equation
+\[
+\begin{array} {c} {\underbrace{y_{i}-\overline{{y}}}_{\mathrm{t o t a l}} \ =\underbrace{y_{i}-\widehat{y}_{i}}_{\mathrm{d e v i a t i o n}} \ +\underbrace{\widehat{y}_{i}-\overline{{y}}}_{\mathrm{d e v i a t i o n}}} \\ \end{array}
+\]
+ as the " deviation without knowledge of the explanatory variables equals the
+ deviation not explained by the explanatory variables plus deviation explained by
+ the explanatory variables." Squaring each side and summing over all observations
+yields
+:
+\[
+\mathit{T o t a l} \; \mathit{S S}=\mathit{E r r o r} \; \mathit{S S}+\mathit{R e g r e s s i o n} \; \mathit{S S} ,
+\]
+ where Error \(S S \,=\, \sum_{i \,=\, 1}^{n} \, ( y_{i} \,-\, \widehat{y}_{i} )^{2}\) and Regression \(S S \,=\, \sum_{i=1}^{n} \left( \widehat{y_{i}} \,-\, \overline{{y}} \right)^{2}\) As in
+Section 2.3 for the one explanatory variable case, the sum of the cross-product
+terms turns out to be zero.
+ A statistic that summarizes this relationship is the coeffcient of determination,
+\[
+R^{2}=\cfrac{R e g r e s s i o n \; S S} {T o t a l \; S S} .
+\]
+We interpret \(R^{2}\) to be the proportion of variability explained by the regression
+function.
+If the model is a desirable one for the data, one would expect a strong rela-
+tionship between the observed responses and those " pected" under the model,
+ the fitted values. An interesting algebraic fact is the following. If we square the
+correlation coefficient between the responses and the fitted values, we get the
+coefficient of determination; that is,
+\[
+R^{2}=\left[ r \left( y , \, \widehat{y} \right) \right]^{2} .
+\]
+As a result, \(R\) , the positive square root of \(R^{2}\) is called the multiple correla-
+tion coeffcient . It can be interpreted as the correlation between the response
+and the best linear combination of the explanatory variables, the fitted values.
+(This relationship is developed using matrix algebra in the technical supplement
+Section 5.10.1.)
+ The variability decomposition is also summarized using the analysis of vari-
+ance, or ANOVA, table, as follows:
+ANOVA Table
+Source Sum of Squares \(d f\) Mean Square
+Regression Regression \(\mathit{S S}\) \(k\) Regression Ms
+Error Error Ss \(n-( k+1 )\) \(M S E\)
+Total Total \(\mathit{S S}\) \(n-1\)
+\clearpage
+84 Multiple Linear Regression -- I
+ Table 3.3 Term Life
+ANOVA Table Source Sum of Squares \(d f\) Mean Square
+Regression 328.47 3 109.49
+Error 630.43 271 2.326
+Total 958.90 274
+The mean square column figures are defined to be the sum of squares figures
+divided by their respective degrees of freedom. The error degrees of freedom
+denotes the number of unrestricted residuals. It is this number that we use in our
+definition of the " average," or mean, square error. That is, we define
+\[
+M S E=E r r o r \ M S=\cfrac{E r r o r \ S S} {n-( k+1 )}=s^{2} .
+\]
+ Similarly, the regression degrees of freedom is the number of explanatory vari-
+ables. This yields
+\[
+R e g r e s s i o n \, \, M S=\cfrac{R e g r e s s i o n \, \, S S} {k} .
+\]
+When discussing the coefficient of determination, it can be established that when-
+ ever an explanatory variable is added to the model, \(R^{2}\) never decreases. This is
+ true whether or not the additional variable is useful. We would like a measure of
+ fit that decreases when useless variables are entered into the model as explanatory
+variables. To circumvent this anomaly, a widely used statistic is the coeffcient of
+ determination adjusted for degrees of freedom, defined by
+\[
+R_{a}^{2}=1-\frac{( E r r o r \ S S ) / [ n-( k+1 ) ]} {( T o t a l \ S S ) / ( n-1 )}=1-\frac{s^{2}} {s_{y}^{2}} . \tag{3.9}
+\]
+To interpret this statistic, note that \(s_{y}^{2}\) does not depend on the model or on the
+model variables. Thus, \(s^{2}\) and \(R_{a}^{2}\) are equivalent measures of model fit. As the
+model fit improves, then \(R_{a}^{2}\) becomes larger and \(s^{2}\) becomes smaller, and vice
+versa. Put another way, choosing a model with the smallest \(s^{2}\) is equivalent to
+choosing a model with the largest \(R_{a}^{2}\) .
+Example: Term Life Insurance, Continued. To illustrate, Table 3.3 displays the
+ summary statistics for the regression of LNFACE on EDUCATION, NUMHH,
+and LNINCOME. From the degrees-of-freedom column, we remind ourselves
+ that there are three explanatory variables and 275 observations. As measures of
+model fit, the coefficient of determination is \(R^{2}=3 4 . 3 7 6 ~ ( \mathrm{=} 3 2 8 . 4 7 7 9 5 8 . 9 0 )\) and
+ the residual standard deviation is \(s \,=\, 1 . 5 2 5 \, (=\sqrt{2 . 3 2 6} )\) If we were to attempt to
+ estimate the logarithmic face amount without knowledge of the explanatory vari-
+ ables EDUCATION, NUMHH, and LNINCOME, then the size of the typical error 
+would be \(s_{y}=1 . 8 7 1 \: (=\sqrt{9 5 8 . 9 0 / 2 7 4} )\) . Thus, by taking advantage of our knowl-
+ edge of the explanatory variables, we have been able to reduce the size of the typi-
+ cal error. The measure of model fit that compares these two estimates of variability
+ is the adjusted coefficient of determination, \(R_{a}^{2}=1 \,-\, 2 . 3 2 6 / 1 . 8 7 1^{2}=3 3 . 6 9 6 .\)
+\clearpage
+3.4 Statistical Inference for a Single Coeffcient 85
+Table 3.4
+Variable Coefficient \(t\) -Statistic Regression
+Intercept 9.904 12.928 Coefficients from a
+ Model of Female
+Logarithmic number of persons per physician -0.473 3.212 Advantage
+Fertility -0.444 -3.477
+Percentage of Hindus and Buddhists \(- 0 . 0 1 8\) -3.196
+ Soviet Union dummy 4.922 7.235
+Source: Lemaire (2002)
+Example: Why Do Females Live Longer Than Males? In an article with this
+ title, Lemaire (2002) examined what he called the " femaleadvantage," the differ-
+ ence in life expectancy between women and men. Life expectancies are of interest
+because they are widely used measures of a nation's health. Lemaire examined
+ data from \(n=1 6 9\) countries and found that the average female advantage was
+ 4.51 years worldwide. He sought to explain this difference based on 45 behavior-
+ ial measures, variables that capture a nation's degree of economic modernization;
+social, cultural, and religious mores; geographic position; and quality of health
+ care available.
+ After a detailed analysis, Lemaire reports coefficients from a regression model
+that appear in Table 3.4. This regression model explains \(R^{2}=6 1^{\mathcal{V}_{o}}\) of the vari-
+ability. It is a parsimonious model consisting of only \(k=4\) of the original 45
+variables.
+All variables were strongly statistically significant. The number of persons
+per physician was also correlated with other variables that capture a country's
+degree of economic modernization, such as urbanization, number of cars, and
+ percentage working in agriculture. Fertility, the number of births per woman, was
+ highly correlated with education variables in the study, including female illiteracy
+and female school enrollment. The percentage of Hindus and Buddhists is a
+ social, cultural, and religious variable. The Soviet Union dummy is a geographic
+variable -- it characterizes Eastern European countries that formerly belonged
+to the Soviet Union. Because of the high degree of collinearity among the \(4 5\)
+ candidate variables, other analysts could easily pick an alternative set of variables.
+Nonetheless, Lemaire's important point was that this simple model explains
+roughly \(6 1 7_{o}\) of the variability from only behaviorial variables, unrelated to
+ biological sex differences.
+3.4 Statistical Inference for a Single Coeffcient
+3.4.1 The t-Test
+In many applications, a single variable is of primary interest, and other variables
+ are included in the regression to control for additional sources of variability. To
+illustrate, a sales agent might be interested in the effect that income has on the
+\clearpage
+86 Multiple Linear Regression -- I
+quantity of insurance demanded. In a regression analysis, we could also include
+other explanatory variables such as an individual's sex, occupation, age, size of
+household, education level, and so on. By including these additional explanatory
+variables, we hope to gain a better understanding of the relationship between
+ income and insurance demand. To reach sensible conclusions, we will need some
+rules to decide whether a variable is important.
+We respond to the question, Is \(x_{j}\) important? by investigating whether the
+corresponding slope parameter, \(\beta_{j}\) equals zero. The question is whether \(\beta_{j}\) is
+ zero can be restated in the hypothesis testing framework as  Is \(H_{0} : \beta_{j}=0\)
+valid?
+We examine the proximity of \(b_{j}\) to zero to determine whether \(\beta_{j}\) is zero.
+Begnae \(b_{j}\) depend on the units of \(y\) and \(x_{j}\) , we need to standardize \(\sigma^{2}\) times
+\(( j+1 )\) this quantity. In Property \(2\) and equation (3.6), we saw that Var \(\sigma^{2}\) by the estimator \(b_{j}\) is \(s^{2}\) and
+st diagonal element of \(\left( \mathbf{X}^{\prime} \mathbf{X} \right)^{-1}\) Replacing
+taking square roots, we have the following:
+Defnition . The standard error of \(b_{j}\) can be expressed as
+\[
+s e ( b_{j} )=s \sqrt{( j+1 ) s t \ d i a g o n a l \ e l e m e n t \ o f \left( \mathbf{X^{\prime} X} \right)^{-1}} .
+\]
+Recall that a standard error is an estimated standard deviation. To test \(H_{0} : \beta_{j}=0 ,\)
+\(t\) -ratio, \(t ( b_{j} )=b_{j} / s e ( b_{j} )\) . We interpret \(t ( b_{j} )\) to be the number
+Interpret t(bj) to be of standard errors that \(b_{j}\) iayfrmpre aiy
+the number of because the sampling distribution of \(t ( b_{j} )\) can be shown to be the \(t\)
+ is away from zero. with \(d f=n-( k+1 )\) degrees of freedom, under the null hypothesis with the
+ linear regression model assumptions F1-- F5.This enables us to construct tests of
+ the null hypothesis such as the following procedure:
+Procedure. The t-test for a Regression Coefficient (beta).
+: The null hypothesis is \(H_{0} : \beta_{j}=0 .\)
+: The alternative hypothesis is \(H_{a} : \beta_{j} \neq0 .\)
+Establish a significance level  (typically but not necessarily 5\%).
+: Construct the statistic, \(t ( b_{j} )=b_{j} / s e ( b_{j} )\) .
+- Procedure: Reject the null hypothesis in favor of the alternative if \(| t ( b_{j} ) |\)
+exceeds a \(t\) -value. Here, this \(t\) -value is the \(( 1-\alpha/ 2 )\) th percentile from
+the \(t\) -distribution using \(d f=n \,-\, ( k \,+\, 1 )\) degrees of freedom, denoted as
+\(t_{n-( k+1 ) , 1-\alpha/ 2} .\)
+In many applications, the sample size will be large enough so that we may
+Rule of thumb: approximate the \(t\) -value by the corresponding percentile from the standard normal
+inerpret a variable tocurve. At the \(5 7_{o}\) level of significance, this percentile is 1.96. Thus, as a rule of
+be important if its
+t-ratio exceeds two in thumb, we can interpret a variable to be important if its \(t\) -ratio exceeds two in
+ absolute value. absolute value.
+\clearpage
+3.4 Statistical Inference for a Single Coeffcient 87
+Table 3.5
+Alternative Procedure: Reject \(H_{0}\) in Decision-Making
+I \(H_{a}\) favor of \(H_{a}\) Procedures for
+)
+\(\beta_{j} < d\) \(\vert t \mathrm{-r a t i o} \vert\, > \, t_{n-( k+1 ) , 1-\alpha/ 2}\) Testing \(H_{0} : \beta_{j}=d\)
+\(\beta_{j} > d\) \(t \mathrm{-r a t i o} \, > \, t_{n-\left( k+1 \right) , 1-\alpha}\)
+\(\beta_{j} \neq d\) \(t \mathrm{-r a t i o} <-{t}_{n-\left( k+1 \right) , 1-\alpha}\)
+Notes: The significance level is \(\alpha\) .Here, \(t_{n-( k+1 ) , 1-\alpha}\)
+is the \(( 1 \mathrm{-} \alpha)\) th percentile from the \(t\) -distribution
+using \(d f=n \,-\, ( k \,+\, 1 )\) degrees of freedom. The test
+statistic is \(t \mathrm{-r a t i o}=( b_{j} \,-d ) / s e ( b_{j} ) .\)
+Table 3.6
+Alternative Probability Values for
+Hypothesis ( \(( H_{a} )\) \(\beta_{j} > d\)
+\[
+\beta_{j} < d
+\]
+\(\beta_{j} \neq d\) Testing \(H_{0} : \beta_{j}=d\)
+\(p\) -Value \(\operatorname* {P r} ( t_{n-( k+1 )} > t \mathrm{-r a t i o} )\) \(\operatorname* {P r} ( t_{n-( k+1 )} < t \mathrm{-r a t i o} )\) \(\operatorname* {P r} ( | t_{n-( k+1 )} | > | t |\) -ratio()
+Notes: Here, \(t_{n-( k+1 )}\) is a \(t\) -distributed random variable with \(d f=n \,-\, ( k \,+\, 1 )\) degrees of
+freedom. The test statistic is \(t \mathrm{-r a t i o}=( b_{j} \,-d ) / s e ( b_{j} )\)
+Although it is the most common, testing \(H_{0} : \beta_{j}=0\) versus \(H_{a} : \beta_{j} \neq0\) is just
+ one of many hypothesis tests that can be performed. Table 3.5 outlines alternative
+ decision-making procedures. These procedures are for testing \(H_{0} : \beta_{j}=d\) . Here,
+\(d\) is a user-prescribed value that may be equal to zero or any other known value.
+Alternatively, one can construct \(p\) -values and compare them to given signif-
+icant levels. The \(p\) -value allows the report reader to understand the strength of
+the deviation from the null hypothesis. Table 3.6 summarizes the procedure for
+calculating \(p\) -values.
+Example: Term Life Insurance, Continued. \(\mathrm{A}\) useful convention when report-
+ ing the results of a statistical analysis is to place the standard error of a statistic in
+ parentheses below that statistic. Thus, for example, in our regression of LNFACE
+ on EDUCATION, NUMHH, and LNINCOME, the estimated regression equation
+is
+\[
+\begin{array} {l} {\widehat{\mathrm{L N F A C E}}} \\ {\mathrm{s t a n d a r d ~ e r r o r} \hfill\quad\quad( 0 . 8 4 6 ) \hfill\quad\quad( 0 . 0 3 9 ) \hfill\quad\quad\quad\quad( 0 . 0 6 3 ) \hfill\quad\quad\quad( 0 . 0 7 8 )} \\ \end{array}
+\]
+To illustrate the calculation of the standard errors, first note that, from
+Table 3.3, the residual standard deviation is \(s \,=\, 1 . 5 2 5\) - Using a statistical pack-
+ age, we have
+\[
+\left( \mathbf{X}^{\prime} \mathbf{X} \right)^{-1}=\left( \begin{matrix} {\; \; \, 0 . 3 0 7 9 7 5} & {-0 . 0 0 4 6 3 3} & {-0 . 0 0 2 1 3 1} & {-0 . 0 2 0 6 9 7} \\ {-0 . 0 0 4 6 3 3} & {0 . 0 0 0 6 4 8} & {0 . 0 0 0 1 4 3} & {-0 . 0 0 0 4 6 7} \\ {-0 . 0 0 2 1 3 1} & {0 . 0 0 0 1 4 3} & {0 . 0 0 1 7 2 4} & {-0 . 0 0 0 4 5 3} \\ {-0 . 0 2 0 6 9 7} & {-0 . 0 0 0 4 6 7} & {-0 . 0 0 0 4 5 3} & {\; \; \, 0 . 0 0 2 5 8 5} \\ \end{matrix} \right) .
+\]
+
+\clearpage
+88 Multiple Linear Regression -- I
+To illustrate, we can compute \(s e ( b_{3} )=s \times\sqrt{0 . 0 0 2 5 8 5}=0 . 0 7 8 ,\) as earlier. Cal-
+culation of the standard errors, as well as the corresponding \(t\) -statistics, is part of
+ the standard output from statistical software and need not be computed by users.
+ Our purpose here is to illustrate the ideas underlying the routine calculations.
+With this information, we can immediately compute \(t\) -ratios to check to
+see whether a coefficient associated with an individual variable is significantly
+different from zero. For example, the \(t\) -ratio for the LNINCOME variable is
+\(t ( b_{3} )=0 . 4 9 4 / 0 . 0 7 8=6 . 3 .\) The interpretation is that \(b_{3}\) is more than four stan-
+dard errors above zero, and thus LNINCOME is an important variable in the
+model. More formally, we may be interested in testing the null hypothesis that
+\(H_{0} : \beta_{3}=0\) versus \(H_{0} : \beta_{3} \neq0 .\) At a 5\% level of significance, the \(t\) -value is
+1.96, because \(d f=2 7 5-\left( 1+3 \right)=2 7 1\) . We thus reject the null in favor of the
+alternative hypothesis, that logarithmic income (LNINCOME) is important in
+ determining the logarithmic face amount.
+3.4.2 Confidence Intervals
+Confdence intervals for parameters provide another device for describing the
+strength of the contribution of the \(j\) th explanatory variable. The statistic \(b_{j}\) is a
+ point estimate of the parameter \(\beta_{j}\) To provide a range of reliability, we use the
+confidence interval
+\[
+b_{j} \pm t_{n-( k+1 ) , 1-\alpha/ 2} s e ( b_{j} ) . \tag{3.10}
+\]
+Here, the \(t\) -value \(t_{n-( k+1 ) , 1-\alpha/ 2}\) is a percentile from the \(t\) -distribution with \(d f=\)
+\(n-( k+1 )\) degrees of freedom. We use the same \(t\) -value as in the two-sided
+hypothesis test. Indeed, there is a duality between the confidence interval and
+the two-sided hypothesis test. For example, it is not hard to check that if a
+ hypothesized value falls outside the confidence interval, then \(H_{0}\) will be rejected
+ in favor of \(H_{a}\) Further, knowledge of the \(p\) -value, point estimate, and standard
+error can be used to determine a confidence interval.
+ 3.4.3 Added Variable Plots
+To represent multivariate data graphically, we have seen that a scatterplot matrix
+is a useful device. However, the major shortcoming of the scatterplot matrix is
+ that it captures relationships only between pairs of variables. When the data can
+be summarized using a regression model, a graphical device that does not have
+ this shortcoming is an added variable plot. The added variable plot is also called
+a partial regression plot because, as we will see, it is constructed in terms of
+residuals from certain regression fits. We will also see that the added variable plot
+can be summarized in terms of a partial correlation coefficient, thus providing a
+ link between correlation and regression. To introduce these ideas, we work in the
+context of the following example:
+\clearpage
+3.4 Statistical Inference for a Single Coeffcient 89
+Table 3.7 Summary
+Standard Statistics for Each
+Variable Mean Median Deviation Minimum Maximum Variable for 37
+Refrigerators
+ECOST 70.51 68.00 9.14 60.00 94.00
+RSIZE 13.400 13.200 0.600 12.600 14.700
+FSIZE 5.184 5.100 0.938 4.100 7.400
+ SHELVES 2.514 2.000 1.121 1.000 5.000
+FEATURES 3.459 3.000 2.512 1.000 12.000
+PRICE 626.4 590.0 139.8 460.0 1200.0
+Source: Consumer Reports, July 1992. " Refrigerators:A Comprehensive Guide to the Big
+White Box."
+Table 3.8 Matrix
+ECOST RSIZE FSIZE SHELVES FEATURES of Correlation
+Coefficients
+RSIZE 0.333
+FSIZE 0.855 0.235
+SHELVES 0.188 0.363 0.251
+FEATURES 0.334 0.096 \(0 . 4 3 9\) 0.160
+PRICE 0.522 0.024 0.720 0.400 0.697
+ EMPIRICAL
+Example: Refrigerator Prices. What characteristics of a refrigerator are impor- Filename is
+tant in determining its price (PRICE)? We consider here several characteristics "Refrigerator"
+of a refrigerator, including the size of the refrigerator in cubic feet (RSIZE), the
+size of the freezer compartment in cubic feet (FSIZE), the average amount of
+money spent per year to operate the refrigerator (ECOST, for " enegy cost" ),
+the number of shelves in the refrigerator and freezer doors (SHELVES), and
+ the number of features (FEATURES). The features variable includes shelves for
+cans, see-through crispers, ice makers, egg racks, and so on.
+Both consumers and manufacturers are interested in models of refrigerator
+prices. Other things equal, consumers generally prefer larger refrigerators with
+lower energy costs that have more features. Because of forces of supply and
+ demand, we would expect consumers to pay more for such refrigerators. A larger
+refrigerator with lower energy costs that has more features at the similar price is
+considered a bargain to the consumer. How much extra would the consumer be
+willing to pay for the additional space? A model of prices for refrigerators on the
+market provides some insight to this question.
+ To this end, we analyze data from \(n=3 7\) refrigerators. Table 3.7 provides the
+ basic summary statistics for the response variable PRICE and the five explanatory
+variables. From this table, we see that the average refrigerator price is \(\overline{{y}}=\)
+\$626.40, with standard deviation \(s_{y}=\S1 3 9 . 8 0\) Similarly, the average annual
+amount to operate a refrigerator, or average ECOST, is \$70.51.
+ To analyze relationships among pairs of variables, Table 3.8 provides a matrix
+of correlation coefficients. From the table, we see that there are strong linear
+relationships between PRICE and each of freezer space (FSIZE) and the number
+\clearpage
+90 Multiple Linear Regression -- I
+Table 3.9 Fitted
+Refrigerator Price Coefficient Standard
+ Model Estimate Error \(t\) -Ratio
+Intercept 798 271.4 2.9
+ECOST 6.96 2.275 \(- 3 . 1\)
+RSIZE 76.5 \(1 9 . 4 4\) 3.9
+FSIZE 137 23.76 5.8
+SHELVES 37.9 9.886 3.8
+FEATURES 23.8 4.512 5.3
+ of FEATURES. Surprisingly, there is also a strong positive correlation between
+PRICE and ECOST. Recall that ECOST is the energy cost; one might expect that 
+ higher-priced refrigerators should enjoy lower energy costs.
+ A regression model was fit to the data. The fitted regression equation appears
+ in Table 3.9, with \(s \,=6 0 . 6 5\) and \(R^{2}=8 3 . 8 \mathcal{V}_{o}\) .
+From Table 3.9, the explanatory variables seem to be useful predictors of
+refrigerator prices. Together, the variables account for 83.8\% of the variability. To
+ understand prices, the typical error has dropped from \(s_{y} \,=\, \S1 3 9 . 8 0 \, \mathrm{t o} \, s \,=\, \S6 0 . 6 5 .\)
+The \(t\) -ratios for each of the explanatory variables exceeds 2 in absolute value,
+ indicating that each variable is important on an individual basis.
+What is surprising about the regression fit is the negative coefficient associated
+with energy cost. Remember, we can interpret \(b_{E C O S T}=-6 . 9 6\) to mean that, for
+each dollar increase in ECOST, we expect the PRICE to decrease by \$6.96. This
+ negative relationship conforms to our economic intuition. However, it is surprising
+that the same dataset has shown us that there is a positive relationship between
+PRICE and ECOST. This seeming anomaly is because correlation measures
+relationships only between pairs of variables, though the regression fit can account
+for several variables simultaneously. To provide more insight into this seeming
+ anomaly, we now introduce the added variable plot.
+ Producing an Added Variable Plot
+ The added variable plot provides additional links between the regression method-
+ ology and more fundamental tools such as scatter plots and correlations. We work
+ in the context of the refrigerator price example to demonstrate the construction
+of this plot.
+Procedure for producing an added variable plot.
+(i) Run a regression of PRICE on RSIZE, FSIZE, SHELVES, and FEA-
+TURES, omitting ECOST. Compute the residuals from this regression,
+ which we label \(e_{1}\) .
+(ii) Run a regression of ECOST on RSIZE, FSIZE, SHELVES, and
+FEATURES. Compute the residuals from this regression, which we
+label \(e_{2}\) .
+(iii) Plot \(e_{1}\) versus \(e_{2}\) . This is the added variable plot of PRICE versus
+ECOST, controlling for the effects of the RSIZE, FSIZE, SHELVES, and
+ FEATURES. This plot appears in Figure 3.4.
+\clearpage
+3.4 Statistical Inference for a Single Coeffcient 91
+150 0 \(\circ\) Figure 3.4 An added
+variable plot. The
+100 \(\varpi\) 0 residuals from the
+regression of PRICE
+0 \(\circ\surd\omicron\) \(\circ\) : 0 0 variables, omitting
+\(\circ\) on the explanatory
+50 \(\circ^{\circ}\) : ECOST, are on the
+0 8 \(\circ_{\mathrm{O}}\) vertical axis. On the
+0 horizontal axis are the
+100 \(\circ\ss_{\omicron}\) 0 regression fit of
+residuals from the
+0 ECOST on the other
+5 \(0\) 5 10 explanatory variables.
+The correlation
+\(\mathbf{e}_{1}\) coefficient is \(- 0 . 4 8\) .
+The error \(\varepsilon\) can be interpreted as the natural variation in a sample. In many
+situations, this natural variation is small compared to the patterns evident in
+the nonrandom regression component. Thus, it is useful to think of the error,
+\(\varepsilon_{i} \,=\, y_{i} \,-( \beta_{0}+\beta_{1} x_{i \, 1}+\cdots+\beta_{k} x_{i \, k} ) .\) as the response after controlling for the
+effects of the explanatory variables. In Section 3.3, we saw that a random error
+can be approximated by a residual, \(e_{i} \,=\, y_{i} \,-\, ( b_{0} \,+\, b_{1} x_{i \, 1} \,+\, \cdots\,+\, b_{k} \, x_{i \, k} ) .\) Thus,
+ in the same way, we may think of a residual as the response after " controlling
+for" the effects of the explanatory variables.
+ With this in mind, we can interpret the vertical axis of Figure 3 .4 as the refriger-
+ ator PRICE controlled for effects of RSIZE, FSIZE, SHELVES, and FEATURES.
+ Similarly, we can interpret the horizontal axis as the ECOST controlled for effects
+ of RSIZE, FSIZE, SHELVES, and FEATURES. The plot then provides a graph-
+ ical representation of the relation between PRICE and ECOST, after controlling
+for the other explanatory variables. For comparison, a scatter plot of PRICE and
+ ECOST (not shown here) does not control for other explanatory variables. Thus,
+ it is possible that the positive relationship between PRICE and ECOST is due not
+ to a causal relationship but rather to one or more additional variables that cause
+ both variables to be large.
+For example, from Table 3.7, we see that the freezer size (FSIZE) is positively
+correlated with both ECOST and PRICE. It certainly seems reasonable that
+ increasing the size of a freezer would cause both the energy cost and the price to
+ increase. Rather, the positive correlation may be because large values of FSIZE
+ mean large values of both ECOST and PRICE.
+Variables left out of a regression are called omitted variables. This omission
+could cause a serious problem in a regression model fit; regression coefficients
+could be not only strongly significant when they should not be but also of the
+ incorrect sign. Selecting the proper set of variables to be included in the regression
+model is an important task; it is the subject of Chapters \(5\) and \(6\) .
+ 3.4.4 Partial Correlation Coefficients
+ As we saw in Chapter \(2\) a correlation statistic is a useful quantity for summarizing
+ plots. The correlation for the added variable plot is called a partial correlation
+coeffcient . It is defined to be the correlation between the residuals \(e_{1}\) and \(e_{2}\) and is
+\clearpage
+92 Multiple Linear Regression -- I
+ denoted by \(r ( y , \, x_{j} | x_{1} , \, \ldots, \, x_{j-1} , \, x_{j+1} , \, \ldots, \, x_{k} )\) Because it summarizes an added
+variable plot, we may interpret \(r ( y , \, x_{j} | x_{1} , \, \ldots, \, x_{j-1} , \, x_{j+1} , \, \ldots, \, x_{k} ) )\) to be the
+ correlation between \(y\) and \(x_{j}\) , in the presence of the other explanatory variables.
+To illustrate, the correlation between PRICE and ECOST in the presence of the
+ other explanatory variables is \(- \, 0 . 4 8\) .
+ The partial correlation coefficient can also be calculated using
+\[
+r ( y , \, x_{j} | x_{1} , \, \dots, \, x_{j-1} , \, x_{j+1} , \, \dots, \, x_{k} )=\cfrac{t ( b_{j} )} {\sqrt{t ( b_{j} )^{2}+n-( k+1 )}} . \tag{3.11}
+\]
+Here, \(t ( b_{j} )\) is the \(t\) -ratio for \(b_{j}\) from a regression of \(y\) on \(x_{1} , \dots, \, x_{k}\) (including the
+variable \(x_{j}\) ). An important aspect of equation (3.11) is that it allows us to calculate
+partial correlation coefficients running only one regression. For example, from
+ Table 3.9, the partial correlation between PRICE and ECOST in the presence of
+ the other explanatory variables is \((-3 . 1 ) / \sqrt{(-3 . 1 )^{2} \,+\, 3 7 \,-\, ( 5 \,+\, 1 )} \stackrel{\_} \approx-0 . 4 8\) :
+Calculation of partial correlation coefficients is quicker when using the rela-
+tionship with the \(t\) -ratio, but may fail to detect nonlinear relationships. The
+ information in Table 3.9 allows us to calculate all five partial correlation coef-
+ficients in the refrigerator price example after running only one regression. The
+ three-step procedure for producing added variable plots requires ten regressions,
+two for each of the five explanatory variables. Of course, by producing added
+variable plots, we can detect nonlinear relationships that are missed by correlation
+coefficients.
+Partial correlation coefficients provide another interpretation for \(t\) -ratios.
+Equation (3.11) shows how to calculate a correlation statistic from a \(t\) -ratio, thus
+ providing another link between correlation and regression analysis. Moreover,
+from equation (3.11), we see that the larger is the \(t\) -ratio, the larger is the partial
+ correlation coefficient. That is, a large \(t\) -ratio means that there is a large correlation
+ between the response and the explanatory variable, controlling for other explana-
+tory variables. This provides a partial response to the question that is regularly
+asked by consumers of regression analyses: Which variable is most important?
+ 3.5 Some Special Explanatory Variables
+The linear regression model is the basis of a rich family of models. This section
+The linear regression provides several examples to illustrate the richness of this family. These examples
+ function is linear in demonstrate the use of (i) binary variables, (ii) transformation of explanatory
+the parameters but variables, and (iii) interaction terms. This section also serves to underscore the
+ may be a highly meaning of the adjective linear in the phrase " linearregression" ;the regression
+ nonlinear function of function is linear in the parameters but may be a highly nonlinear function of the
+the explanatory
+variables. explanatory variables.
+ 3.5.1 Binary Variables
+ Categorical variables provide a numerical label for measurements of observations
+that fall in distinct groups, or categories. Because of the grouping, categorical
+\clearpage
+ 3.5 Some Special Explanatory Variables 93
+LNFACE Figure 3.5 Letter
+16 plot of LNFACE
+LNFACE = 5.09 + 0.634 LNINCOME versus LNINCOME,
+14 \(\circ\) \(\mathcal{s}\) \(\circ\) Wwih tre lener ode o
+" S"for single and \(\varsigma\)
+for other. The fitted
+12 regression lines have
+been superimposed.
+10 \(\delta\) \(\circ\) The lower line is for
+8 s S S \_NFACE. single and the upper
+= 4.29 + 0.634 LNINCOme line is for other.
+6 8 10 12
+LNINCOME
+variables are discrete and generally take on a finite number of values. We begin
+our discussion with a categorical variable that can take on one of only two
+values, a binary variable. Further discussion of categorical variables is the topic
+ of Chapter \(4\) .
+Example: Term Life Insurance, Continued. We now consider the marital status
+of the survey respondent. In the Survey of Consumer Finances, respondents can
+ select among several options describing their marital status including " married,
+" living with a partner," " divorced," and so on. Marital status is not measured
+continuously but rather takes on values that fall into distinct groups. In this Binary explanatory
+chapter, we group survey respondents according to whether they are single, variables are also
+ known as indicator
+defined to include those who are separated, divorced, widowed, never married, and dummy variables.
+ and are not married nor living with a partner. Chapter \(4\) will present a more
+ complete analysis of marital status by including additional categories.
+ The binary variable SINGLE is defined as \(1\) if the survey respondent is single
+and \(\; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; 0 \; \; \; \; \; 0\) otherwise. The variable SINGLE is also known as an indicator variable
+because it indicates whether the respondent is single. Another name for this
+ important type of variable is a dummy variable. We could use \(\; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; 0 \; \; \; \; \; 0\) and 100, or 20
+ and 36, or any other distinct values. However, \(\; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; 0 \; \; \; \; \; 0\) and \(1\) are convenient for the
+ interpretation of the parameter values, discussed subsequently. To streamline the
+ discussion, we now present a model using only LNINCOME and SINGLE as
+ explanatory variables.
+ For our sample of \(n \,=2 7 5\) households, 57 are single and the other 218 are not.
+ To see the relationships among LNFACE, LNINCOME, and SINGLE, Figure 3.5
+introduces a letter plot of LNFACE versus LNINCOME, with SINGLE as the
+code variable. We can see that Figure 3.5 is a scatter plot of LNFACE versus
+LNINCOME, using \(5 0\) randomly selected households from our sample of 275
+(for clarity of the graph). However, instead of using the same plotting symbol for
+ each observation, we have coded the symbols so that we can easily understand the
+behavior of a third variable, SINGLE. In other applications, you may elect to use
+ other plotting symbols such as \(\clubsuit, \heartsuit, \spadesuit\) and so on, or to use different colors, to
+\clearpage
+94 Multiple Linear Regression -- I
+encode additional information. For this application, the letter codes " S"for single
+and "- o"for other were selected because they remind the reader of the plot of the
+nature of the coding scheme. Regardless of the coding scheme, the important
+point is that a letter plot is a useful device for graphically portraying three or
+more variables in two dimensions. The main restriction is that the additional
+information must be categorized, such as with binary variables, to make the
+coding scheme work.
+Figure 3.5 suggests that LNFACE is lower for those who are single than for
+others for a given level of income. Thus, we now consider a regression model,
+\[
+\qquad\qquad\qquad L N F A C E=\beta_{0} \,+\, \beta_{1} L N I N C O M E \,+\, \beta_{2} S I N G L E+\, \varepsilon.
+\]
+ The regression function can
+be written as
+\[
+\textrm{E} y=\begin{cases} {\beta_{0}+\beta_{1} \mathrm{L N I N C O M E}} & {\mathrm{f o r ~ o t h e r ~ r e s p o n d e n t s}} \\ {\beta_{0}+\beta_{2}+\beta_{1} \mathrm{L N I N C O M E}} & {\mathrm{f o r ~ s i n g l e ~ r e s p o n d e n t s}} \\ \end{cases} .
+\]
+The interpretation of the model coefficients differs from the continuous vari-
+able case. For continuous variables such as LNINCOME, we interpret \(\beta_{1}\) as
+the expected change in \(y\) per unit change of logarithmic income, holding other
+variables fixed. For binary variables such as SINGLE, we interpret \(\beta_{2}\) as the
+expected increase in \(y\) when going from the base level of SINGLE ( \(= 0 )\) to the
+ alternative level. Thus, although we have one model for both marital statuses,
+we can interpret the model using two regression equations, one for each type of
+marital status. By writing a separate equation for each marital status, we have
+been able to simplify a complicated multiple regression equation. Sometimes,
+ you will find that it is easier to communicate a series of simple relationships than
+a single, complex relationship.
+ Although the interpretation for binary explanatory variables differs from the
+continuous, the ordinary least squares estimation method remains valid. To illus-
+trate, the fitted version of the preceding model is
+\[
+\begin{array} {l} {\widehat{L N F A C E}} \\ {\mathrm{s t a n d a r d ~ e r r o r} \quad( 0 . 8 9 ) \qquad\qquad( 0 . 0 7 8 )} \\ \end{array} \begin{array} {l} {{\mathrm{~}}} \\ {( 0 . 2 4 8 )} \\ \end{array} .
+\]
+ To interpret \(b_{2}=-0 . 8 0 0\) we say that we expect the logarithmic face to be smaller
+ by 0.80 for a survey respondent who is single compared to the other category. This
+assumes that other things, such as income, remain unchanged. For a graphical
+interpretation, the two fitted regression lines are superimposed in Figure 3.5.
+3.5.2 Transforming Explanatory Variables
+Regression models have the ability to represent complex, nonlinear relationships
+ between the expected response and the explanatory variables. For example, early
+regression texts, such as Plackett (1960, chapter 6) devote an entire chapter of
+ material to polynomial regression,
+\[
+\textrm{E} y=\beta_{0}+\beta_{1} x+\beta_{2} x^{2}+\cdots+\beta_{p} x^{p} . \tag{3.12}
+\]
+
+\clearpage
+ 3.5 Some Special Explanatory Variables 95
+Here, the idea is that a \(p\) th order polynomial in \(x\) can be used to approximate
+ general, unknown nonlinear functions of \(x\) .
+ The modern-day treatment of polynomial regression does not require an entire
+chapter because the model in equation (3.12) can be expressed as a special
+case of the linear regression model. That is, with the regression function in
+equation (3.5), E \(y=\beta_{0}+\beta_{1} x_{1}+\beta_{2} x_{2}+\cdots+\beta_{k} x_{k}\) , we can choose \(k=p\) and
+\(x_{1}=x , \, x_{2}=x^{2} , \, \dots, \, x_{p}=x^{\, p}\) . Thus, with these choices of explanatory variables,
+ we can model a highly nonlinear function of \(x\) .
+We are not restricted to powers of \(x\) in our choice of transformations. For
+example, the model E \(y=\beta_{0}+\beta_{1} \operatorname{l n} x\) , provides another way to represent a
+ gently sloping curve in \(x\) . This model can be written as a special case of the basic
+ linear regression model using \(x^{*}=\operatorname{l n} x\) as the transformed version of \(x\) .
+Transformations of explanatory variables need not be smooth functions. To
+ illustrate, in some applications, it is useful to categorize a continuous explanatory
+ variable. For example, suppose that \(x\) represents the number of years of education,
+ranging from \(\; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; \; 0 \; \; \; \; 0\) to 17. If we are relying on information self-reported by our sample
+of senior citizens, there may be a substantial amount of error in the measurement
+of \(x\) : We could elect to use a less informative but more reliable transform of
+\(x\) such as \(x^{*}\) , a binary variable for finishing 13 years of school (finishing high
+school). Formally, we would code \(x^{*}=1\) if \(x \geq1 3\) and \(x^{\, *}=0\) if \(x < 1 3\)
+Thus, there are several ways that nonlinear functions of the explanatory vari-
+ ables can be used in the regression model. An example of a nonlinear regression
+ model is \(y=\beta_{0}+\operatorname{e x p} ( \beta_{1} x )+\varepsilon\) These typically arise in science applications of
+regressions where there are fundamental scientific principles guiding the complex
+ model development.
+3.5.3 Interaction Terms
+We have so far discussed how explanatory variables, say, \(x_{1}\) and \(x_{2}\) , affect the
+mean response in an additive fashion, that is, \(\textrm{E} y \!=\! \beta_{0}+\! \beta_{1} x_{1}+\beta_{2} x_{2}\) . Here, we
+expect \(y\) to increase by \(\beta_{1}\) per unit increase in \(x_{1}\) , with \(x_{2}\) held fixed. What if the
+ marginal rate of increase of \(\textrm{E} y\) differs for high values of \(x_{2}\) when compared to
+low values of \(x_{2}\) ? One way to represent this is to create an interaction variable
+\(x_{3}=x_{1} \times x_{2}\) and consider the model E \(\textsc{l} y=\beta_{0}+\beta_{1} x_{1}+\beta_{2} x_{2}+\beta_{3} x_{3} ,\)
+With this model, the change in the expected \(y\) per unit change in \(x_{1}\) now
+depends on \(x_{2}\) . Formally, we can assess small changes in the regression function
+as
+\[
+\frac{\partial\textbf{E} y} {\partial x_{1}}=\frac{\partial} {\partial x_{1}} \left( \beta_{0}+\beta_{1} x_{1}+\beta_{2} x_{2}+\beta_{3} x_{1} x_{2} \right)=\beta_{1}+\beta_{3} x_{2} .
+\]
+In this way, we may allow for more complicated functions of \(x_{1}\) and \(x_{2}\) . Figure 3.6
+ illustrates this complex structure. From this figure and the preceding calculations,
+ we see that the partial changes of \(\textrm{E} y\) due to movement of \(x_{1}\) depend on the value
+of \(x_{2}\) . In this way, we say that the partial changes due to each variable are not
+unrelated but rather "" move together."
+\clearpage
+96 Multiple Linear Regression -- I
+Figure 3.6 Plot of
+\(\textrm{E} y=\beta_{0}+\beta_{1} x_{1}+\)
+\(\beta_{2} x_{2}+\beta_{3} x_{1} x_{2}\) versus
+\(x_{1}\) and \(x_{2}\) .
+80
+ 60
+40 
+12
+10.2
+8
+10
+X1
+6
+15
+ More generally, an interaction term is a variable that is created as a nonlinear
+function of two or more explanatory variables. These special terms, even though
+ permitting us to explore a rich family of nonlinear functions, can be cast as special
+cases of the linear regression model. To do this, we simply create the variable
+of interest and treat this new term as another explanatory variable. Of course,
+not every variable that we create will be useful. In some instances, the created
+variable will be so similar to variables already in our model that it will provide
+no new information. Fortunately, we can use \(t\) -tests to check whether the new
+variable is useful. Further, Chapter \(4\) will introduce a test to decide whether a
+ group of variables is useful.
+The function that we use to create an interaction variable must be more than
+ just a linear combination of other explanatory variables. For example, if we use
+\(x_{3}=x_{1}+x_{2}\) , we will not be able to estimate all of the parameters. Chapter 5 will
+ introduce some techniques to help avoid situations when one variable is a linear
+combination of the others.
+To give you some exposure to the wide variety of potential applications of
+special explanatory variables, we now present a series of short examples.
+Example: Term Life Insurance, Continued. How do we interpret the inter-
+action of a binary variable with a continuous variable? To illustrate, consider a
+Term Life regression model, \(L N F \! A C E=\beta_{0} \,+\, \beta_{1} \mathrm{I}\) LNINCOME \(+ \ \beta_{2} \mathrm{S I N G L E}+\)
+\(\beta_{2}\) LNINCOME*SINGLE \(+ \varepsilon\) . In this model, we have created a third explana-
+ tory variable through the interaction of LNINCOME and SINGLE. The regression
+function can be written as:
+\[
+\textsc{e} y=\begin{cases} {\beta_{0}+\beta_{1} \textsc{L N I N C O M E}} & {\mathrm{f o r ~ o t h e r ~ r e s p o n d e n}} \\ {\beta_{0}+\beta_{2}+( \beta_{1}+\beta_{3} ) \textsc{L N I N C O M E}} & {\mathrm{f o r ~ s i n g l e ~ r e s p o n d e n}} \\ \end{cases}
+\]
+ts
+nts
+Thus, through this single model with four parameters, we can create two separate
+regression lines, one for those single and one for others. Figure 3.7 shows the
+ two fitted regression lines for our data.
+\clearpage
+ 3.5 Some Special Explanatory Variables 97
+Table 3.10
+Variable Variable Squared Twenty-Three
+Variable \(( D=0 )\) \(( D=1 )\) \(( D=0 )\) eraction with Regression
+Baseline Interaction with Baseline \(D=1 )\) Expense Cost Model
+Coefficients from an
+ Number of life policies issued \(( x_{1}\) \(- 0 . 4 5 4\) 0.152 0.032 0.007
+ Amount of term life insurance 0.112 0.206 0.002 0.005
+sold \(( x_{2} )\)
+Amount of whole life insurance 0.184 0.173 0.008 0.007
+sold \(( x_{3} )\)
+Total annuity considerations ( \(x_{4}\) ) 0.098 0.169 -0.003 0.009
+Total accident and health -0.171 0.014 0.010 0.002
+premiums \(( x_{5}\) )
+Intercept 7.726
+Price of labor (PL) 0.553
+Price of capital (PC) 0.102
+Note: \(x_{1}\) through \(x_{5}\) are in logarithmic units.
+Source: Segal (2002).
+LNFACE Figure 3.7 Letter
+16- plot of LNFACE
+LNFACE = 5.78 + 0.573 LNINCOME versus LNINCOME,
+14 : Wih tre lete ode o"
+" S"for single and \(\cdot\epsilon\)
+for other. The fitted
+12 regression lines have
+been superimposed.
+10 \(\delta\) \(\circ\) The lower line is for
+8 INFACE single and the upper
+=1.51+1.185 LNINCOME line is for other.
+6 8 10 12
+LNINCOME
+Example: Life Insurance Company Expenses. In a well-developed life insur-
+ance industry, minimizing expenses is critical for a company's competitive posi-
+ tion. Segal (2002) analyzed annual accounting data from more than 100 firms for
+the period 1995- 1998,inclusive, using a data base from the National Associa-
+tion of Insurance Commissioners (NAIC) and other reported information. Segal
+ modeled overall company expenses as a function of firm outputs and the price of
+inputs. The outputs consist of insurance production, measured by \(x_{1}\) through \(x_{5}\)
+described in Table 3.10. Segal also considered the square of each output, as well
+as an interaction term with a dummy/binary variable \(\mathit{D}\) that indicates whether
+or not the firm uses a branch company to distribute its products. (In a branch
+company, field managers are company employees, not independent agents.)
+For the price inputs, the price of labor (PL) is defined to be the total cost of
+employees and agents divided by their number, in logarithmic units. The price
+ of capital (PC) is approximated by the ratio of capital expense to the number of
+\clearpage
+98 Multiple Linear Regression -- I
+employees and agents, also in logarithmic units. The price of materials consists of
+ expenses other than labor and capital divided by the number of policies sold and
+ terminated during the year. It does not appear directly as an explanatory variable.
+Rather, Segal took the dependent variable ( \(y )\) to be total company expenses
+ divided by the price of materials, again in logarithmic units.
+With these variable definitions, Segal estimated the following regression
+function:
+1
+\[
+\begin{aligned} {\textnormal{E} y=\beta_{0}+\sum_{j=1}^{5} \left( \beta_{j} x_{j}+\beta_{j+5} D x_{j}+\beta_{j+1 0} x_{j}^{2}+\beta_{j+1 5} D x_{j}^{2} \right)+\beta_{2 1} P L+\beta_{2 2} P C .} \\ \end{aligned}
+\]
+ The parameter estimates appear in Table 3.10. For example, the marginal change
+in \(\textrm{E} y\) per unit change in \(x_{1}\) is
+\[
+\frac{\partial\textrm{E} y} {\partial x_{1}}=\beta_{1}+\beta_{6} D+2 \beta_{1 1} x_{1}+2 \beta_{1 6} D x_{1} ,
+\]
+which is estimated as \(- 0 . 4 5 4 \,+\, 0 . 1 5 2 \, D \,+\, ( 0 . 0 6 4 \,-\, 0 . 0 1 4 \, D ) x_{1}\) . For these data,
+the median number of policies issued was \(x_{1}=1 5 , 9 4 4\) : At this value of
+\(x_{1}\) , the estimated marginal change is \(- 0 . 4 5 4 \,+\, 0 . 1 5 2 \, D \,+\, ( 0 . 0 6 4 \,-\, 0 . 0 1 4 \, D )\)
+\(\operatorname{l n} ( 1 5 9 4 4 )=0 . 1 6 5+0 . 0 1 7 D\) or 0.165 for baseline( \(D=0\) and 0.182 for
+branch ( \(D=1\) companies.
+These estimates are elasticities, as defined in Section 3.2.2. To interpret these
+coefficients further, let COST represent total general company expenses and
+ NUMPOL represent the number of life policies issued. Then, for branch ( \(D=1\) )
+companies, we have
+\[
+0 . 1 8 2 \approx\frac{\partial y} {\partial x_{1}}=\frac{\partial\, \operatorname{l n} \, C O S T} {\partial\, \operatorname{l n} \, N U M P O L}=\frac{\frac{\partial\, \, C O S T} {\partial\, \, N U M P O L}} {\frac{C O S T} {N U M P O L}} ,
+\]
+\(\frac{\partial\ C O S T} {\partial\ N U M P O L} \approx0 . 1 8 2 \frac{C O S T} {N U M P O L}\) The median cost is \$15,992,000, so the marginal
+or
+cos an values is 0.182 x (15992000/15944) = \$182.55.
+ Special Case: Curvilinear Response Functions. We can expand the polynomial
+ functions of an explanatory variable to include several explanatory variables. For
+example, the expected response, or response function, for a second-order model
+with two explanatory variables is
+\[
+\mathrm{E} y=\beta_{0}+\beta_{1} x_{1}+\beta_{2} x_{2}+\beta_{1 1} x_{1}^{2}+\beta_{2 2} x_{2}^{2}+\beta_{1 2} x_{1} x_{2} .
+\]
+Figure 3.8 illustrates this response function. Similarly, the response function
+for a second-order model with three explanatory variables is
+\[
+\begin{aligned} {\mathrm{E} y} & {{}=\beta_{0}+\beta_{1} x_{1}+\beta_{2} x_{2}+\beta_{3} x_{3}+\beta_{1 1} x_{1}^{2}+\beta_{2 2} x_{2}^{2}+\beta_{3 3} x_{3}^{2}+\beta_{1 2} x_{1} x_{2}} \\ {} & {{} \quad+\, \beta_{1 3} x_{1} x_{3}+\beta_{2 3} x_{2} x_{3} .} \\ \end{aligned}
+\]
+When there is more than one explanatory variable, third- and higher-order
+ models are rarely used in applications.
+\clearpage
+3.5 Some Special Explanatory Variables 99
+Figure 3.8 Plot of
+\(\textrm{E} y=\beta_{0}+\beta_{1} x_{1}+1\)
+\(\beta_{2} x_{2}+\beta_{1 1} x_{1}^{2}+\)
+200 \(\beta_{2 2} x_{2}^{2}+\beta_{1 2} x_{1} x_{2}\) and \(x_{2}\)
+versus \(x_{1}\)
+150
+100
+50
+0 12
+5 \(1 0 \ddag\)
++10 8
+6
+15
+Figure 3.9 The
+marginal change in
+\(\textrm{E} y\) is lower below
+\$97,500. The
+ parameter \(\beta_{2}\)
+represents the
+\(\textsc{e y}\) difference in the
+\(\beta_{1}+\beta_{2}\) slopes.
+\(\beta_{1}\)
+ 90000 95000 100000 10500
+x
+ Special Case: Nonlinear Functions of a Continuous Variable. In some applica-
+tions, we expect the response to have some abrupt changes in behavior at certain
+ values of an explanatory variable, even if the variable is continuous. For example,
+ suppose that we are trying to model an individual's charitable contributions \(\left( y \right)\) in
+terms of his or her wages (x). For 2007 data, a simple model we might entertain
+ is given in Figure 3.9.
+A rational for this model is that, in 2007, individuals paid 7.65\% of their
+income for Social Security taxes up to \$97,500. No social security taxes are
+excised on wages in excess of \$97,500. Thus, one theory is that, for wages in
+excess of \$97,500, individuals have more disposal income per dollar and thus
+ should be more willing to make charitable contributions.
+To model this relationship, define the binary variable \(z\) to be zero if \(x <\)
+\(9 7 , \! 5 0 0\) and to be one if \(x ~ \geq~ 9 7 , \! 5 0 0\) Define the regression function to be
+E \(\cdot\ y \,=\, \beta_{0} \,+\, \beta_{1} x \,+\, \beta_{2} z ( x \,-\, 9 7 {,} 5 0 0 ) .\) This can be written as
+\[
+\textrm{E} y=\left\{\begin{matrix} {\beta_{0}+\beta_{1} x} & {x < 9 7 , 5 0 0} \\ {\beta_{0}-\beta_{2} ( 9 7 , \! 5 0 0 )+( \beta_{1}+\beta_{2} ) x} & {x \geq9 7 , \! 5 0 0} \\ \end{matrix} \right. .
+\]
+
+\clearpage
+100 Multiple Linear Regression -- I
+Figure 3.10 Plot of
+expected commissions 240
+(E y) versus number
+of shares traded (x). 220
+ The break at \(x \,=\, 1 0 0\) 200
+reflects savings in
+expenses. The lower E y 180 -
+administrative
+ slope for \(x \, \geq\, 1 0 0\) 160
+reflects economies of
+ scales in expenses. 140
+120
+60 80 100 120 140
+x
+To estimate this model, we would run a regression of \(y\) on two explanatory
+variables, \(x_{1}=x\) and \(x_{2}=z \times( x \,-9 7 , 5 0 0 )\) . If \(\beta_{2} > 0\) then the marginal rate
+ of charitable contributions is higher for incomes exceeding \$97,500.
+Figure 3.9 illustrates this relationship, known as piecewise linear regression or
+sometimes \(\mathrm{a}\) " brolen-stick" model. The sharp break in Figure 3.9 at \(x \,=9 7 , \! 5 0 0\)
+ is called a kink. We have linear relationships above and below the kinks and have
+used a binary variable to put the two pieces together. We are not restricted to one
+ kink. For example, suppose that we want to do a historical study of federal taxable
+income for 1992 single filers. Then, there were three tax brackets: the marginal
+tax rate below \$21,450 was \(1 5 \not\! \gamma_{o}\) , above \$51,900 was \(3 1 {\cal V}_{o}\) , and in between was
+28 percent. For this example, we would use two kinks, at 21,450 and 51,900.
+Further, piecewise linear regression is not restricted to continuous response
+functions. For example, suppose that we are studying the commissions paid to
+stockbrokers (y) in terms of the number of shares purchased by a client (x).
+We might expect to see the relationship illustrated in Figure 3.10. Here, the
+discontinuity at \(x \,=\, 1 0 0\) reflects the administrative expenses of trading in odd
+ lots, as trades of less than 100 shares are called. The lower marginal cost for trades
+ in excess of 100 shares simply reflects the economies of scale for doing business
+ in larger volumes. A regression model of this is E \(\boldsymbol{y}=\beta_{0} \,+\, \beta_{1} \boldsymbol{x} \,+\, \beta_{2} \boldsymbol{z} \,+\, \beta_{3} \boldsymbol{z} \boldsymbol{x}\) :
+where \(z=0\) if \(x \, < \, 1 0 0\) and \(z=1\) if \(x \, \geq\, 1 0 0 .\) The regression function depicted
+in Figure 3.10 is
+\[
+\textrm{E} y=\begin{cases} {\, \beta_{0} \,+\, \beta_{1} x_{1}} & {x \, < \, 1 0 0} \\ {\, \beta_{0} \,+\, \beta_{2} \,+\, ( \beta_{1} \,+\, \beta_{3} ) x_{1}} & {x \, \geq\, 1 0 0} \\ \end{cases} .
+\]
+3.6 Further Reading and References
+For proofs of the Chapter 3 results, see Goldberger (1991). Nonlinear regression
+models are discussed in, for example, Bates and Watts (1988).
+ Chapter 3 has introduced the fundamentals of multiple linear regression. Chap-
+ter \(4\) will widen the scope by introducing categorical variables and statistical
+\clearpage
+3.7 Exercises 101
+inference methods for handling several coefficients simultaneously. Chapter \(5\)
+will introduce techniques to help you pick appropriate variables in a multiple
+ linear regression model. Chapter \(6\) is a synthesis chapter, discussing model inter-
+ pretation, variable selection, and data collection.
+Chapter References
+ Bates, Douglas M., and D. G. Watts (1988). Nonlinear Regression Analysis and its Applications.
+John Wiley and Sons, New York.
+Lemaire, Jean (2002). Why do females live longer than males? North American Actuarial
+ Journal 6, no. 4, 21- 37.
+Goldberger, Arthur (1991). A Course in Econometrics. Harvard University Press, Cambridge,
+Massachusetts.
+Plackett, \(\mathrm{R}\) . L. (1960). Regression Analysis. Clarendon Press, Oxford, U.K.
+ Segal, Dan (2002). An economic analysis of life insurance company expenses. North American
+ Actuarial Journal \(6\) , no. \(4\) 81- 94.
+3.7 Exercises
+3.1. Consider a fictitious dataset of \(n \,=\, 1 0 0\) observations with \(s_{y}=8 0 .\) We run
+ a regression with three explanatory variables to get \(s \,=5 0\) .
+a. Calculate the adjusted coefficient of determination, \(R_{a}^{2}\) .
+b. Complete the ANOVA table.
+ANOVA Table
+Source Sum of Squares \(d f\) Mean Square
+Regression
+Error
+Total
+\(\mathrm{c}\) .Calculate the (unadjusted) coefficient of determination, \(R^{2}\)
+3.2. Consider a fictitious dataset of \(n \,=\, 1 0 0\) observations with \(s_{y}=8 0 .\) We run
+ a regression with three explanatory variables to get \(s \,=5 0\) We also get
+\[
+\left( \mathbf{X}^{\prime} \mathbf{X} \right)^{-1}=\left( \begin{matrix} {1 0 0} & {2 0} & {2 0} & {2 0} \\ {2 0} & {9 0} & {3 0} & {4 0} \\ {2 0} & {3 0} & {8 0} & {5 0} \\ {2 0} & {4 0} & {5 0} & {7 0} \\ \end{matrix} \right) .
+\]
+ a. Determine the standard error of \(b_{3} , \, s e ( b_{3} )\) .
+b. Determine the estimated covariance between \(b_{2}\) and \(b_{3}\) .
+ c. Determine the estimated correlation between \(b_{2}\) and \(b_{3}\) .
+d. Determine the estimated variance of \(4 b_{2}+3 b_{3}\) .
+\clearpage
+102 Multiple Linear Regression -- I
+3.3. Consider the following small fictitious dataset. You will be fitting a regres-
+ sion model to \(y\) using two explanatory variables, \(x_{1}\) and \(x_{2}\) .
+\[
+\begin{array} {l l l l l} \hline{} & {} & {} & {} & {} \\ {i} & {1} & {2} & {3} & {4} \\ {x_{i , 1}} & {-1} & {2} & {4} & {6} \\ {x_{i , 2}} & {0} & {0} & {1} & {1} \\ {y_{i}} & {0} & {1} & {5} & {8} \\ \hline{} \\ \end{array}
+\]
+From the fitted regression model, we have \(s \,=1 . 3 7 3\) and
+\[
+\mathbf{b}=\left( \begin{matrix} {0 . 1 5} \\ {0 . 6 9 2} \\ {2 . 8 8} \\ \end{matrix} \right) \mathrm{~ a n d ~} \ \left( \mathbf{X}^{*} \mathbf{X} \right)^{-1}=\left( \begin{matrix} {0 . 5 3 8 4 6} & {-0 . 0 7 6 9 2} & {-0 . 1 5 3 8 5} \\ {-0 . 0 7 6 9 2} & {0 . 1 5 3 8 5} & {-0 . 6 9 2 3 1} \\ {-0 . 1 5 3 8 5} & {-0 . 6 9 2 3 1} & {4 . 1 1 5 3 8} \\ \end{matrix} \right) .
+\]
+a. Write down the vector of dependent variables, \({\bf y}\) , and the matrix of
+ explanatory variables, \(\mathbf{X}\) .
+Determine the numerical value for \(\widehat{y}_{3}\) , the fitted value for the third
+b.
+observation.
+ c. Determine the numerical value for \(s e ( b_{2} )\) .
+@ EMPIRICAL d. Determine the numerical value for \(t ( b_{1} )\) .
+Filename is 3.4. Wisconsin Lottery. Section 2.1 described a sample of \(n=5 0\) geographic
+"WiscLottery" areas (Zip codes) containing sales data on the Wisconsin state lottery ( \(y=\)
+ SALES). In that section, sales were analyzed using a basic linear regression
+ model with \(x \,=\, P \, O \, P\) , the area population, as the explanatory variable.
+ This exercise extends that analysis by introducing additional explanatory
+ variables given in Table 3.11.
+Table 3.11 Lottery,
+Economic, and Lottery Characteristics
+Demographic
+Characteristics of 50 SALES Online Lottery Sales to Individual Consumers
+Wisconsin Zip Codes
+Economic and demographic characteristics
+PERPERHH Persons per household
+MEDSCHYR Median years of schooling
+MEDHVL Median home value in \$1000s for owner-occupied homes
+PRCRENT Percentage of housing that is renter occupied
+PRC55P Percentage of population that is 55 or older
+HHMEDAGE Household median age
+MEDINC Estimated median household income, in \$1000s
+POP Population, in thousands
+a. Produce a table of summary statistics for all variables. One Zip code
+(observation 11, \(\mathrm{Z i p} \,=\, 5 3 2 1 1\) , Shorewood, Wisconsin, a suburb of
+Milwaukee) appears to have unusually large values of MEDSCHYR
+ and MEDHVL. For this observation, how many standard deviations is
+the value of MEDSCHYR above the mean? For this observation, how
+ many standard deviations is the value of MEDHVL above the mean?
+\clearpage
+3.7 Exercises 103
+b. Produce a table of correlations. What three variables are most highly
+correlated with SALES?
+ c. Produce a scatterplot matrix of all explanatory variables and SALES.
+In the plot of MEDSCHYR versus SALES, describe the position of
+observation 11.
+ d. Fit a linear model of SALES on all eight explanatory variables. Sum-
+ marize the fit of this model by citing the residual standard deviation, \(s\) :
+ the coefficient of determination, \(R^{2}\) ; and its adjusted version, \(R_{a}^{2}\) .
+e. Based on your part (d) model fit, is MEDSCHYR a statistically sig
+nificant variable? To respond to this question, use a formal test of
+ hypothesis. State your null and alternative hypotheses, decision-making
+criterion, and decision-making rule.
+f. Now fit a more parsimonious model, using SALES as the dependent
+variable and MEDSCHYR, MEDHVL, and POP as explanatory vari-
+ables. Summarize the fit of this model by citing the residual standard
+deviation, \(s\) ; the coefficient of determination, \(R^{2}\) ; and its adjusted ver-
+sion, \(R_{a}^{2}\) . How do these values compare to the model fit in part (d)?
+g. Note that the sign of the regression coefficient associated with MED-
+SCHYR is now negative. To help interpret this coefficient, compute the
+corresponding partial correlation coefficient. What is the interpretation
+of this coefficient?
+h. To get further insights into the relation between MEDSCHYR and
+SALES, produce an added variable plot controlling for the effects of
+MEDHVL and POP. Check that the correlation associated with this
+ plot agrees with your answer in part \(\mathrm{( g )}\) .
+i. Rerun the regression in part (f), after removing observation 11. Cite
+the basic summary statistics from this regression. For this model fit,
+is MEDSCHYR a statistically significant variable? To respond to this
+ question, use a formal test of hypothesis. State your null and alternative
+hypotheses, decision-making criterion, and decision-making rule.
+ Rerun the regression in part (f), after removing observation \(9\) . Cite the
+j.
+ basic summary statistics from this regression. @ EMPIRICAL
+3.5. Insurance Company Expenses. This exercise considers insurance com- Filename is
+ pany data from the NAIC and described in Exercise 1.6. "NAICExpense"
+Table 3.12 describes several variables that can be used to explain
+expenses. As with Segal's (2002) study of life insurers, firm " outputs"
+consist of premiums written (for property and casualty, these are sub-
+divided into personal and commercial lines) and losses (subdivided into
+short and long tail lines). ASSETS and CASH are commonly used mea-
+sures of the size of a company. GROUP, STOCK, and MUTUAL describe
+ the organizational structure. Firm " inputs"were gathered from the Bureau
+ of Labor Statistics (BLS, from the Occupational Employee Statistics pro-
+ gram). WAGESTAFF is calculated as the average wage in the state where
+the insurance company is headquartered. AGENTWAGE is calculated as
+\clearpage
+104 Multiple Linear Regression -- I
+ the weighted average of annual wages of the brokerage industry, weighted
+ by the percentage of gross premium written in each state.
+Table 3.12 Insurer
+ Expense Variables Variable Description
+ NAIC Variables
+EXPENSES Total expenses incurred, in millions of dollars
+LOSSLONG Losses incurred for long tail lines, in millions of dollars
+LOSSSHORT Losses incurred for short tail lines, in millions of dollars
+GPWPERSONAL Gross premium written for personal lines, in millions of dollars
+GPWCOMM Gross premium written for commercial lines, in millions of dollars
+ASSETS Net admitted assets, in millions of dollars
+CASH Cash and invested assets, in millions of dollars
+GROUP Indicates whether the company is affiliated
+ STOCK Indicates whether the company is a stock company
+ MUTUAL indicates whether the company is a mutual company
+ BLS Variables
+STAFFWAGE Annual average wage of the insurer's administrative staff,
+ in thousands of dollars
+AGENTWAGE Annual average wage of the insurance agent, in thousands of dollars
+ A preliminary inspection of the data showed that many firms did not
+report any insurance losses incurred in 2005. For this exercise, we consider
+the 384 companies with some losses in the file " NAICExpense."
+ a. Produce summary statistics of the response variable and the (nonbinary)
+ explanatory variables. Note the pattern of skewness for each variable.
+ Note that many variables have negative values.
+b. Transform each nonbinary variable through the modified logarithm
+transform, \(\operatorname{l n} ( 1+x )\) Produce summary statistics of these modi-
+fied nonbinary explanatory variables. Let LNEXPENSES \((=\operatorname{l n} ( 1+\)
+EXPENSES)) denote the modified expense variable.
+For subsequent analysis, use only the modified variables described
+in part (b).
+c. Produce a table of correlations for the nonbinary variables. What three
+Variables are most highly correlated with LNEXPENSES?
+d. Provide a boxplot of LNEXPENSES by level of GROUP. Which level
+of group has higher expenses?
+e. Fit a linear model of LNEXPENSES on all eleven explanatory vari
+ ables. Summarize the fit of this model by citing the residual standard
+ deviation, \(s\) ; the coefficient of determination, \(R^{2}\) ; and its adjusted ver-
+ sion, \(R_{a}^{2}\) .
+f. Fit a linear model of LNEXPENSES on a reduced model using eight
+explanatory variables, dropping CASH, STOCK, and MUTUAL. For
+the explanatory variables, include assets, GROUP, both versions of
+losses and gross premiums, as well as the two BLSvariables.
+\clearpage
+3.7 Exercises 105
+f(i). Summarize the fit of this model by citing \(s , \, \, R^{2}\) and \(R_{a}^{2}\)
+f(ii). Interpret the coefficient associated with commercial lines gross
+ premiums on the logarithmic scale.
+f(iii). Suppose that GPWCOMM increases by \$1.00, how much do we
+expect EXPENSES to increase? Use your answer in part f(ii)
+and median values of GPWCOMM and EXPENSES for this
+question.
+g. Square each of the two loss and the two gross premium variables. Fit
+ a linear model of LNEXPENSES on a reduced model using twelve
+explanatory variables, the eight variables in part (f), and the four addi-
+ tional squared terms just created.
+\(\mathrm{g ( i )}\) .Summarize the fit of this model by citing \(s , \; R^{2}\) , and \(R_{a}^{2}\) .
+\(\mathrm{g ( i i )}\) . Do the quadratic variables appear to be useful explanatory
+variables?
+h. Now omit the two BLS variables, so you are fitting a model of LNEX-
+PENSES on assets, GROUP, both versions of losses and gross premi-
+ums, as well as quadratic terms. Summarize the fit of this model by
+citing \(s , \; R^{2}\) , and \(R_{a}^{2}\) Comment on the number of observations used to
+fit this model compared to part (f).
+i. Drop the quadratic terms in part (g) and add interaction terms with
+ the dummy variable GROUP. Thus, there are now 11 variables, assets,
+GROUP, both versions of losses and gross premiums, as well as inter-
+actions of GROUP with assets and both versions of losses and gross
+premiums.
+i(i). Summarize the fit of this model by citing \(s , \; R^{2}\) , and \(R_{a}^{2}\) .
+i(ii). Suppose that GPWCOMM increases by \(\S1 . 0 0\) , how much do
+we expect EXPENSES to increase for \(\mathrm{G R O U P} ~=~ 0\) compa-
+nies? Use the median values of GPWCOMM and EXPENSES of
+\(\mathrm{G R O U P}=0\) companies for this question.
+i(ii). Suppose that GPWCOMM increases by \$1.00, how much do
+we expect EXPENSES to increase for GROUP \(= 1\) compa-
+nies? Use the median values of GPWCOMM and EXPENSES of
+\(\mathrm{G R O U P}=1\) companies for this question. @ EMPIRICAL
+3.6. National Life Expectancies. We continue the analysis begun in ExercisesFilename is
+1.7 and 2.22. Now fit a regression model on LIFEEXP using three explana-"UNLifeExpectancy"
+tory variables, FERTILITY, PUBLICEDUCATION, and lnHEALTH (the
+ natural logarithmic transform of PRIVATEHEALTH).
+ a. Interpret the regression coefficient associated with public education.
+b. Interpret the regression coefficient associated with health expenditures
+without using the logarithmic scale for expenditures.
+c.Based on the model fit, is PUBLICEDUCATION a statistically sig-
+nificant variable? To respond to this question, use a formal test of
+ hypothesis. State your null and alternative hypotheses, decision-making
+criterion, and decision-making rule.
+\clearpage
+106 Multiple Linear Regression -- I
+Figure 3.11 Added 2 : S : \(\aleph_{\circ}\) 0 0
+variable plot of PUB- 5 S
+lnHEALTH. TE d g0
+LICEDUCATION
+versus LIFEEXP, 5 0 0
+6
+ controlling for 00
+FERTILITY and
+2 0
+2
+4 2 0 2 4 6 8
+residuals(PUBLICEDUCATION)
+ d. The negative sign of the PUBLICEDUCATION coefficient is surpris-
+ ing, in that the sign of the correlation between PUBLICEDUCATION
+ and LIFEEXP is positive and intuition suggests a positive relation. To
+check this result, an added variable plot appears in Figure 3.11.
+\(\mathrm{d ( i )}\) .For an added variable plot, describe its purpose and a method for
+ producing it.
+ d(ii). Calculate the correlation corresponding to the added variable plot
+ that appears in Figure 3.11.
+\clearpage
+
+\end{document}

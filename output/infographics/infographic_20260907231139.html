@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>Regression and the Normal Distribution</title>
+<style>
+:root{ --bg:#fff; --fg:#1a1a1a; --panel:#f4f6f8; --accent:#3a6ea5; --border:#ccd6df; }
+@media (prefers-color-scheme: dark){ :root{ --bg:#141414; --fg:#e8e8e8; --panel:#1f1f1f; --accent:#7fa8d0; --border:#3a3a3a; } }
+body{font-family:'Segoe UI', system-ui, sans-serif; background:var(--bg); color:var(--fg); margin:0; padding:2em 1em;}
+main{max-width:1040px; margin:0 auto;}
+h1{font-size:1.9em; margin-bottom:0.1em;}
+.subtitle{color:var(--accent); margin-top:0; margin-bottom:1.5em;}
+.panel{border:1px solid var(--border); border-radius:10px; padding:1.2em 1.4em; margin-bottom:1.4em; background:var(--panel);}
+.panel h2{margin-top:0; display:flex; align-items:center; gap:0.5em;}
+.badge{background:var(--accent); color:#fff; border-radius:50%; width:1.6em; height:1.6em; display:inline-flex; align-items:center; justify-content:center; font-size:0.85em;}
+.section{margin:0.8em 0;}
+.half-row{display:flex; gap:1.2em; flex-wrap:wrap;}
+.half{flex:1 1 260px;}
+.stat-value{font-size:1.6em; font-weight:700; color:var(--accent);}
+blockquote{border-left:3px solid var(--accent); margin:0.3em 0; padding:0.2em 1em; font-style:italic;}
+ol{padding-left:1.3em;}
+.bar-row{display:flex; align-items:center; gap:0.6em; margin:0.3em 0;}
+.bar-label{flex:0 0 160px; font-size:0.85em;}
+.bar-track{flex:1; background:var(--border); border-radius:4px; height:10px; overflow:hidden;}
+.bar-fill{background:var(--accent); height:100%;}
+</style></head><body><main>
+<h1>Regression and the Normal Distribution</h1>
+<p class="subtitle">A visual summary of Chapter 1 (Frees) — from Galton's heights to actuarial pricing</p>
+
+</div>
+<div class="panel"><h2><span class="badge">1</span> Foundations</h2>
+<div class="section"><h3>Opening Idea</h3><blockquote>Regression analysis is a statistical method used to analyze data... the distinguishing feature of this method is the ability to make statements about variables after having controlled for values of known explanatory variables.<br>— Section 1.1</blockquote></div>
+<div class="half-row">
+<div class="half"><div class="section"><h3>Galton's Dataset</h3><div class="stat-value">928</div><div>adult children measured in Galton's 1885 height study</div></div></div>
+<div class="half"><div class="section"><h3>Regression's Reach</h3><div class="stat-value">24,000+</div><div>articles using regression techniques indexed in ABI/INFORM, 1978-2007</div></div></div>
+</div>
+</div>
+<div class="panel"><h2><span class="badge">2</span> The Normal Curve</h2>
+<div class="section"><h3>Fitting the Normal Curve</h3><ol><li>Collect data (e.g. MA bodily injury claims, n=272)</li><li>Compute mean, median, standard deviation, percentiles</li><li>Fit normal curve using ybar for mu and s_y^2 for sigma^2</li><li>Diagnose fit with histogram, box plot, and qq plot</li></ol></div>
+<div class="section"><h3>MA Bodily Injury Claims Summary (log-thousands $)</h3><div class="bar-row"><div class="bar-label">Mean</div><div class="bar-track"><div class="bar-fill" style="width:41.2%"></div></div><div>0.481</div></div><div class="bar-row"><div class="bar-label">Median</div><div class="bar-track"><div class="bar-fill" style="width:67.9%"></div></div><div>0.793</div></div><div class="bar-row"><div class="bar-label">Std Dev</div><div class="bar-track"><div class="bar-fill" style="width:94.3%"></div></div><div>1.101</div></div><div class="bar-row"><div class="bar-label">25th pct</div><div class="bar-track"><div class="bar-fill" style="width:9.8%"></div></div><div>-0.114</div></div><div class="bar-row"><div class="bar-label">75th pct</div><div class="bar-track"><div class="bar-fill" style="width:100.0%"></div></div><div>1.168</div></div></div>
+</div>
+<div class="panel"><h2><span class="badge">3</span> Power Transforms</h2>
+<div class="half-row">
+<div class="half"><div class="section"><h3>Skewness Directions</h3><ol><li>Right-skewed (positive) vs Left-skewed (negative)</li><li>Long right tail, left mass vs Long left tail, right mass</li><li>Typical of raw insurance claims vs Typical after log transform</li></ol></div></div>
+<div class="half"><div class="section"><h3>Box-Cox Family</h3><ol><li>lambda = 1: no transform</li><li>lambda = 1/2: square root</li><li>lambda = 0: natural log ln(y)</li><li>lambda = -1: negative reciprocal</li></ol></div></div>
+</div>
+</div>
+<div class="panel"><h2><span class="badge">4</span> Sampling &amp; Design</h2>
+<div class="half-row">
+<div class="half"><div class="section"><h3>Four Basic Sampling Assumptions</h3><ol><li>E(y_i) = mu</li><li>Var(y_i) = sigma^2</li><li>{y_i} independent</li><li>{y_i} normally distributed</li></ol></div></div>
+<div class="half"><div class="section"><h3>Designed vs Observational Data</h3><ol><li>RAND Health Insurance Experiment vs Galton height data</li><li>Analyst controls treatment vs Analyst cannot control assignment</li><li>Causal inference possible vs Statistical control only, confounders possible</li></ol></div></div>
+</div>
+</div>
+<div class="panel"><h2><span class="badge">5</span> Actuarial Applications</h2>
+<div class="section"><h3>Three Traditional Actuarial Applications</h3><ol><li>Pricing — risk classification counters adverse selection</li><li>Reserving — forecasting future obligations</li><li>Solvency testing — assessing capital adequacy</li></ol></div>
+</div>
+</main></body></html>

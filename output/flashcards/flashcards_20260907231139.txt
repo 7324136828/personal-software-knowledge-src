@@ -1,0 +1,22 @@
+# Regression and the Normal Distribution — Flashcards
+# 20 recall cards covering Sections 1.1-1.9 of the chapter excerpt.
+What is the distinguishing feature of regression analysis, according to Section 1.1?	The ability to make statements about a variable of interest after controlling for known explanatory variables.
+How many adult children's heights, classified by parents' height index, are shown in Galton's 1885 dataset (Table 1.1)?	928 adult children.
+What is an 'explanatory variable'?	A measurement that provides information about a variable of interest (e.g., parents' height explains a child's height).
+The normal curve is defined by f(y) = 1/(sigma*sqrt(2*pi)) * exp(-(y-mu)^2 / ______).	2*sigma^2 (twice the variance)
+In the normal curve density, what do mu and sigma^2 represent?	mu is the location (mean/median) parameter; sigma^2 is the scale parameter controlling peakedness/spread.
+Why is Carl Gauss's image on an old German 10-Deutsche-Mark note relevant to Section 1.2?	Gauss developed the normal curve (also called the Gaussian curve) around 1809 in connection with least squares curve-fitting, so the note commemorates his link to the distribution central to regression theory.
+How many Massachusetts automobile bodily injury claims does the Table 1.2 example use, and from whom is the data sourced?	272 claims, from Rempala and Derrig (2005).
+Define the sample mean ybar algebraically.	ybar = (1/n) * (y_1 + ... + y_n) = (1/n) * sum_{i=1}^{n} y_i
+Define the sample standard deviation s_y.	s_y = sqrt( (1/(n-1)) * sum_{i=1}^{n} (y_i - ybar)^2 )
+What is a percentile?	A number below which a specified fraction of ordered observations falls (e.g., 25% of observations lie below the 25th percentile).
+Why do analysts often use a logarithmic transform for variables like insurance claims or wages?	A log transform preserves the original ordering of values but pulls in extreme values, symmetrizing distributions that are otherwise skewed (common in insurance claims).
+What is a right-skewed (positively skewed) distribution?	A distribution with a longer tail on the right and a greater concentration of mass to the left; common in insurance claims data.
+In the Box-Cox family, when lambda = ______, the transform y^(lambda) is defined as ln(y).	0 (zero)
+List the four Basic Sampling Assumptions from Section 1.4.	1) E(y_i)=mu; 2) Var(y_i)=sigma^2; 3) {y_i} are independent; 4) {y_i} are normally distributed.
+Why is Assumption 4 (normality) not required for many statistical inference procedures?	Because central limit theorems provide approximate normality for many statistics of interest even when the underlying data are not normal.
+Distinguish experimental data from observational data.	Experimental (designed-study) data are collected under the analyst's control (e.g., randomized fertilizer levels); observational data are not under the analyst's control (e.g., Galton's height data), limiting causal inference.
+In the RAND Health Insurance Experiment described in Section 1.5, how many different insurance plans were randomly assigned to enrolled households?	14 different insurance plans, across six cities between November 1974 and February 1977.
+What is adverse selection, and how does regression-based pricing address it?	Adverse selection occurs when flat-rate pricing causes low-risk customers to overpay and leave while high-risk customers stay, degrading profitability; regression-based classification systems let insurers price each insured according to their risk, mitigating this problem.
+Name the three traditional areas of actuarial application discussed in Section 1.6.	Pricing, reserving, and solvency testing.
+According to the Edgeworth Approximation discussed in Section 1.9, what makes the normal approximation for ybar better or worse?	The approximation improves as the skewness term E(ybar-mu)^3 approaches zero; it is more accurate for symmetric parent populations than for skewed ones, which is why transforming skewed data toward symmetry helps regression inference.

@@ -1,0 +1,22 @@
+# Basic Linear Regression — Flashcards
+# Twenty source-grounded recall cards for Chapter 2.
+What does Pearson correlation r measure?	The strength and direction of a linear relationship between two variables.
+What is the range of any Pearson correlation coefficient?	-1 <= r <= 1.
+Why can y=x^2 have r=0?	Correlation measures linear relationship only; the symmetric quadratic relationship is perfect but nonlinear.
+What correlation did SALES and POP have in the Wisconsin Lottery sample?	r = 0.886, indicating a strong positive linear relationship.
+The least-squares slope is b1 = r times ______ divided by ______.	s_y; s_x.
+The least-squares intercept is b0 = ______ minus b1 times xbar.	ybar.
+What is a fitted value yhat_i?	The regression-line estimate b0+b1x_i for response y_i.
+What is a residual e_i?	The observed response minus its fitted value: y_i-yhat_i.
+State the least-squares variability decomposition.	Total SS = Error SS + Regression SS.
+What does R-squared measure?	The proportion of response variability explained by the regression line.
+What is MSE in basic linear regression?	s^2 = Error SS/(n-2), the unbiased estimator of sigma^2.
+What are the error degrees of freedom in basic linear regression?	n-2, because two coefficients determine the line.
+What three conditions reduce se(b1)?	More observations, smaller residual standard deviation s, and greater spread s_x in the explanatory variable.
+What null hypothesis tests whether the explanatory variable is important?	H0: beta1=0.
+What is the 95% confidence interval formula for beta1?	b1 ± t_(n-2,0.975) se(b1).
+What is a prediction interval designed to cover?	A new individual response at x*, not merely the mean response.
+What is heteroscedasticity?	Variability that changes by observation rather than remaining common.
+What is a high leverage point?	An observation unusual in the horizontal, x-direction.
+What CAPM slope classification does the text give for b1>1?	Aggressive; slopes below one are defensive.
+What compact matrix form represents basic linear regression?	y = X beta + epsilon.

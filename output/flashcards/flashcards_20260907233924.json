@@ -1,0 +1,246 @@
+{
+  "title": "Basic Linear Regression — Flashcards",
+  "description": "Twenty source-grounded recall cards for Chapter 2.",
+  "cards": [
+    {
+      "type": "definition",
+      "front": "What does Pearson correlation r measure?",
+      "back": "The strength and direction of a linear relationship between two variables.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "basic",
+      "front": "What is the range of any Pearson correlation coefficient?",
+      "back": "-1 <= r <= 1.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "concept",
+      "front": "Why can y=x^2 have r=0?",
+      "back": "Correlation measures linear relationship only; the symmetric quadratic relationship is perfect but nonlinear.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "basic",
+      "front": "What correlation did SALES and POP have in the Wisconsin Lottery sample?",
+      "back": "r = 0.886, indicating a strong positive linear relationship.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "cloze",
+      "front": "The least-squares slope is b1 = r times ______ divided by ______.",
+      "back": "s_y; s_x.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "cloze",
+      "front": "The least-squares intercept is b0 = ______ minus b1 times xbar.",
+      "back": "ybar.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "definition",
+      "front": "What is a fitted value yhat_i?",
+      "back": "The regression-line estimate b0+b1x_i for response y_i.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "definition",
+      "front": "What is a residual e_i?",
+      "back": "The observed response minus its fitted value: y_i-yhat_i.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "basic",
+      "front": "State the least-squares variability decomposition.",
+      "back": "Total SS = Error SS + Regression SS.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "definition",
+      "front": "What does R-squared measure?",
+      "back": "The proportion of response variability explained by the regression line.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "definition",
+      "front": "What is MSE in basic linear regression?",
+      "back": "s^2 = Error SS/(n-2), the unbiased estimator of sigma^2.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "basic",
+      "front": "What are the error degrees of freedom in basic linear regression?",
+      "back": "n-2, because two coefficients determine the line.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "concept",
+      "front": "What three conditions reduce se(b1)?",
+      "back": "More observations, smaller residual standard deviation s, and greater spread s_x in the explanatory variable.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "basic",
+      "front": "What null hypothesis tests whether the explanatory variable is important?",
+      "back": "H0: beta1=0.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "definition",
+      "front": "What is the 95% confidence interval formula for beta1?",
+      "back": "b1 ± t_(n-2,0.975) se(b1).",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "definition",
+      "front": "What is a prediction interval designed to cover?",
+      "back": "A new individual response at x*, not merely the mean response.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "definition",
+      "front": "What is heteroscedasticity?",
+      "back": "Variability that changes by observation rather than remaining common.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "definition",
+      "front": "What is a high leverage point?",
+      "back": "An observation unusual in the horizontal, x-direction.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "basic",
+      "front": "What CAPM slope classification does the text give for b1>1?",
+      "back": "Aggressive; slopes below one are defensive.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "type": "basic",
+      "front": "What compact matrix form represents basic linear regression?",
+      "back": "y = X beta + epsilon.",
+      "tags": [
+        "basic-linear-regression",
+        "chapter-2"
+      ],
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    }
+  ]
+}

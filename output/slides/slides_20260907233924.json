@@ -1,0 +1,154 @@
+{
+  "title": "Basic Linear Regression — Slide Deck",
+  "slides": [
+    {
+      "title": "Basic Linear Regression",
+      "subtitle": "A chapter-level map",
+      "bullets": [
+        "One explanatory variable",
+        "visual and algebraic intuition",
+        "lottery sales and CAPM"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "Correlation and Scatterplots",
+      "subtitle": "Start with relationships",
+      "bullets": [
+        "Scatterplot as relationship view",
+        "r measures linear strength",
+        "r is location and scale invariant"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "Wisconsin Lottery Example",
+      "subtitle": "Population and sales",
+      "bullets": [
+        "50 ZIP-code areas",
+        "POP mean 9,311",
+        "SALES mean 6,495",
+        "r=0.886"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "Least Squares",
+      "subtitle": "A reproducible fitted line",
+      "bullets": [
+        "Minimize squared deviations",
+        "b1=r sy/sx",
+        "b0=ybar-b1xbar",
+        "yhat=469.7+0.647 POP"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "The Basic Model",
+      "subtitle": "Observable and error representations",
+      "bullets": [
+        "E(y)=beta0+beta1x",
+        "constant variance",
+        "independent responses",
+        "optional normality"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "How useful is the line?",
+      "subtitle": "Variation and fit",
+      "bullets": [
+        "Total SS decomposition",
+        "R-squared explained variation",
+        "residual standard deviation",
+        "ANOVA bookkeeping"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "Inference",
+      "subtitle": "Tests, estimates, predictions",
+      "bullets": [
+        "t statistic for slope",
+        "95% confidence interval",
+        "prediction interval",
+        "n-2 degrees of freedom"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "Residual Analysis",
+      "subtitle": "Diagnose before trusting",
+      "bullets": [
+        "Check residual patterns",
+        "heteroscedasticity",
+        "nonnormality",
+        "unusual points",
+        "sensitivity analysis"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "CAPM Application",
+      "subtitle": "Market and security returns",
+      "bullets": [
+        "Lincoln versus S&P 500",
+        "slope 0.973",
+        "R-squared 35.4%",
+        "crash as leverage point"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "title": "What to Carry Away",
+      "subtitle": "Discussion",
+      "bullets": [
+        "Correlation is not all relationships",
+        "least squares quantifies a line",
+        "diagnostics protect inference",
+        "matrix form scales"
+      ],
+      "speaker_notes": "Connect this slide to the chapter’s Wisconsin Lottery and CAPM examples; all quantities and interpretations come from the chapter excerpt.",
+      "image_query": "linear regression chart",
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    }
+  ]
+}

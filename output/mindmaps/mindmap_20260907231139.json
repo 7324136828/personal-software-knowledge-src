@@ -1,0 +1,183 @@
+{
+  "name": "Regression and the Normal Distribution (Ch. 1 excerpt)",
+  "children": [
+    {
+      "name": "1.1 What Is Regression Analysis?",
+      "children": [
+        {
+          "name": "Statistics = collection, summarization, analysis of data",
+          "children": []
+        },
+        {
+          "name": "Regression: explains a variable of interest via explanatory variables",
+          "children": []
+        },
+        {
+          "name": "Galton's 1885 parent-child height data, n=928",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "1.2 Fitting Data to a Normal Distribution",
+      "children": [
+        {
+          "name": "Normal curve f(y) with parameters mu, sigma^2",
+          "children": []
+        },
+        {
+          "name": "Basic summary statistics",
+          "children": [
+            {
+              "name": "Mean: ybar = (1/n) sum y_i",
+              "children": []
+            },
+            {
+              "name": "Median: middle ordered observation",
+              "children": []
+            },
+            {
+              "name": "Standard deviation s_y",
+              "children": []
+            },
+            {
+              "name": "Percentile",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Example: MA Bodily Injury Claims, n=272 (Rempala & Derrig 2005)",
+          "children": []
+        },
+        {
+          "name": "Box plot: quartiles and whiskers, outliers",
+          "children": []
+        },
+        {
+          "name": "QQ plot vs normal reference distribution",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "1.3 Power Transforms",
+      "children": [
+        {
+          "name": "Box-Cox family: y^(lambda)",
+          "children": []
+        },
+        {
+          "name": "lambda=0 gives ln(y)",
+          "children": []
+        },
+        {
+          "name": "Right-skewed claims data example",
+          "children": []
+        },
+        {
+          "name": "Chi-square(2) simulation: sqrt, log, negative reciprocal transforms",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "1.4 Sampling and the Role of Normality",
+      "children": [
+        {
+          "name": "Basic Sampling Assumptions",
+          "children": [
+            {
+              "name": "E(y_i) = mu",
+              "children": []
+            },
+            {
+              "name": "Var(y_i) = sigma^2",
+              "children": []
+            },
+            {
+              "name": "Independence of y_i",
+              "children": []
+            },
+            {
+              "name": "Normality of y_i",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Central limit theorems relax the need for normality",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "1.5 Regression and Sampling Designs",
+      "children": [
+        {
+          "name": "Terminology: dependent/independent, response/treatment, regressand/regressor",
+          "children": []
+        },
+        {
+          "name": "Designed (experimental) studies — RAND Health Insurance Experiment",
+          "children": []
+        },
+        {
+          "name": "Observational studies — Galton data, confounding variables",
+          "children": []
+        },
+        {
+          "name": "Statistical control vs experimental control",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "1.6 Actuarial Applications of Regression",
+      "children": [
+        {
+          "name": "Pricing and adverse selection",
+          "children": []
+        },
+        {
+          "name": "Reserving",
+          "children": []
+        },
+        {
+          "name": "Solvency testing",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "1.8 Exercises",
+      "children": [
+        {
+          "name": "MEPS Health Expenditures",
+          "children": []
+        },
+        {
+          "name": "Wisconsin Nursing Home Utilization",
+          "children": []
+        },
+        {
+          "name": "AutoClaims, AutoBI, Hospital Costs, NAICExpense, UN Life Expectancy",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "1.9 Technical Supplement: Central Limit Theorem",
+      "children": [
+        {
+          "name": "CLT statement: sqrt(n)/sigma (ybar - mu) -> standard normal",
+          "children": []
+        },
+        {
+          "name": "Edgeworth Approximation adds skewness correction term",
+          "children": []
+        }
+      ]
+    }
+  ]
+}

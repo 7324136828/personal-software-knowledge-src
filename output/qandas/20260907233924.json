@@ -1,0 +1,294 @@
+{
+  "title": "Basic Linear Regression — Study Q&A",
+  "description": "Every identifiable Chapter 2 exercise is represented, followed by source-grounded conceptual review. Use formulas given in the chapter; where raw data are absent, answers state the applicable method.",
+  "questions": [
+    {
+      "id": "exercise-2-1",
+      "kind": "source_exercise",
+      "exercise_label": "2.1",
+      "question": "Fit least squares to the three-observation dataset and determine r, b1, and b0.",
+      "answer": "Use b1=r s_y/s_x and b0=ybar-b1 xbar after computing the sample summaries; the source supplies the data but not the worked numeric result.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-2",
+      "kind": "source_exercise",
+      "exercise_label": "2.2",
+      "question": "For y=x^2 at x=-2,-1,0,1,2, graph the data and verify r=0.",
+      "answer": "The graph is a symmetric parabola; the positive and negative x deviations cancel in the correlation numerator, giving zero linear correlation despite a perfect nonlinear relation.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-3",
+      "kind": "source_exercise",
+      "exercise_label": "2.3",
+      "question": "Prove the Pearson correlation is bounded by -1 and 1.",
+      "answer": "Begin with the nonnegative squared standardized combination in part a, then set a=c to obtain r<=1 and a=-c to obtain r>=-1.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-4",
+      "kind": "source_exercise",
+      "exercise_label": "2.4",
+      "question": "Show the intercept b0 is a weighted sum of dependent variables.",
+      "answer": "Start from b0=ybar-b1 xbar and substitute the weighted-sum expression for b1; derive weights in terms of the slope weights.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-5",
+      "kind": "source_exercise",
+      "exercise_label": "2.5",
+      "question": "Express b1 as a weighted average of pointwise slopes from (xbar,ybar).",
+      "answer": "Use the requested weighted-average form and identify each weight as a function of x; for part b substitute xbar=4, ybar=3, x1=2, y1=6.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-6",
+      "kind": "source_exercise",
+      "exercise_label": "2.6",
+      "question": "Relate the correlation to slopes from regressions of y on x and x on y.",
+      "answer": "Show |r|=sqrt(b1,x,y times b1,y,x), as stated in the exercise.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-7",
+      "kind": "source_exercise",
+      "exercise_label": "2.7",
+      "question": "Derive least squares regression through the origin and adapt it to a quadratic through the origin.",
+      "answer": "Minimizing sum(y_i-b1 x_i)^2 yields b1=sum x_i y_i/sum x_i^2; for y_i=beta1 z_i^2+epsilon_i, use x_i=z_i^2 in that result.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-8",
+      "kind": "source_exercise",
+      "exercise_label": "2.8",
+      "question": "Derive alternative computational formulas for variance, covariance, and the least-squares slope.",
+      "answer": "Show s_y^2=[sum y_i^2-n ybar^2]/(n-1), covariance numerator=sum x_i y_i-n xbar ybar, then divide the centered covariance by centered x sum of squares.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-9",
+      "kind": "source_exercise",
+      "exercise_label": "2.9",
+      "question": "Interpret the slope when the explanatory variable is binary.",
+      "answer": "Using Exercise 2.8, show b1=ybar_2-ybar_1: the difference between mean response for x=1 and for x=0.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-10",
+      "kind": "source_exercise",
+      "exercise_label": "2.10",
+      "question": "Analyze nursing-home utilization with correlations, scatterplots, four basic regressions, and a 2001 stability comparison.",
+      "answer": "Compute the stated correlations/plots; report R^2 and NUMBED or SQRFOOT t statistics for each model; compare 2000 and 2001 patterns. Raw data are not provided here.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-11",
+      "kind": "source_exercise",
+      "exercise_label": "2.11",
+      "question": "For n=3 with e2=24 and e3=-1, determine e1.",
+      "answer": "Least squares residuals sum to zero, so e1=-(24-1)=-23.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-12",
+      "kind": "source_exercise",
+      "exercise_label": "2.12",
+      "question": "For r=0, n=15, and s_y=10, determine s.",
+      "answer": "Since R^2=r^2=0, all variation is error variation: s=s_y sqrt((n-1)/(n-2))=10 sqrt(14/13).",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-13",
+      "kind": "source_exercise",
+      "exercise_label": "2.13",
+      "question": "Establish R^2=r^2.",
+      "answer": "Use yhat_i-ybar=b1(x_i-xbar), derive Regression SS=b1^2 s_x^2(n-1), and substitute b1=r s_y/s_x.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-14",
+      "kind": "source_exercise",
+      "exercise_label": "2.14",
+      "question": "Show the average least-squares residual is zero.",
+      "answer": "The first normal equation gives sum e_i=0; therefore n^-1 sum e_i=0.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-15",
+      "kind": "source_exercise",
+      "exercise_label": "2.15",
+      "question": "Show residuals are uncorrelated with explanatory variables and fitted values.",
+      "answer": "Use the normal equation sum x_i e_i=0 and the linear fitted-value form to establish the requested zero correlations.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-16",
+      "kind": "source_exercise",
+      "exercise_label": "2.16",
+      "question": "Relate r and the t statistic for the slope.",
+      "answer": "Derive R^2=1-[(n-2)/(n-1)]s^2/s_y^2, then s=s_y sqrt((1-r^2)(n-1)/(n-2)), and finally t(b1)=sqrt(n-2)r/sqrt(1-r^2).",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-17",
+      "kind": "source_exercise",
+      "exercise_label": "2.17",
+      "question": "Quantify how an unusually large residual contributes to Error SS.",
+      "answer": "Because Error SS=(n-2)s^2, an e10=ks residual contributes k^2/(n-2) of Error SS; substitute k=8 or 4 and the stated n.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-18",
+      "kind": "source_exercise",
+      "exercise_label": "2.18",
+      "question": "Find se(pred) for n=20, xbar=0, ybar=9, s_x=1, s=7, x*=1.",
+      "answer": "Use se(pred)=s sqrt(1+1/n+(x*-xbar)^2/[(n-1)s_x^2]) and substitute the stated values.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-19",
+      "kind": "source_exercise",
+      "exercise_label": "2.19",
+      "question": "Use Anscombe data to show matching summary statistics can conceal different relationships.",
+      "answer": "Verify close means, standard deviations, b0≈3, b1≈0.5, s≈1.237, R^2≈0.677, then compare the four scatterplots; visual structure differs dramatically.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-20",
+      "kind": "source_exercise",
+      "exercise_label": "2.20",
+      "question": "Perform a full log-log nursing-home regression: summaries, fit, slope tests, change estimates, and predictions.",
+      "answer": "Fit LOGTPY on LOGNUMBED, test beta1 against 0 and 1 as specified, use slope times a marginal x change for expected change, and exponentiate log-scale predictions/interval endpoints. Numeric outputs require the source data.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-21",
+      "kind": "source_exercise",
+      "exercise_label": "2.21",
+      "question": "Analyze IPO return against revenue and log revenue, including Inktomi’s unusual observation.",
+      "answer": "Use the supplied summary/output values to fit and test models; Inktomi has LnREV=1.76 and the highest RETURN, so calculate its residual and Error SS share, then distinguish its vertical unusualness from leverage.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "exercise-2-22",
+      "kind": "source_exercise",
+      "exercise_label": "2.22",
+      "question": "Fit LIFEEXP on FERTILITY and answer fitted-value, prediction, residual, and slope-test questions.",
+      "answer": "Use the fitted model from the exercise’s figure/data for the US, Dominica, and China tasks; test H0: beta1=-6 against beta1>-6 at 5%. The fitted coefficients are not printed in the excerpt.",
+      "placeholder": "Apply the chapter formula and interpret the result…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "generated-least-squares-purpose",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "Why does the chapter prefer least squares to drawing a line by eye?",
+      "answer": "Least squares provides a reproducible fitting rule: analysts who agree on the data and method agree on the fitted line, unlike eyeball approximations.",
+      "placeholder": "Contrast reproducibility with eyeballing…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    },
+    {
+      "id": "generated-kensoha-lesson",
+      "kind": "generated",
+      "exercise_label": null,
+      "question": "What does Kenosha teach about deleting unusual observations?",
+      "answer": "Removing Kenosha improves fit measures, but an unusual point can contain meaningful information; the goal is to understand its effect rather than automatically omit it.",
+      "placeholder": "Focus on information, not automatic deletion…",
+      "required": true,
+      "source_ids": [
+        "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex"
+      ]
+    }
+  ]
+}
