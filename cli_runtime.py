@@ -3,49 +3,20 @@
 from __future__ import annotations
 
 import argparse
-import importlib
+import json
 import logging
 from collections.abc import Sequence
 from pathlib import Path
-from types import ModuleType
-from typing import Protocol, cast
 
 from app_config import ACTION_CONFIG
 from connectors import CONNECTORS, create_connector
 from document_loader import load_document
 from errors import ApplicationError, InvalidArgumentsError
 from output_writer import write_output
+from pipeline.engine import PipelineOptions, PipelineResult, run_pipeline
 from skill_loader import load_skill
 
 LOGGER = logging.getLogger("content_generator")
-
-
-class GenerateFunction(Protocol):
-    """Signature implemented by each action module."""
-
-    def __call__(
-        self,
-        source_text: str,
-        source_path: Path,
-        skill_text: str,
-        connector: object,
-        output_path: Path | None = None,
-    ) -> str: ...
-
-
-def _load_generate_function(module_name: str) -> GenerateFunction:
-    try:
-        module: ModuleType = importlib.import_module(module_name)
-    except ImportError as exc:
-        raise InvalidArgumentsError(
-            f"Could not import action module '{module_name}': {exc}"
-        ) from exc
-    generate = getattr(module, "generate", None)
-    if not callable(generate):
-        raise InvalidArgumentsError(
-            f"Action module '{module_name}' does not expose a callable generate()."
-        )
-    return cast(GenerateFunction, generate)
 
 
 def execute_generation(
@@ -55,7 +26,8 @@ def execute_generation(
     action: str,
     output_path: Path,
     model: str | None = None,
-) -> None:
+    options: PipelineOptions | None = None,
+) -> PipelineResult:
     """Run one validated load, generate, and write operation."""
 
     try:
@@ -83,18 +55,71 @@ def execute_generation(
 
     connector = create_connector(connector_name, model=model)
     LOGGER.info("Model: %s", connector.model)
-    generator = _load_generate_function(action_config["module"])
-
     LOGGER.info("Generating...")
-    result = generator(
-        source_text,
-        input_path,
-        skill.text,
-        connector,
-        output_path,
+    result = run_pipeline(
+        source_text=source_text,
+        source_path=input_path,
+        skill_text=skill.text,
+        connector=connector,
+        connector_name=connector_name,
+        action=action,
+        output_path=output_path,
+        options=options,
     )
-    write_output(output_path, result)
+    write_output(output_path, result.text)
     LOGGER.info("Output written to %s", output_path)
+    return result
+
+
+def add_pipeline_arguments(parser: argparse.ArgumentParser) -> None:
+    """Expose identical pipeline controls on every generation entry point."""
+
+    parser.add_argument("--strategy", choices=("baseline", "chunked", "extraction_then_generation", "multi_pass"))
+    parser.add_argument("--chunk-tokens", type=int, help="Desired source tokens per semantic chunk, bounded by the model profile.")
+    parser.add_argument("--chunk-overlap", type=int, help="Maximum tokens of preceding context; provenance remains attached to the original chunk.")
+    parser.add_argument("--max-output-tokens", type=int)
+    parser.add_argument("--aggregation", choices=("deterministic", "hierarchical"))
+    parser.add_argument("--group-size", type=int)
+    parser.add_argument("--retries", type=int)
+    parser.add_argument("--generation-passes", type=int)
+    parser.add_argument("--temperature", type=float)
+    for name in ("checkpoint", "validate", "keep-raw"):
+        parser.add_argument(f"--{name}", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument("--force", action="store_true", help="Regenerate completed stages while retaining prior raw responses.")
+    parser.add_argument("--work-dir", type=Path, help="Explicit intermediate/checkpoint directory for this run.")
+    parser.add_argument("--experiment", help="Apply a named experiment preset; explicit flags override it.")
+    parser.add_argument("--model-profile", type=Path, help="JSON object of model-profile overrides, useful for unrecognized/local models.")
+    parser.add_argument("--context-window", type=int, help="Override model context-window tokens.")
+    parser.add_argument("--profile-max-output-tokens", type=int, help="Override the model's hard output-token ceiling.")
+
+
+def options_from_args(args: argparse.Namespace) -> PipelineOptions:
+    """Combine an optional experiment preset with explicit CLI controls."""
+
+    from experiments.runner import options_dict, load_scenario
+
+    values = options_dict(load_scenario(args.experiment)) if args.experiment else {}
+    for name in ("strategy", "chunk_tokens", "chunk_overlap", "max_output_tokens", "aggregation", "group_size", "retries", "generation_passes", "temperature", "checkpoint", "validate", "keep_raw", "work_dir"):
+        value = getattr(args, name, None)
+        if value is not None:
+            values[name] = value
+    values["force"] = args.force
+    overrides = dict(values.get("profile_overrides", {}))
+    if args.model_profile:
+        try:
+            supplied = json.loads(args.model_profile.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise InvalidArgumentsError(f"Could not read model profile '{args.model_profile}': {exc}") from exc
+        if not isinstance(supplied, dict):
+            raise InvalidArgumentsError("--model-profile must contain a JSON object.")
+        overrides.update(supplied)
+    if args.context_window is not None:
+        overrides["context_window"] = args.context_window
+        overrides.setdefault("safety_margin", min(512, max(0, args.context_window // 10)))
+    if args.profile_max_output_tokens is not None:
+        overrides["max_output_tokens"] = args.profile_max_output_tokens
+    values["profile_overrides"] = overrides
+    return PipelineOptions(**values)
 
 
 def configure_logging() -> None:
@@ -113,6 +138,7 @@ def build_action_parser(action: str) -> argparse.ArgumentParser:
     parser.add_argument("--input", required=True, type=Path, dest="input_path")
     parser.add_argument("--output", required=True, type=Path, dest="output_path")
     parser.add_argument("--model", help="Override the connector's configured model.")
+    add_pipeline_arguments(parser)
     return parser
 
 
@@ -129,6 +155,7 @@ def run_action_cli(action: str, argv: Sequence[str] | None = None) -> int:
             action=action,
             output_path=args.output_path,
             model=args.model,
+            options=options_from_args(args),
         )
     except ApplicationError as exc:
         LOGGER.error("%s", exc)

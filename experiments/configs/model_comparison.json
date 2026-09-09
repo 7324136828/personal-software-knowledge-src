@@ -1,0 +1,13 @@
+{
+  "name": "model_comparison",
+  "connector": "ollama",
+  "model": "llama3.2:3b",
+  "source_file": "input/Chapter 005. Variable Selection.txt",
+  "action": "create_qandas",
+  "strategy": "multi_pass",
+  "chunking": {"strategy": "semantic", "target_tokens": 1200, "overlap_tokens": 120},
+  "generation": {"max_output_tokens": 2048, "temperature": 0.0, "retries": 3, "passes": 4},
+  "aggregation": {"strategy": "hierarchical", "group_size": 3},
+  "checkpoint": true, "keep_raw": true, "validate": true,
+  "validation_criteria": {"min_coverage": 0.95, "min_exercise_coverage": 0.95, "require_schema_valid": true, "max_truncated_outputs": 0, "max_duplicate_ratio": 0.05, "max_latex_errors": 0}
+}

@@ -5,9 +5,18 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from errors import ConnectorConfigurationError, ProviderError
+from errors import ConnectorConfigurationError
 
-from .base import LLMConnector
+from .base import (
+    GenerationResponse,
+    LLMConnector,
+    checked_response,
+    provider_failure,
+    request_budget,
+    request_temperature,
+    token_count,
+    value_of,
+)
 
 
 @dataclass
@@ -32,6 +41,15 @@ class OpenRouterConnector(LLMConnector):
             )
 
     def generate(self, *, system_prompt: str, user_prompt: str) -> str:
+        return self.generate_response(
+            system_prompt=system_prompt, user_prompt=user_prompt
+        ).text
+
+    def generate_response(
+        self, *, system_prompt: str, user_prompt: str,
+        max_output_tokens: int | None = None, temperature: float | None = None,
+        json_mode: bool = False, context_window: int | None = None,
+    ) -> GenerationResponse:
         try:
             from openai import OpenAI
         except ImportError as exc:
@@ -53,17 +71,34 @@ class OpenRouterConnector(LLMConnector):
             }
             if headers:
                 client_options["default_headers"] = headers
-            response = OpenAI(**client_options).chat.completions.create(
-                model=self.model,
-                messages=[
+            profile, allowance = request_budget(
+                "openrouter", self.model, system_prompt, user_prompt,
+                max_output_tokens, context_window,
+            )
+            request: dict[str, object] = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
+                "max_tokens": allowance,
+            }
+            temperature = request_temperature(temperature)
+            if temperature is not None:
+                request["temperature"] = temperature
+            if json_mode and profile.structured_output:
+                request["response_format"] = {"type": "json_object"}
+            response = OpenAI(**client_options).chat.completions.create(**request)
+            choice = response.choices[0]
+            result = value_of(value_of(choice, "message", {}), "content", "")
+            usage = value_of(response, "usage", {})
+            generated = GenerationResponse(
+                text=result, finish_reason=value_of(choice, "finish_reason"),
+                input_tokens=token_count(usage, "prompt_tokens"),
+                output_tokens=token_count(usage, "completion_tokens"),
+                raw_metadata={"response_id": value_of(response, "id"),
+                              "native_finish_reason": value_of(choice, "native_finish_reason")},
             )
-            result = response.choices[0].message.content
         except Exception as exc:
-            raise ProviderError(f"OpenRouter request failed: {exc}") from exc
-
-        if not result or not result.strip():
-            raise ProviderError("OpenRouter returned an empty model response.")
-        return result
+            raise provider_failure("OpenRouter", exc) from exc
+        return checked_response(generated, "OpenRouter")

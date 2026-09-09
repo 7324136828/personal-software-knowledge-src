@@ -43,6 +43,33 @@ python orchestrator.py \
   --output "tmp/flashcards.txt"
 ```
 
+Large inputs use a token-aware semantic chunk pipeline by default. The legacy command
+shape remains valid; advanced controls are optional:
+
+```bash
+python orchestrator.py \
+  --connector anthropic \
+  --model MODEL_NAME \
+  --input "input/Chapter 005. Variable Selection.txt" \
+  --action create_qandas \
+  --strategy multi_pass \
+  --chunk-tokens 12000 \
+  --chunk-overlap 500 \
+  --max-output-tokens 8000 \
+  --aggregation hierarchical \
+  --retries 3 \
+  --checkpoint \
+  --validate \
+  --keep-raw \
+  --output "tmp/Chapter005/qandas/final.json"
+```
+
+`--model-profile profile.json`, `--context-window`, and
+`--profile-max-output-tokens` let deployments provide verified limits for unknown or
+locally configured models. `--force` regenerates completed stages but never overwrites
+old raw responses. `--experiment NAME` loads one preset from `experiments/configs/`;
+explicit flags take precedence.
+
 Action modules are directly executable through the same shared runtime:
 
 ```bash
@@ -67,7 +94,7 @@ source-of-truth representation as plain UTF-8 text.
 | Connector | Required configuration | Model setting/default |
 |---|---|---|
 | `openai` | `OPENAI_API_KEY` | `OPENAI_MODEL` / `gpt-4.1-mini` |
-| `claude` | `ANTHROPIC_API_KEY` | `ANTHROPIC_MODEL` / `claude-sonnet-4-5` |
+| `anthropic` / `claude` | `ANTHROPIC_API_KEY` | `ANTHROPIC_MODEL` / `claude-sonnet-4-5` |
 | `openrouter` | `OPENROUTER_API_KEY` | `OPENROUTER_MODEL` / `openai/gpt-4.1-mini` |
 | `ollama` | local Ollama server | `OLLAMA_MODEL` / `llama3.2` |
 
@@ -75,8 +102,9 @@ Ollama defaults to `http://localhost:11434` (`OLLAMA_BASE_URL`). Its request tim
 controlled by `OLLAMA_TIMEOUT`. OpenRouter also supports `OPENROUTER_BASE_URL`,
 `OPENROUTER_HTTP_REFERER`, and `OPENROUTER_APP_NAME`.
 
-Provider failures, rate limits, unavailable models, and context-limit errors are
-reported using the provider's original detail and exit code 6.
+Provider failures, rate limits, unavailable models, and context-limit errors use exit
+code 6. Provider exception bodies are not echoed because SDK errors can contain prompt
+text or sensitive request details.
 
 ## Actions
 
@@ -110,9 +138,10 @@ def load_custom(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 ```
 
-Documents are currently sent intact so exercises and mathematical context are not lost.
-The loading and prompt-construction boundaries are isolated to support future
-section-aware chunking/map-reduce without changing the CLI or action/connector APIs.
+Documents are split losslessly at chapters, sections, exercises, paragraphs, lists,
+tables, and token-based fallbacks. Code fences, LaTeX environments/equations, tables,
+lists, and recognized exercise blocks are atomic whenever they fit the verified model
+budget. Oversized protected blocks fail explicitly instead of being silently cut.
 
 ## Architecture
 
@@ -123,9 +152,20 @@ section-aware chunking/map-reduce without changing the CLI or action/connector A
 - `action_base.py` constructs the grounded prompt shared by the small `create_*.py`
   modules.
 - `connectors/` contains all provider-specific code behind `LLMConnector`.
+- `pipeline/` contains model profiles, token budgeting, semantic chunking, normalized
+  extraction, bounded retry/recovery, hierarchical aggregation, checkpoints,
+  provenance, and validation.
+- `experiment.py` and `experiments/` define reproducible strategy/model comparisons;
+  see [experiments/README.md](experiments/README.md).
 - `result_processor.py` removes accidental whole-response code fences and validates
   `.json` output before it is written.
 - `output_writer.py` writes only to the caller's requested destination.
+
+Intermediates are written to `tmp/<source>/<artifact>/` by default (or `--work-dir`):
+source chunks and metadata under `chunks/`, per-chunk extractions/artifacts, append-only
+request/response evidence under `raw/`, aggregation tree nodes, validation metrics, and
+`checkpoint.json`. Restarts reuse only content-addressed complete stages; changed source,
+skill, model, profile, or generation settings invalidate the relevant checkpoint.
 
 ## Batch generation from `config.yaml`
 

@@ -34,6 +34,7 @@ def _openrouter(model: str | None) -> LLMConnector:
 
 
 CONNECTORS: dict[str, Callable[[str | None], LLMConnector]] = {
+    "anthropic": _claude,
     "openai": _openai,
     "ollama": _ollama,
     "claude": _claude,

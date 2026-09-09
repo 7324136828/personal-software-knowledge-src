@@ -112,7 +112,7 @@ def configured_provider(config: Mapping[str, Any]) -> str:
 def connector_environment(config: Mapping[str, Any], provider: str) -> dict[str, str]:
     """Translate the selected provider's YAML settings into connector variables."""
 
-    config_section_name = "anthropic" if provider == "claude" else provider
+    config_section_name = "anthropic" if provider in {"anthropic", "claude"} else provider
     section = config.get(config_section_name, {})
     if not isinstance(section, Mapping):
         raise BatchConfigurationError(
@@ -121,6 +121,7 @@ def connector_environment(config: Mapping[str, Any], provider: str) -> dict[str,
 
     variable_maps: dict[str, dict[str, str]] = {
         "openai": {"api_key": "OPENAI_API_KEY", "model": "OPENAI_MODEL"},
+        "anthropic": {"api_key": "ANTHROPIC_API_KEY", "model": "ANTHROPIC_MODEL"},
         "claude": {"api_key": "ANTHROPIC_API_KEY", "model": "ANTHROPIC_MODEL"},
         "openrouter": {
             "api_key": "OPENROUTER_API_KEY",
@@ -253,7 +254,7 @@ def run_batch(
             provider_config[provider_key] = resolve_environment_placeholders(value, os.environ)
     provider = configured_provider(provider_config)
 
-    config_section_name = "anthropic" if provider == "claude" else provider
+    config_section_name = "anthropic" if provider in {"anthropic", "claude"} else provider
     resolved_config = dict(config)
     selected_section = resolved_config.get(config_section_name, {})
     resolved_config[config_section_name] = resolve_environment_placeholders(

@@ -14,4 +14,4 @@ ollama:
   timeout: '600'
 
 provider:
-  default: 'claude'
+  default: 'openai'

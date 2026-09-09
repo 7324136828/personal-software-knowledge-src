@@ -1,0 +1,13 @@
+{
+  "name": "truncation_recovery",
+  "connector": "ollama",
+  "model": "llama3.2:3b",
+  "source_file": "input/Chapter 005. Variable Selection.txt",
+  "action": "create_qandas",
+  "strategy": "chunked",
+  "chunking": {"strategy": "semantic", "target_tokens": 1600, "overlap_tokens": 100},
+  "generation": {"max_output_tokens": 1024, "temperature": 0.0, "retries": 3, "passes": 3},
+  "aggregation": {"strategy": "hierarchical", "group_size": 3},
+  "checkpoint": true, "keep_raw": true, "validate": true,
+  "validation_criteria": {"min_coverage": 0.90, "require_schema_valid": true, "max_duplicate_ratio": 0.08, "max_latex_errors": 0}
+}

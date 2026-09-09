@@ -1,9 +1,0 @@
-+==============================================================================+
-| Multiple Linear Regression II                                                |
-+==============================================================================+
-| [flow] Model a categorical predictor                                     |
-| [stat] Term-life joint test                                              |
-| [flow] Partial F workflow                                                |
-| [comparison] One-factor ANOVA and regression                                   |
-| [chart] Auto-claims ANOVA sums of squares                                 |
-| [quote] Modeling lesson                                                   |

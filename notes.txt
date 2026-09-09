@@ -9,4 +9,18 @@ The configured generator would transmit the full chapter to an external OpenAI s
 
 ....in the action_base.py, when source_text is more than 30kb, we will split them into 30kb chunk and send separately to the downstream system?
 
-5. use claude + chatgpt terra boostrap (?)
+5. use claude + chatgpt terra boostrap (67% -> 61%, only generated )
+[Data table JSON](C:\\Users\\zachn\\Documents\\tmp-learning-set\\test-20260907-2\\output\\datatables\\20260908010926.json) and [CSV](C:\\Users\\zachn\\Documents\\tmp-learning-set\\test-20260907-2\\output\\datatables\\20260908010926.csv)
+[Mind map JSON](C:\\Users\\zachn\\Documents\\tmp-learning-set\\test-20260907-2\\output\\mindmaps\\mindmap_20260908010926.json), [Markdown](C:\\Users\\zachn\\Documents\\tmp-learning-set\\test-20260907-2\\output\\mindmaps\\mindmap_20260908010926.md), and [Mermaid](C:\\Users\\zachn\\Documents\\tmp-learning-set\\test-20260907-2\\output\\mindmaps\\mindmap_20260908010926.mmd)
+[Quiz JSON](C:\\Users\\zachn\\Documents\\tmp-learning-set\\test-20260907-2\\output\\quizzes\\quiz_20260908010926.json)
+[Slides JSON](C:\\Users\\zachn\\Documents\\tmp-learning-set\\test-20260907-2\\output\\slides\\slides_20260908010926.json) and [Markdown](C:\\Users\\zachn\\Documents\\tmp-learning-set\\test-20260907-2\\output\\slides\\slides_20260908010926.md)
+
+(ended up wasting way more)
+
+
+Therefore, the perferred way is to use 
+3. use gpt-terra (from openai/boostrapped by python script and chatgpt ? -> 79%)
+or 
+1. use claude (from openrouter) 
+
+If we have subscription capacity, then we will use (1) claude (2) chatgpt luna/terra (enough)

@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from app_config import ACTION_CONFIG
-from cli_runtime import configure_logging, execute_generation
+from cli_runtime import add_pipeline_arguments, configure_logging, execute_generation, options_from_args
 from connectors import CONNECTORS
 from errors import ApplicationError
 
@@ -52,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--model",
         help="Optional model override; otherwise use connector environment configuration.",
     )
+    add_pipeline_arguments(parser)
     return parser
 
 
@@ -67,6 +68,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             action=args.action,
             output_path=args.output_path,
             model=args.model,
+            options=options_from_args(args),
         )
     except ApplicationError as exc:
         LOGGER.error("%s", exc)
