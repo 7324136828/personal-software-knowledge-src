@@ -9,31 +9,31 @@ from errors import InvalidArgumentsError
 from .base import LLMConnector
 
 
-def _openai(model: str | None) -> LLMConnector:
+def _openai(model: str | None, api_key: str | None = None) -> LLMConnector:
     from .openai import OpenAIConnector
 
-    return OpenAIConnector(model=model)
+    return OpenAIConnector(model=model, api_key=api_key)
 
 
-def _ollama(model: str | None) -> LLMConnector:
+def _ollama(model: str | None, api_key: str | None = None) -> LLMConnector:
     from .ollama import OllamaConnector
 
     return OllamaConnector(model=model)
 
 
-def _claude(model: str | None) -> LLMConnector:
+def _claude(model: str | None, api_key: str | None = None) -> LLMConnector:
     from .claude import ClaudeConnector
 
-    return ClaudeConnector(model=model)
+    return ClaudeConnector(model=model, api_key=api_key)
 
 
-def _openrouter(model: str | None) -> LLMConnector:
+def _openrouter(model: str | None, api_key: str | None = None) -> LLMConnector:
     from .openrouter import OpenRouterConnector
 
-    return OpenRouterConnector(model=model)
+    return OpenRouterConnector(model=model, api_key=api_key)
 
 
-CONNECTORS: dict[str, Callable[[str | None], LLMConnector]] = {
+CONNECTORS: dict[str, Callable[[str | None, str | None], LLMConnector]] = {
     "anthropic": _claude,
     "openai": _openai,
     "ollama": _ollama,
@@ -42,7 +42,9 @@ CONNECTORS: dict[str, Callable[[str | None], LLMConnector]] = {
 }
 
 
-def create_connector(name: str, *, model: str | None = None) -> LLMConnector:
+def create_connector(
+    name: str, *, model: str | None = None, api_key: str | None = None
+) -> LLMConnector:
     """Create a configured connector by its CLI name."""
 
     normalized_name = name.strip().lower()
@@ -53,7 +55,7 @@ def create_connector(name: str, *, model: str | None = None) -> LLMConnector:
         raise InvalidArgumentsError(
             f"Unknown connector '{name}'. Supported connectors: {supported}."
         ) from exc
-    return factory(model)
+    return factory(model, api_key)
 
 
 __all__ = ["CONNECTORS", "LLMConnector", "create_connector"]

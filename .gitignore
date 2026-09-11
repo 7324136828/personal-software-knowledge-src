@@ -1,7 +1,51 @@
-.env
+# Python virtual environment
 .venv/
+venv/
+env/
+ENV/
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-.uv-cache/
-tmp/*
-!tmp/.gitkeep
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables & secrets (Pillar 6)
+.env
+.env.*
+!.env.example
+
+# Temporary / intermediate generation directories
+tmp/
+.checkpoint.json
+conversion_history/
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+.eslintcache
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

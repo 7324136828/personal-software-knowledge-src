@@ -10,8 +10,10 @@ from experiments.runner import SCENARIOS, compare_runs, load_scenario, parse_mod
 from pipeline.chunker import chunk_source
 from pipeline.engine import PipelineOptions, run_pipeline
 from pipeline.model_profiles import ModelProfile, get_model_profile
+from pipeline.retry import backoff_delay
 from pipeline.token_budget import TokenBudget, TokenBudgetError
 from pipeline.validator import validate_output
+from errors import ProviderError
 
 
 def qanda(question_id: str = "generated-question") -> str:
@@ -59,7 +61,237 @@ class ExtractionConnector(RecordingConnector):
         return GenerationResponse(qanda("extracted-question"), finish_reason="stop")
 
 
+class FlakyConnector(RecordingConnector):
+    def __init__(self, failures: int) -> None:
+        super().__init__()
+        self.failures = failures
+
+    def generate_response(self, **request) -> GenerationResponse:
+        self.calls.append(request)
+        if len(self.calls) <= self.failures:
+            error = ProviderError("OpenAI request failed (HTTP 404): NotFoundError.")
+            error.status_code = 404
+            raise error
+        return GenerationResponse(qanda("eventual-success"), finish_reason="stop")
+
+
+class PayloadFlakyConnector(RecordingConnector):
+    def __init__(self, failures: int) -> None:
+        super().__init__()
+        self.failures = failures
+
+    def generate_response(self, **request) -> GenerationResponse:
+        self.calls.append(request)
+        if len(self.calls) <= self.failures:
+            error = ProviderError("OpenAI request failed (HTTP 400): BadRequestError.")
+            error.status_code = 400
+            raise error
+        return GenerationResponse(qanda("smaller-payload-success"), finish_reason="stop")
+
+
+class ValidationFeedbackConnector(RecordingConnector):
+    """Returns an invalid source ID first, then fixes it after validation feedback."""
+
+    def generate_response(self, **request) -> GenerationResponse:
+        self.calls.append(request)
+        if len(self.calls) == 1:
+            return GenerationResponse(json.dumps({
+                "title": "Model selection",
+                "fields": [{
+                    "name": "model_selection", "description": "Selection guidance",
+                    "example": "Choose the simpler model",
+                }],
+                "data": [{
+                    "source_id": "input/chapter.txt", "page": "1",
+                    "model_selection": "Choose the simpler model",
+                }],
+            }), finish_reason="stop")
+        return GenerationResponse(json.dumps({
+            "title": "Model selection",
+            "fields": [{
+                "name": "model_selection", "description": "Selection guidance",
+                "example": "Choose the simpler model",
+            }],
+            "data": [{
+                "source_id": "chapter.txt", "page": "1",
+                "model_selection": "Choose the simpler model",
+            }],
+        }), finish_reason="stop")
+
+
 class PipelineTests(unittest.TestCase):
+    def test_exponential_backoff_sequence_caps_at_four_minutes(self) -> None:
+        self.assertEqual(
+            [backoff_delay(attempt) for attempt in range(10)],
+            [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 240.0, 240.0],
+        )
+
+    def test_provider_errors_retry_until_success_when_limit_is_unspecified(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            connector = FlakyConnector(2)
+            from unittest.mock import patch
+            with patch("pipeline.engine.backoff") as sleep:
+                result = run_pipeline(
+                    source_text="A compact source statement.",
+                    source_path=Path("chapter.txt"),
+                    skill_text="Return canonical JSON.",
+                    connector=connector,
+                    connector_name="openai",
+                    action="create_qandas",
+                    output_path=Path(directory) / "final.json",
+                    options=PipelineOptions(
+                        strategy="chunked",
+                        work_dir=Path(directory) / "work",
+                        profile_overrides={
+                            "context_window": 32000,
+                            "max_output_tokens": 4096,
+                            "recommended_chunk_tokens": 5000,
+                            "reserved_output_tokens": 4096,
+                        },
+                    ),
+                )
+            self.assertEqual(len(connector.calls), 3)
+            self.assertEqual([call.args[0] for call in sleep.call_args_list], [0, 1])
+            self.assertEqual(result.metrics["retry_count"], 2)
+
+    def test_http_400_retries_with_a_smaller_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            connector = PayloadFlakyConnector(2)
+            from unittest.mock import patch
+            with patch("pipeline.engine.backoff"):
+                result = run_pipeline(
+                    source_text="Source evidence. " * 800,
+                    source_path=Path("chapter.txt"),
+                    skill_text="Return canonical JSON.",
+                    connector=connector,
+                    connector_name="openai",
+                    action="create_qandas",
+                    output_path=Path(directory) / "final.json",
+                    options=PipelineOptions(
+                        strategy="chunked", chunk_tokens=16000,
+                        work_dir=Path(directory) / "work",
+                        profile_overrides={
+                            "context_window": 32000,
+                            "max_output_tokens": 4096,
+                            "recommended_chunk_tokens": 16000,
+                            "reserved_output_tokens": 4096,
+                        },
+                    ),
+                )
+            self.assertEqual(len(connector.calls), 3)
+            self.assertLess(
+                len(connector.calls[1]["user_prompt"]),
+                len(connector.calls[0]["user_prompt"]),
+            )
+            self.assertLess(
+                connector.calls[1]["max_output_tokens"],
+                connector.calls[0]["max_output_tokens"],
+            )
+            self.assertFalse(connector.calls[2]["json_mode"])
+            self.assertEqual(
+                [event["strategy"] for event in result.metrics["recovery_events"][:2]],
+                ["provider_payload_retry", "provider_payload_retry"],
+            )
+
+    def test_validation_retry_truncates_source_and_appends_errors(self) -> None:
+        source = (
+            "Choose models by comparing performance and complexity. " * 40
+            + "END_OF_ORIGINAL_CHUNK"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            connector = ValidationFeedbackConnector()
+            from unittest.mock import patch
+            with patch("pipeline.engine.random.uniform", return_value=0.1):
+                result = run_pipeline(
+                    source_text=source,
+                    source_path=Path("chapter.txt"),
+                    skill_text="Return canonical JSON.",
+                    connector=connector,
+                    connector_name="ollama",
+                    action="create_datatables",
+                    output_path=Path(directory) / "final.json",
+                    options=PipelineOptions(
+                        strategy="chunked", retries=1, work_dir=Path(directory) / "work",
+                        profile_overrides={
+                            "context_window": 32000, "max_output_tokens": 4096,
+                            "recommended_chunk_tokens": 5000, "reserved_output_tokens": 4096,
+                        },
+                    ),
+                )
+        self.assertEqual(len(connector.calls), 2)
+        retry_prompt = connector.calls[1]["user_prompt"]
+        self.assertIn("PREVIOUS VALIDATION FAILURES", retry_prompt)
+        self.assertIn(
+            "$.data[0].source_id: invalid format",
+            retry_prompt,
+        )
+        self.assertIn("Choose models by comparing performance and complexity.", retry_prompt)
+        self.assertNotIn("END_OF_ORIGINAL_CHUNK", retry_prompt)
+        self.assertNotIn("Artifact to repair", retry_prompt)
+        self.assertTrue(result.validation["valid"])
+        recovery = next(
+            event for event in result.metrics["recovery_events"]
+            if event["strategy"] == "validation_prompt_retry"
+        )
+        self.assertGreater(recovery["source_characters_removed"], 0)
+        self.assertLess(
+            recovery["source_characters_after"], recovery["source_characters_before"]
+        )
+
+    def test_character_chunk_separation_is_exactly_configurable(self) -> None:
+        source = "A sentence with source evidence. " * 80
+        with tempfile.TemporaryDirectory() as directory:
+            connector = RecordingConnector()
+            result = run_pipeline(
+                source_text=source,
+                source_path=Path("chapter.txt"),
+                skill_text="Return canonical JSON.",
+                connector=connector,
+                connector_name="ollama",
+                action="create_qandas",
+                output_path=Path(directory) / "final.json",
+                options=PipelineOptions(
+                    strategy="chunked", chunk_characters=512, retries=0,
+                    work_dir=Path(directory) / "work",
+                    profile_overrides={
+                        "context_window": 32000, "max_output_tokens": 4096,
+                        "recommended_chunk_tokens": 5000, "reserved_output_tokens": 4096,
+                    },
+                ),
+            )
+        self.assertEqual(result.metrics["target_chunk_characters"], 512)
+        self.assertGreater(result.metrics["chunk_count"], 1)
+
+    def test_repeated_http_400_regenerates_from_smaller_source_chunks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            connector = PayloadFlakyConnector(5)
+            from unittest.mock import patch
+            with patch("pipeline.engine.backoff"):
+                result = run_pipeline(
+                    source_text="Source evidence about regression. " * 800,
+                    source_path=Path("chapter.txt"),
+                    skill_text="Return canonical JSON.",
+                    connector=connector,
+                    connector_name="openai",
+                    action="create_qandas",
+                    output_path=Path(directory) / "final.json",
+                    options=PipelineOptions(
+                        strategy="chunked", chunk_tokens=16000,
+                        work_dir=Path(directory) / "work",
+                        profile_overrides={
+                            "context_window": 32000,
+                            "max_output_tokens": 4096,
+                            "recommended_chunk_tokens": 16000,
+                            "reserved_output_tokens": 4096,
+                        },
+                    ),
+                )
+            self.assertEqual(len(connector.calls), 7)
+            self.assertIn(
+                "smaller_chunk",
+                [event["strategy"] for event in result.metrics["recovery_events"]],
+            )
+
     def test_semantic_chunking_is_lossless_and_keeps_atomic_blocks(self) -> None:
         source = (
             "# 1 Introduction\n\nA paragraph about the topic.\n\n"

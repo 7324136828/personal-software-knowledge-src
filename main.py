@@ -147,21 +147,61 @@ def connector_environment(config: Mapping[str, Any], provider: str) -> dict[str,
     return exported
 
 
+def _empty_checkpoint() -> dict[str, Any]:
+    return {"version": 2, "completed": [], "in_progress": {}}
+
+
 def load_checkpoint(path: Path) -> dict[str, Any]:
-    """Load the small checkpoint format, accepting an absent checkpoint as empty."""
+    """Load or migrate the batch checkpoint.
+
+    Version 1 stored ``in_progress`` as a list of source names. Version 2 maps
+    each source to completed artifacts and detailed chunk progress, allowing a
+    restart to skip successful artifacts instead of restarting the whole folder.
+    """
 
     if not path.exists():
-        return {"completed": [], "in_progress": []}
+        return _empty_checkpoint()
     try:
         checkpoint = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise BatchConfigurationError(f"Could not parse checkpoint '{path}': {exc}") from exc
     if not isinstance(checkpoint, dict):
         raise BatchConfigurationError("The checkpoint must contain a JSON object.")
-    for field in ("completed", "in_progress"):
-        value = checkpoint.setdefault(field, [])
-        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-            raise BatchConfigurationError(f"Checkpoint field '{field}' must be a list of strings.")
+    completed = checkpoint.setdefault("completed", [])
+    if not isinstance(completed, list) or not all(isinstance(item, str) for item in completed):
+        raise BatchConfigurationError("Checkpoint field 'completed' must be a list of strings.")
+
+    in_progress = checkpoint.setdefault("in_progress", {})
+    if isinstance(in_progress, list):
+        if not all(isinstance(item, str) for item in in_progress):
+            raise BatchConfigurationError(
+                "Legacy checkpoint field 'in_progress' must be a list of strings."
+            )
+        in_progress = {
+            source: {"completed": [], "in_progress": {}} for source in in_progress
+        }
+        checkpoint["in_progress"] = in_progress
+    if not isinstance(in_progress, dict) or not all(
+        isinstance(source, str) and isinstance(progress, dict)
+        for source, progress in in_progress.items()
+    ):
+        raise BatchConfigurationError(
+            "Checkpoint field 'in_progress' must map source names to progress objects."
+        )
+    for source, progress in in_progress.items():
+        artifact_completed = progress.setdefault("completed", [])
+        artifact_progress = progress.setdefault("in_progress", {})
+        if not isinstance(artifact_completed, list) or not all(
+            isinstance(item, str) for item in artifact_completed
+        ):
+            raise BatchConfigurationError(
+                f"Checkpoint completed artifacts for '{source}' must be a list of strings."
+            )
+        if not isinstance(artifact_progress, dict):
+            raise BatchConfigurationError(
+                f"Checkpoint in-progress artifacts for '{source}' must be an object."
+            )
+    checkpoint["version"] = 2
     return checkpoint
 
 
@@ -231,6 +271,74 @@ def output_path_for(output_directory: Path, action: str, timestamp: str) -> Path
     return output_directory / f"output_{action}_{timestamp}.txt"
 
 
+def artifact_name(action: str) -> str:
+    """Return the checkpoint/output-folder spelling for an action."""
+
+    return action.removeprefix("create_")
+
+
+def artifact_work_directory(output_directory: Path, source: Path, action: str) -> Path:
+    """Keep each source/artifact's chunks and checkpoint in its own folder."""
+
+    return output_directory / source.stem / artifact_name(action)
+
+
+def artifact_progress(work_directory: Path, *, status: str = "in_progress") -> dict[str, Any]:
+    """Summarize the detailed local stage checkpoint for the batch checkpoint."""
+
+    chunks = sorted((work_directory / "chunks").glob("chunk_*.txt"))
+    completed_chunks: set[str] = set()
+    failed_chunks: set[str] = set()
+    local_checkpoint = work_directory / "checkpoint.json"
+    if local_checkpoint.is_file():
+        try:
+            local = json.loads(local_checkpoint.read_text(encoding="utf-8"))
+            stages = local.get("stages", {}) if isinstance(local, dict) else {}
+            if isinstance(stages, dict):
+                for key, record in stages.items():
+                    if not isinstance(key, str) or not key.endswith(":generation") or not isinstance(record, dict):
+                        continue
+                    chunk_id = key.removesuffix(":generation")
+                    if record.get("status") == "complete":
+                        completed_chunks.add(chunk_id)
+                    elif record.get("status") == "failed":
+                        failed_chunks.add(chunk_id)
+        except (OSError, json.JSONDecodeError):
+            # The per-artifact Checkpoint class preserves corrupt files. The batch
+            # summary remains usable and will be refreshed after the next attempt.
+            pass
+
+    current_at = 1
+    for index, chunk in enumerate(chunks, 1):
+        if chunk.stem not in completed_chunks:
+            current_at = index
+            break
+    else:
+        current_at = len(chunks) + 1 if chunks else 1
+
+    generated = work_directory / "artifacts" / "generated"
+    if not generated.is_dir():
+        generated = work_directory / "knowledge_and_artifacts" / "generated"
+    outputs = sorted(
+        path.relative_to(work_directory).as_posix()
+        for path in generated.glob("chunk_*.*")
+        if not path.name.endswith(".checkpoint.json")
+    ) if generated.is_dir() else []
+    result: dict[str, Any] = {
+        "status": "failed" if failed_chunks and status == "in_progress" else status,
+        "folder": str(work_directory),
+        "checkpoint": str(local_checkpoint),
+        # ``text`` contains paths to the pre-separated source chunks, avoiding a
+        # second full copy of a potentially large source inside .checkpoint.json.
+        "text": [path.relative_to(work_directory).as_posix() for path in chunks],
+        "current_at": current_at,
+        "outputs": outputs,
+    }
+    if failed_chunks:
+        result["failed_chunks"] = sorted(failed_chunks)
+    return result
+
+
 def run_batch(
     *,
     config: Mapping[str, Any],
@@ -271,14 +379,28 @@ def run_batch(
 
     for source in sources:
         source_key = source.name
-        in_progress = checkpoint["in_progress"]
+        in_progress: dict[str, Any] = checkpoint["in_progress"]
+        source_progress = in_progress.setdefault(
+            source_key, {"completed": [], "in_progress": {}}
+        )
+        source_progress.setdefault("completed", [])
+        source_progress.setdefault("in_progress", {})
         if not dry_run:
-            if source_key not in in_progress:
-                in_progress.append(source_key)
             save_checkpoint(checkpoint_path, checkpoint)
 
-        timestamp = run_timestamp()
+        timestamp = source_progress.get("timestamp")
+        if not isinstance(timestamp, str) or not timestamp:
+            timestamp = run_timestamp()
+            source_progress["timestamp"] = timestamp
         for action in actions:
+            artifact = artifact_name(action)
+            if artifact in source_progress["completed"]:
+                LOGGER.info("Skipping completed %s for %s", action, source.name)
+                continue
+            work_directory = artifact_work_directory(output_directory, source, action)
+            source_progress["in_progress"][artifact] = artifact_progress(work_directory)
+            if not dry_run:
+                save_checkpoint(checkpoint_path, checkpoint)
             output_path = output_path_for(output_directory, action, timestamp)
             command = [
                 sys.executable,
@@ -289,6 +411,8 @@ def run_batch(
                 str(source),
                 "--action",
                 action,
+                "--work-dir",
+                str(work_directory),
                 "--output",
                 str(output_path),
             ]
@@ -298,10 +422,24 @@ def run_batch(
                 continue
             try:
                 completed_process = subprocess.run(command, env=child_environment, check=False)
+            except KeyboardInterrupt:
+                source_progress["in_progress"][artifact] = artifact_progress(
+                    work_directory, status="interrupted"
+                )
+                save_checkpoint(checkpoint_path, checkpoint)
+                raise
             except OSError as exc:
                 LOGGER.error("Could not start %s for %s: %s", action, source.name, exc)
+                source_progress["in_progress"][artifact] = artifact_progress(
+                    work_directory, status="failed"
+                )
+                save_checkpoint(checkpoint_path, checkpoint)
                 return 1
             if completed_process.returncode != 0:
+                source_progress["in_progress"][artifact] = artifact_progress(
+                    work_directory, status="failed"
+                )
+                save_checkpoint(checkpoint_path, checkpoint)
                 LOGGER.error(
                     "%s failed for %s with exit code %s.",
                     action,
@@ -309,10 +447,14 @@ def run_batch(
                     completed_process.returncode,
                 )
                 return completed_process.returncode or 1
+            source_progress["in_progress"].pop(artifact, None)
+            if artifact not in source_progress["completed"]:
+                source_progress["completed"].append(artifact)
+            save_checkpoint(checkpoint_path, checkpoint)
 
         if dry_run:
             continue
-        checkpoint["in_progress"] = [item for item in checkpoint["in_progress"] if item != source_key]
+        checkpoint["in_progress"].pop(source_key, None)
         if source_key not in checkpoint["completed"]:
             checkpoint["completed"].append(source_key)
         save_checkpoint(checkpoint_path, checkpoint)

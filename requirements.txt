@@ -8,3 +8,8 @@ python-docx>=1.1.0
 
 # Batch-runner configuration
 PyYAML>=6.0.0
+
+# Web Backend API
+fastapi>=0.115.0
+uvicorn>=0.30.0
+python-multipart>=0.0.9

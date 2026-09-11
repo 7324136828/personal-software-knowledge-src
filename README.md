@@ -4,7 +4,62 @@ This Python 3.11+ application turns a source document into a learning artifact. 
 action is governed by the complete corresponding `skills/<name>/SKILL.md`; action
 modules add only small task-specific context and contain no provider API code.
 
-## Installation
+## Quickstart (Web UI & Backend)
+
+### 1. Setup Environment
+Automatically create the Python virtual environment (`.venv`), install backend dependencies, and install React frontend npm dependencies:
+
+- **Windows**:
+  ```cmd
+  setup.bat
+  ```
+- **Linux / macOS**:
+  ```bash
+  chmod +x setup.sh run.sh
+  ./setup.sh
+  ```
+*(Both scripts dispatch `setup.py`.)*
+
+### 2. Run Application
+Concurrently launch the FastAPI backend (`http://127.0.0.1:8000`) and the Vite React frontend (`http://localhost:5173`):
+
+- **Windows**:
+  ```cmd
+  run.bat
+  ```
+- **Linux / macOS**:
+  ```bash
+  ./run.sh
+  ```
+*(Both scripts dispatch `run.py`.)*
+
+Open your browser at **http://localhost:5173**. In the UI you can:
+- **Select or drop multiple PDF files** (or Word, Markdown, plain text).
+- **Paste PDF files** directly from your clipboard (or paste raw text).
+- Choose one or more of the 9 content-generation skills; every selected artifact is generated for every selected source.
+- Persist each job in an isolated `conversion_history/` folder so completed and interrupted conversions survive restarts.
+- Open **File History** to expand each source into its artifact jobs, inspect retry logs,
+  retry failures with a chosen character-based chunk size, cancel work, or download
+  completed artifacts as ZIP archives. Queued files can be dragged to change priority.
+
+## Web interface
+
+The landing page is the starting point for a conversion. Add one or more source files,
+select the learning artifacts to generate, choose a connector and model, then queue the
+work. Each selected artifact is generated for every selected file.
+
+![Landing page: source upload, artifact selection, and generation settings](images/landing_page.png)
+
+**File History** keeps related artifact jobs together under their source file. Expand a
+file to see individual statuses and recent logs. Failed artifacts can be retried with a
+custom character-based chunk size; completed artifacts can be downloaded as ZIP files.
+Queued files can be moved higher or lower in the processing order by dragging them.
+
+![File History: grouped artifact jobs, logs, and queue controls](images/history_page.png)
+
+---
+
+## Installation (CLI Mode)
 
 Create and activate a virtual environment, then install the provider SDKs and binary
 document readers:
@@ -153,7 +208,7 @@ budget. Oversized protected blocks fail explicitly instead of being silently cut
   modules.
 - `connectors/` contains all provider-specific code behind `LLMConnector`.
 - `pipeline/` contains model profiles, token budgeting, semantic chunking, normalized
-  extraction, bounded retry/recovery, hierarchical aggregation, checkpoints,
+  extraction, capped exponential retry/recovery, hierarchical aggregation, checkpoints,
   provenance, and validation.
 - `experiment.py` and `experiments/` define reproducible strategy/model comparisons;
   see [experiments/README.md](experiments/README.md).
@@ -166,6 +221,15 @@ source chunks and metadata under `chunks/`, per-chunk extractions/artifacts, app
 request/response evidence under `raw/`, aggregation tree nodes, validation metrics, and
 `checkpoint.json`. Restarts reuse only content-addressed complete stages; changed source,
 skill, model, profile, or generation settings invalidate the relevant checkpoint.
+
+API failures retry by default until a successful response is received. Delays follow
+`1s, 2s, 4s, 8s, ... 64s, 128s, 240s, 240s, ...`. For HTTP 400, 413, or 422 responses,
+the next four attempts use a smaller prompt and output budget; the second attempt also
+falls back from provider-side JSON formatting while retaining the JSON instruction. If
+all four variants are rejected, the pipeline regenerates that stage from smaller source
+chunks. Authentication and authorization failures, plus local token-budget errors,
+remain terminal. Use `--retries N` when a finite retry limit is required; `--retries 0`
+disables provider retries.
 
 ## Batch generation from `config.yaml`
 
@@ -188,9 +252,38 @@ unfinished source/action pair.
 
 For one input source, all actions share a timestamp. Output paths use
 `tmp/output_<action>_<YYYYMMDDHHmmss>.txt`, keeping the nine responses separate rather
-than overwriting one `output_<timestamp>.txt` file. The checkpoint is atomically saved
-before work begins and after all actions for a source succeed; failed or interrupted
-sources remain unfinished for the next run.
+than overwriting one `output_<timestamp>.txt` file. The version-2 batch checkpoint is
+atomically saved before and after every artifact. It records completed artifacts for each
+source plus the artifact work folder, pre-separated chunk paths, next chunk number, and
+completed chunk outputs. Every artifact folder also has its own content-addressed
+`checkpoint.json`, updated after each successful chunk. Version-1 checkpoints whose
+`in_progress` field is a list of filenames are migrated on load. A failed or interrupted
+run resumes the unfinished artifact and reuses its valid chunk outputs.
+
+The batch checkpoint uses this shape (chunk text is stored in the referenced files):
+
+```json
+{
+  "version": 2,
+  "completed": ["Chapter 003. Statistical Learning.txt"],
+  "in_progress": {
+    "Chapter 004. Linear Regression.txt": {
+      "timestamp": "20260909190548",
+      "completed": ["datatables", "flashcards"],
+      "in_progress": {
+        "infographics": {
+          "status": "in_progress",
+          "folder": "tmp/Chapter 004. Linear Regression/infographics",
+          "checkpoint": "tmp/Chapter 004. Linear Regression/infographics/checkpoint.json",
+          "text": ["chunks/chunk_0001.txt", "chunks/chunk_0002.txt"],
+          "current_at": 2,
+          "outputs": ["artifacts/generated/chunk_0001.json"]
+        }
+      }
+    }
+  }
+}
+```
 
 ## Exit codes
 

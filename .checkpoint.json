@@ -4,7 +4,20 @@
     "Regression Modeling with Actuarial and Financial Applications_013 - 2 Basic Linear Regression.tex",
     "Regression Modeling with Actuarial and Financial Applications_014 - 3 Multiple Linear Regression - I.tex",
     "Chapter 004. Multiple Linear Regression - II.txt",
-    "Chapter 005. Variable Selection.txt"
+    "Chapter 005. Variable Selection.txt",
+    "Chapter 003. Statistical Learning.txt",
+    "Chapter 004. Linear Regression.txt",
+    "Chapter 005. Classification.txt",
+    "Chapter 006. Resampling Methods.txt",
+    "Chapter 007. Linear Model Selection and Regularization.txt",
+    "Chapter 008. Moving Beyond Linearity.txt",
+    "Chapter 009. Tree-Based Methods.txt",
+    "Chapter 010. Support Vector Machines.txt",
+    "Chapter 011. Deep Learning.txt",
+    "Chapter 012. Survival Analysis and Censored Data.txt",
+    "Chapter 013. Unsupervised Learning.txt",
+    "Chapter 014. Multiple Testing.txt"
   ],
-  "in_progress": []
+  "in_progress": {},
+  "version": 2
 }

@@ -26,6 +26,7 @@ def execute_generation(
     action: str,
     output_path: Path,
     model: str | None = None,
+    api_key: str | None = None,
     options: PipelineOptions | None = None,
 ) -> PipelineResult:
     """Run one validated load, generate, and write operation."""
@@ -53,7 +54,7 @@ def execute_generation(
     skill = load_skill(action_config["skill"])
     LOGGER.info("Skill: %s", skill.path)
 
-    connector = create_connector(connector_name, model=model)
+    connector = create_connector(connector_name, model=model, api_key=api_key)
     LOGGER.info("Model: %s", connector.model)
     LOGGER.info("Generating...")
     result = run_pipeline(
@@ -80,7 +81,14 @@ def add_pipeline_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--max-output-tokens", type=int)
     parser.add_argument("--aggregation", choices=("deterministic", "hierarchical"))
     parser.add_argument("--group-size", type=int)
-    parser.add_argument("--retries", type=int)
+    parser.add_argument(
+        "--retries",
+        type=int,
+        help=(
+            "Maximum retries per API call. Omit to retry provider failures until "
+            "success with exponential backoff; use 0 to disable retries."
+        ),
+    )
     parser.add_argument("--generation-passes", type=int)
     parser.add_argument("--temperature", type=float)
     for name in ("checkpoint", "validate", "keep-raw"):

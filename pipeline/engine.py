@@ -9,21 +9,26 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 import time
-from dataclasses import asdict, dataclass, field, replace
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field, fields, replace
 from pathlib import Path
 from typing import Any
 
 from action_base import build_generation_prompts
 from connectors.base import GenerationResponse, LLMConnector
-from errors import InvalidArgumentsError, ProviderError
+from errors import GenerationCancelled, InvalidArgumentsError, ProviderError
 
 from .aggregator import hierarchical_aggregate, merge_artifacts, provenance_index
 from .checkpoint import Checkpoint, atomic_json, atomic_text, digest, evidence_prefix
 from .chunker import Chunk, chunk_source, source_inventory
 from .extractor import EXTRACTION_SYSTEM, extraction_prompt, validate_extraction
 from .model_profiles import ModelProfile, get_model_profile
-from .retry import GenerationFailure, backoff, budget_rejection, retryable
+from .retry import (
+    GenerationFailure, backoff, backoff_delay, budget_rejection, payload_rejection,
+    retryable,
+)
 from .schemas import get_schema
 from .token_budget import TokenBudget, estimate_tokens
 from .validator import validate_coverage, validate_output
@@ -43,6 +48,11 @@ _DERIVED_EXTENSIONS = {
     "create_reports": {".md", ".html"},
     "create_slides": {".md"},
 }
+_PAYLOAD_ADAPTATION_ATTEMPTS = 4
+_MIN_ADAPTED_OUTPUT_TOKENS = 512
+_MIN_ADAPTED_PROMPT_CHARACTERS = 1024
+_MIN_VALIDATION_RETRY_SOURCE_CHARACTERS = 256
+_VALIDATION_RETRY_TRUNCATION_RANGE = (0.05, 0.20)
 
 
 @dataclass
@@ -51,6 +61,7 @@ class PipelineOptions:
 
     strategy: str = "chunked"
     chunk_tokens: int | None = None
+    chunk_characters: int | None = None
     chunk_overlap: int = 0
     max_output_tokens: int | None = None
     aggregation: str = "hierarchical"
@@ -64,13 +75,14 @@ class PipelineOptions:
     keep_raw: bool = True
     work_dir: Path | None = None
     profile_overrides: dict[str, Any] = field(default_factory=dict)
+    cancel_check: Callable[[], bool] | None = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if self.strategy not in _STRATEGIES:
             raise InvalidArgumentsError(f"Unknown pipeline strategy '{self.strategy}'.")
         if self.aggregation not in _AGGREGATIONS:
             raise InvalidArgumentsError(f"Unknown aggregation strategy '{self.aggregation}'.")
-        for name in ("chunk_tokens", "max_output_tokens", "retries"):
+        for name in ("chunk_tokens", "chunk_characters", "max_output_tokens", "retries"):
             value = getattr(self, name)
             if value is not None and (not isinstance(value, int) or isinstance(value, bool) or value < (0 if name == "retries" else 1)):
                 raise InvalidArgumentsError(f"{name} has an invalid value.")
@@ -87,6 +99,8 @@ class PipelineOptions:
                 raise InvalidArgumentsError(f"{name} must be a boolean.")
         if not isinstance(self.profile_overrides, dict):
             raise InvalidArgumentsError("profile_overrides must be an object.")
+        if self.cancel_check is not None and not callable(self.cancel_check):
+            raise InvalidArgumentsError("cancel_check must be callable.")
         if self.work_dir is not None:
             self.work_dir = Path(self.work_dir)
 
@@ -169,9 +183,11 @@ class _Run:
     def request(
         self, *, stage: str, system_prompt: str, user_prompt: str,
         json_mode: bool, requested_output: int | None = None,
+        payload_adjustment: dict[str, Any] | None = None,
     ) -> GenerationResponse:
         """Make one budgeted request and preserve append-only, secret-free evidence."""
 
+        self.ensure_not_cancelled()
         allowance = self.budget.output_allowance(
             system_prompt, user_prompt, requested_output or self.options.max_output_tokens
         )
@@ -182,6 +198,8 @@ class _Run:
                            "temperature": self.options.temperature if self.options.temperature is not None else self.profile.temperature,
                            "json_mode": json_mode, "context_window": self.profile.context_window},
         }
+        if payload_adjustment:
+            request_record["payload_adjustment"] = payload_adjustment
         prefix = evidence_prefix(self.raw_dir, stage) if self.options.keep_raw else None
         if prefix:
             atomic_json(prefix.with_name(prefix.name + "_request.json"), request_record)
@@ -201,6 +219,7 @@ class _Run:
                     system_prompt=system_prompt, user_prompt=user_prompt
                 )
             result = _response(generated)
+            self.ensure_not_cancelled()
         except Exception as exc:
             if prefix:
                 atomic_json(prefix.with_name(prefix.name + "_response.json"),
@@ -218,22 +237,114 @@ class _Run:
             self.metrics["truncated_outputs"] += 1
         return result
 
+    def ensure_not_cancelled(self) -> None:
+        if self.options.cancel_check and self.options.cancel_check():
+            raise GenerationCancelled("Conversion was discarded by the user.")
+
+    @staticmethod
+    def _shorten_payload(text: str, maximum_characters: int) -> str:
+        """Keep request framing plus the most recent material within a smaller payload."""
+
+        if len(text) <= maximum_characters:
+            return text
+        marker = "\n\n[Earlier request material omitted after provider payload rejection.]\n\n"
+        retained = max(1, (maximum_characters - len(marker)) // 2)
+        return text[:retained] + marker + text[-retained:]
+
+    def _adapt_payload(self, original: dict[str, Any], attempt: int) -> dict[str, Any]:
+        """Create a materially smaller request after a 400-style provider rejection.
+
+        This is intentionally based on the original request rather than repeatedly
+        trimming an already-trimmed payload, so every evidence record is predictable
+        and preserves both the request framing and the latest repair material.
+        """
+
+        adapted = dict(original)
+        original_prompt = str(original["user_prompt"])
+        initial_output = original.get("requested_output") or self.options.max_output_tokens
+        if initial_output is None:
+            initial_output = self.profile.reserved_output_tokens
+        prompt_limit = max(
+            _MIN_ADAPTED_PROMPT_CHARACTERS,
+            len(original_prompt) // (2 ** attempt),
+        )
+        output_limit = max(
+            _MIN_ADAPTED_OUTPUT_TOKENS,
+            int(initial_output) // (2 ** attempt),
+        )
+        adapted["user_prompt"] = self._shorten_payload(original_prompt, prompt_limit)
+        adapted["requested_output"] = output_limit
+        # A Responses endpoint may reject a structured-output feature for a model
+        # even when the text payload is valid. The prompt still demands JSON, so
+        # this fallback keeps schema guidance without the provider-only parameter.
+        if attempt >= 2 and adapted.get("json_mode"):
+            adapted["json_mode"] = False
+        adapted["payload_adjustment"] = {
+            "reason": "provider_payload_rejection",
+            "attempt": attempt,
+            "user_prompt_characters": len(adapted["user_prompt"]),
+            "requested_output_tokens": output_limit,
+            "json_mode": adapted["json_mode"],
+        }
+        return adapted
+
     def call_with_retries(self, **request: Any) -> GenerationResponse:
+        """Retry API failures until success unless an explicit limit was supplied.
+
+        ``--retries N`` remains available for batch/CI jobs that require a finite
+        failure time. With no override, transient provider failures use capped
+        exponential backoff indefinitely. Payload rejections instead get four
+        progressively smaller variants before the caller regenerates from smaller
+        source chunks; validation and repair attempts remain bounded by the model
+        profile's ``retries`` value.
+        """
+
         last: Exception | None = None
-        for attempt in range(self.retries + 1):
+        original_request = dict(request)
+        current_request = dict(request)
+        attempt = 0
+        payload_attempts = 0
+        while True:
+            self.ensure_not_cancelled()
             try:
-                return self.request(**request)
+                return self.request(**current_request)
             except Exception as exc:
                 last = exc
-                if attempt >= self.retries or budget_rejection(exc) or not retryable(exc):
+                retry_limit = self.options.retries
+                if (
+                    (retry_limit is not None and attempt >= retry_limit)
+                    or budget_rejection(exc)
+                    or not retryable(exc)
+                ):
                     raise
+                if payload_rejection(exc):
+                    payload_attempts += 1
+                    if payload_attempts > _PAYLOAD_ADAPTATION_ATTEMPTS:
+                        raise GenerationFailure(
+                            "Provider rejected progressively smaller request payloads; "
+                            "regenerate this stage from smaller source chunks.",
+                            payload_rejected=True,
+                        ) from exc
+                    current_request = self._adapt_payload(original_request, payload_attempts)
                 self.metrics["retry_count"] += 1
+                delay = backoff_delay(attempt)
                 self.metrics["recovery_events"].append({
-                    "stage": request["stage"], "strategy": "provider_retry", "attempt": attempt + 1,
-                    "error_type": type(exc).__name__,
+                    "stage": original_request["stage"],
+                    "strategy": (
+                        "provider_payload_retry" if payload_rejection(exc) else "provider_retry"
+                    ),
+                    "attempt": attempt + 1, "error_type": type(exc).__name__,
+                    "delay_seconds": delay,
+                    "payload_adjustment": current_request.get("payload_adjustment"),
                 })
-                backoff(attempt)
-        raise last or ProviderError("Generation failed without an error.")
+                LOGGER.warning(
+                    "API request failed during %s (%s); retrying in %s seconds%s.",
+                    original_request["stage"], type(exc).__name__, int(delay),
+                    " with a smaller payload" if payload_rejection(exc) else "",
+                )
+                backoff(attempt, cancel_check=self.options.cancel_check)
+                attempt += 1
+        raise last or ProviderError("Generation failed without an error.")  # pragma: no cover
 
     def make_chunks(self) -> list[Chunk]:
         empty_system, empty_user = build_generation_prompts(
@@ -245,9 +356,18 @@ class _Run:
             empty_user += "\nRequired canonical schema:\n" + json.dumps(get_schema(self.action), ensure_ascii=False)
         available = self.budget.chunk_allowance(empty_system, empty_user, self.options.max_output_tokens)
         overlap = self.options.chunk_overlap
-        target = min(self.options.chunk_tokens or self.profile.recommended_chunk_tokens,
-                     max(1, available - overlap))
-        chunks = chunk_source(self.source_text, self.source_path.name, target, overlap, estimate_tokens)
+        if self.options.chunk_characters is not None:
+            target = self.options.chunk_characters
+            chunks = chunk_source(self.source_text, self.source_path.name, target, 0, len)
+            chunks = [
+                replace(chunk, estimated_input_tokens=estimate_tokens(chunk.overlap_text + chunk.text))
+                for chunk in chunks
+            ]
+            self.metrics["target_chunk_characters"] = target
+        else:
+            target = min(self.options.chunk_tokens or self.profile.recommended_chunk_tokens,
+                         max(1, available - overlap))
+            chunks = chunk_source(self.source_text, self.source_path.name, target, overlap, estimate_tokens)
         if any(chunk.oversized and chunk.estimated_input_tokens > available for chunk in chunks):
             bad = next(chunk for chunk in chunks if chunk.oversized and chunk.estimated_input_tokens > available)
             raise ProviderError(
@@ -265,7 +385,8 @@ class _Run:
             atomic_json(self.chunks_dir / f"{chunk.chunk_id}.json", metadata)
         atomic_json(self.work_dir / "source_inventory.json", source_inventory(self.source_text))
         self.metrics["chunk_count"] = len(chunks)
-        self.metrics["target_chunk_tokens"] = target
+        if self.options.chunk_characters is None:
+            self.metrics["target_chunk_tokens"] = target
         return chunks
 
     def extraction(self, chunk: Chunk) -> dict:
@@ -309,7 +430,7 @@ class _Run:
             },
         }
 
-    def generation_prompts(self, chunk: Chunk, knowledge: dict | None = None) -> tuple[str, str]:
+    def generation_source(self, chunk: Chunk, knowledge: dict | None = None) -> str:
         source = chunk.overlap_text + chunk.text
         if knowledge is not None:
             source = (
@@ -317,6 +438,16 @@ class _Run:
                 + json.dumps(knowledge, ensure_ascii=False, separators=(",", ":"))
                 + "\nEND KNOWLEDGE INVENTORY"
             )
+        return source
+
+    def generation_prompts(
+        self,
+        chunk: Chunk,
+        knowledge: dict | None = None,
+        *,
+        source_override: str | None = None,
+    ) -> tuple[str, str]:
+        source = source_override if source_override is not None else self.generation_source(chunk, knowledge)
         system, user = build_generation_prompts(
             action=self.action,
             artifact_name=self.action.removeprefix("create_").replace("_", " "),
@@ -333,21 +464,52 @@ class _Run:
             user += "\nReturn exactly one JSON object. Required canonical schema:\n" + json.dumps(get_schema(self.action), ensure_ascii=False)
         return system, user
 
-    def repair_json(self, chunk: Chunk, current: str, errors: list[str], attempt: int) -> GenerationResponse:
-        system = (
-            "Repair one generated JSON artifact. Return exactly one JSON object and no fence. "
-            "Preserve every correct item, formula, exercise, answer and source reference. "
-            "Only fix the listed validation failures; never summarize away content."
-        )
-        user = (
-            f"Action: {self.action}\nSource: {chunk.source}\nChunk: {chunk.chunk_id}\n"
-            "Schema:\n" + json.dumps(get_schema(self.action), ensure_ascii=False) +
-            "\nValidation failures:\n- " + "\n- ".join(errors[:20]) +
-            "\nArtifact to repair:\n" + current
-        )
-        return self.call_with_retries(
-            stage=f"{chunk.chunk_id}_repair_{attempt}", system_prompt=system,
-            user_prompt=user, json_mode=True,
+    @staticmethod
+    def truncate_validation_retry_source(source: str) -> tuple[str, dict[str, Any]]:
+        """Randomly shorten retry context while retaining at least half of small inputs."""
+
+        before = len(source)
+        if before <= 1:
+            return source, {
+                "source_characters_before": before,
+                "source_characters_after": before,
+                "source_characters_removed": 0,
+                "source_reduction_fraction": 0.0,
+            }
+        minimum = min(_MIN_VALIDATION_RETRY_SOURCE_CHARACTERS, max(1, before // 2))
+        fraction = random.uniform(*_VALIDATION_RETRY_TRUNCATION_RANGE)
+        target = max(minimum, before - max(1, round(before * fraction)))
+        # Prefer a paragraph or line boundary within two percentage points of
+        # the random target so a distant boundary cannot cause a huge removal.
+        boundary_floor = max(minimum, target - max(1, round(before * 0.02)))
+        boundary = source.rfind("\n\n", boundary_floor, target + 1)
+        if boundary < boundary_floor:
+            boundary = source.rfind("\n", boundary_floor, target + 1)
+        after = boundary if boundary >= boundary_floor else target
+        shortened = source[:after].rstrip()
+        actual_after = len(shortened)
+        return shortened, {
+            "source_characters_before": before,
+            "source_characters_after": actual_after,
+            "source_characters_removed": before - actual_after,
+            "source_reduction_fraction": round((before - actual_after) / before, 4),
+        }
+
+    @staticmethod
+    def validation_retry_prompt(prompt: str, errors: list[str]) -> str:
+        """Ask for a complete regeneration with actionable validation feedback.
+
+        Starting from the original generation prompt is important for artifacts
+        with dynamic fields (such as data tables): a repair prompt that only
+        includes the canonical schema cannot describe those generated fields.
+        """
+
+        return (
+            prompt
+            + "\n\nPREVIOUS VALIDATION FAILURES\n- "
+            + "\n- ".join(errors[:20])
+            + "\nReturn a complete replacement JSON object. Fix every listed failure while "
+              "preserving the required schema, source grounding, and all requested content."
         )
 
     def generate_chunk(self, chunk: Chunk, knowledge: dict | None) -> dict | str:
@@ -362,6 +524,7 @@ class _Run:
         if cached := self.checkpoint.get(key, fingerprint):
             return cached["data"]
         system, user = self.generation_prompts(chunk, knowledge)
+        retry_source = self.generation_source(chunk, knowledge)
         response = self.call_with_retries(
             stage=f"{chunk.chunk_id}_generate", system_prompt=system, user_prompt=user,
             json_mode=self.uses_json,
@@ -387,9 +550,21 @@ class _Run:
         while not checked["valid"] and attempts < self.retries and self.uses_json:
             attempts += 1
             self.metrics["repair_count"] += 1
-            strategy = "json_repair" if not checked["truncated"] else "regenerate_truncated_json"
-            self.metrics["recovery_events"].append({"stage": key, "strategy": strategy, "attempt": attempts})
-            response = self.repair_json(chunk, checked.get("text") or response.text, checked["errors"], attempts)
+            retry_source, truncation = self.truncate_validation_retry_source(retry_source)
+            self.metrics["recovery_events"].append({
+                "stage": key, "strategy": "validation_prompt_retry", "attempt": attempts,
+                "errors": checked["errors"][:8],
+                **truncation,
+            })
+            retry_system, retry_user = self.generation_prompts(
+                chunk, knowledge, source_override=retry_source
+            )
+            response = self.call_with_retries(
+                stage=f"{chunk.chunk_id}_validation_retry_{attempts}",
+                system_prompt=retry_system,
+                user_prompt=self.validation_retry_prompt(retry_user, checked["errors"]),
+                json_mode=True,
+            )
             checked = validate_output(response.text, self.action, ".json", response.finish_reason)
         if not checked["valid"]:
             self.checkpoint.fail(key, fingerprint, "; ".join(checked["errors"][:8]))
@@ -494,11 +669,17 @@ class _Run:
         return merge(nodes)
 
     def run(self) -> PipelineResult:
+        self.ensure_not_cancelled()
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        option_values = {
+            item.name: getattr(self.options, item.name)
+            for item in fields(self.options)
+            if item.name != "cancel_check"
+        }
         atomic_json(self.work_dir / "run_config.json", {
             "source": str(self.source_path), "output": str(self.output_path), "action": self.action,
             "connector": self.connector_name, "model": self.connector.model,
-            "options": {**asdict(self.options), "work_dir": str(self.work_dir)},
+            "options": {**option_values, "work_dir": str(self.work_dir)},
             "model_profile": asdict(self.profile),
         })
 
@@ -530,7 +711,11 @@ class _Run:
                 except Exception as exc:
                     can_split = (
                         depth < 6 and estimate_tokens(chunk.text) > 256 and
-                        (getattr(exc, "truncated", False) or budget_rejection(exc))
+                        (
+                            getattr(exc, "truncated", False)
+                            or getattr(exc, "payload_rejected", False)
+                            or budget_rejection(exc)
+                        )
                     )
                     if not can_split:
                         raise
@@ -610,8 +795,14 @@ def run_pipeline(
 ) -> PipelineResult:
     """Execute the selected strategy and return the final aggregate plus diagnostics."""
 
-    return _Run(
+    runner = _Run(
         source_text=source_text, source_path=source_path, skill_text=skill_text,
         connector=connector, connector_name=connector_name, action=action,
         output_path=output_path, options=options or PipelineOptions(),
-    ).run()
+    )
+    try:
+        return runner.run()
+    except Exception as exc:
+        # Let server and batch frontends report retry counts when no result exists.
+        exc.pipeline_metrics = runner.metrics
+        raise

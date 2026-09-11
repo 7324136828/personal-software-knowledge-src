@@ -17,6 +17,7 @@ from result_processor import process_result
 from skill_loader import load_skill
 from main import (
     discover_unfinished_inputs,
+    load_checkpoint,
     resolve_environment_placeholders,
     run_batch,
 )
@@ -149,8 +150,74 @@ class ApplicationTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(len(calls), 2)
         self.assertIn("new.tex", saved_checkpoint["completed"])
-        self.assertEqual(saved_checkpoint["in_progress"], [])
+        self.assertEqual(saved_checkpoint["in_progress"], {})
+        self.assertEqual(saved_checkpoint["version"], 2)
         self.assertIn("output_create_datatables_20260908123456.txt", calls[0][-1])
+
+    def test_legacy_checkpoint_is_migrated_to_artifact_progress(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".checkpoint.json"
+            path.write_text(
+                json.dumps({"completed": ["done.txt"], "in_progress": ["active.txt"]}),
+                encoding="utf-8",
+            )
+            checkpoint = load_checkpoint(path)
+        self.assertEqual(checkpoint["version"], 2)
+        self.assertEqual(
+            checkpoint["in_progress"]["active.txt"],
+            {"completed": [], "in_progress": {}},
+        )
+
+    def test_batch_resume_skips_completed_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            input_directory = root / "input"
+            input_directory.mkdir()
+            (input_directory / "new.tex").write_text("new", encoding="utf-8")
+            checkpoint_path = root / ".checkpoint.json"
+            results = iter((0, 6))
+
+            def first_run(command: list[str], **kwargs: object) -> object:
+                del command, kwargs
+                return type("Result", (), {"returncode": next(results)})()
+
+            config = {"provider": {"default": "ollama"}, "ollama": {"model": "llama3.2"}}
+            with patch("main.subprocess.run", side_effect=first_run), patch(
+                "main.run_timestamp", return_value="20260908123456"
+            ):
+                self.assertEqual(
+                    run_batch(
+                        config=config,
+                        checkpoint_path=checkpoint_path,
+                        input_directory=input_directory,
+                        output_directory=root / "tmp",
+                        actions=["create_datatables", "create_qandas"],
+                    ),
+                    6,
+                )
+            partial = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            self.assertEqual(partial["in_progress"]["new.tex"]["completed"], ["datatables"])
+
+            calls: list[list[str]] = []
+
+            def resumed_run(command: list[str], **kwargs: object) -> object:
+                del kwargs
+                calls.append(command)
+                return type("Result", (), {"returncode": 0})()
+
+            with patch("main.subprocess.run", side_effect=resumed_run):
+                self.assertEqual(
+                    run_batch(
+                        config=config,
+                        checkpoint_path=checkpoint_path,
+                        input_directory=input_directory,
+                        output_directory=root / "tmp",
+                        actions=["create_datatables", "create_qandas"],
+                    ),
+                    0,
+                )
+            self.assertEqual(len(calls), 1)
+            self.assertIn("create_qandas", calls[0])
 
     def test_dry_run_does_not_write_checkpoint_or_require_unselected_tokens(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

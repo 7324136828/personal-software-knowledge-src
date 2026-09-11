@@ -43,3 +43,9 @@ class OutputWriteError(ApplicationError):
     """Raised when the requested output file cannot be written."""
 
     exit_code = 7
+
+
+class GenerationCancelled(ApplicationError):
+    """Raised when a user discards an active conversion."""
+
+    exit_code = 8

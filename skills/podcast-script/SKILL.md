@@ -53,12 +53,17 @@ dataset. Scope: **dataset**. Text only — **never** emit audio files.
 
 Spoken rate ≈ **150 words per minute**, counting only `dialogue` text.
 
-- Minimum total: **20 minutes ⇒ ≥ 4,500 words** of dialogue across all episode files.
-- If one episode would exceed ~25 min (~3,800 words), **split**. Each episode file is
-  self-contained: its own intro and sign-off, its own `episode_title` ending
-  `"— Episode N of M"`, `podcast_show` unchanged. The episodes together must still
-  clear 20 minutes.
-- Name split files `<dataset>_epNN.json` with zero-padded 2-digit `NN`.
+* Minimum total: **10 minutes ⇒ ≥ 1,500 words** of dialogue across all episode files.
+
+* If one episode would exceed ~25 minutes (~3,800 words), **split** it into multiple episodes. Each episode file must be self-contained, with:
+
+  * its own introduction and sign-off;
+  * its own `episode_title` ending with `"— Episode N of M"`; and
+  * the same unchanged `podcast_show`.
+
+  The episodes together must still provide **at least 10 minutes (≥ 1,500 words)** of total dialogue.
+
+* Name split files `<dataset>_epNN.json`, where `NN` is a zero-padded 2-digit episode number (for example, `_ep01.json`, `_ep02.json`).
 
 ## Markdown companion (optional)
 
