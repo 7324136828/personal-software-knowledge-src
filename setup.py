@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Automated project setup script.
 
-Creates a Python virtual environment, installs backend Python dependencies,
+Uses the active Python environment or creates one, installs backend Python dependencies,
 installs frontend npm packages, and creates initial configuration.
 """
 
@@ -53,21 +53,31 @@ def main() -> int:
         print("ERROR: Python 3.10 or higher is required.", file=sys.stderr)
         return 1
 
-    # 1. Virtual Environment
-    if not VENV_DIR.is_dir():
-        log("Creating virtual environment in .venv")
-        venv.create(VENV_DIR, with_pip=True)
+    # 1. Python environment. Never create a nested environment when the user
+    # has already activated virtualenv, venv, or Conda.
+    active_environment = (
+        sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+        or bool(os.environ.get("VIRTUAL_ENV"))
+        or bool(os.environ.get("CONDA_PREFIX"))
+    )
+    if active_environment:
+        python_exe = Path(sys.executable)
+        print(f"Using active Python environment at {sys.prefix}")
     else:
-        print(f"Virtual environment already exists at {VENV_DIR}")
+        if not VENV_DIR.is_dir():
+            log("Creating virtual environment in .venv")
+            venv.create(VENV_DIR, with_pip=True)
+        else:
+            print(f"Virtual environment already exists at {VENV_DIR}")
 
-    python_exe, pip_exe = get_venv_executables()
-    if not python_exe.exists():
-        log("Re-initializing virtual environment with pip")
-        venv.create(VENV_DIR, with_pip=True)
-        python_exe, pip_exe = get_venv_executables()
+        python_exe, _ = get_venv_executables()
+        if not python_exe.exists():
+            log("Re-initializing virtual environment with pip")
+            venv.create(VENV_DIR, with_pip=True)
+            python_exe, _ = get_venv_executables()
 
     # 2. Upgrade pip and install Python requirements
-    log("Upgrading pip in virtual environment")
+    log("Upgrading pip in the selected Python environment")
     run_cmd([str(python_exe), "-m", "pip", "install", "--upgrade", "pip"])
 
     log("Installing Python dependencies from requirements.txt")
@@ -103,4 +113,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

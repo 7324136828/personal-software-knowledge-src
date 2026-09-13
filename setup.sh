@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -e
+cd "$(dirname "$0")"
 
 echo "========================================================"
 echo " Skill-Driven Content Generator - Project Setup"
 echo "========================================================"
 echo ""
 
-if command -v python3 &> /dev/null; then
+if [ -n "${VIRTUAL_ENV:-}${CONDA_PREFIX:-}" ]; then
+    PYTHON_BIN="$(command -v python || command -v python3)"
+elif command -v python3 &> /dev/null; then
     PYTHON_BIN="python3"
 elif command -v python &> /dev/null; then
     PYTHON_BIN="python"
@@ -20,4 +23,3 @@ ${PYTHON_BIN} setup.py
 
 echo ""
 echo "[SETUP] Done! Run './run.sh' to start the application."
-

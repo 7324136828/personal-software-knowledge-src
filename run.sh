@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 set -e
+cd "$(dirname "$0")"
 
 echo "========================================================"
 echo " Skill-Driven Content Generator - Starting Application"
 echo "========================================================"
 echo ""
 
-if [ -f ".venv/bin/python" ]; then
-    .venv/bin/python run.py
-elif command -v python3 &> /dev/null; then
-    echo "[WARNING] .venv not found. Running with system python3..."
-    python3 run.py
+if [ -n "${VIRTUAL_ENV:-}${CONDA_PREFIX:-}" ]; then
+    PYTHON_BIN="$(command -v python || command -v python3)"
 else
-    echo "[WARNING] .venv not found. Running with system python..."
-    python run.py
+    if [ ! -x ".venv/bin/python" ]; then
+        echo "[RUN.SH] No active environment or local .venv. Running setup.sh..."
+        ./setup.sh
+    fi
+    PYTHON_BIN=".venv/bin/python"
 fi
 
+exec "$PYTHON_BIN" run.py "$@"

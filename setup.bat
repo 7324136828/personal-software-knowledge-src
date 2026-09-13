@@ -1,5 +1,6 @@
 @echo off
 setlocal
+cd /d "%~dp0"
 echo ========================================================
 echo  Skill-Driven Content Generator - Project Setup
 echo ========================================================
@@ -15,4 +16,3 @@ if errorlevel 1 (
 echo.
 echo [SETUP] Done! Run 'run.bat' to start the application.
 endlocal
-
