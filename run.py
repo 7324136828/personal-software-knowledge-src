@@ -16,6 +16,8 @@ import sys
 import time
 from pathlib import Path
 
+from runtime_environment import load_environment
+
 ROOT_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = ROOT_DIR / "frontend"
 VENV_DIR = ROOT_DIR / ".venv"
@@ -42,8 +44,8 @@ def requested_port(variable: str, default: int) -> int:
     value = os.environ.get(variable, str(default))
     try:
         port = int(value)
-    except ValueError as error:
-        raise RuntimeError(f"{variable} must be an integer, not {value!r}") from error
+    except ValueError:
+        raise RuntimeError(f"{variable} must be an integer") from None
     if not 1 <= port <= 65535:
         raise RuntimeError(f"{variable} must be between 1 and 65535")
     return port
@@ -64,8 +66,12 @@ def available_port(start: int, reserved: set[int] | None = None) -> int:
 
 
 def main() -> int:
-    is_windows = platform.system() == "Windows"
     python_bin = get_venv_python()
+    # Load dependencies in the same environment selected for the backend.
+    if Path(python_bin).absolute() != Path(sys.executable).absolute():
+        os.execv(python_bin, [python_bin, str(ROOT_DIR / "run.py"), *sys.argv[1:]])
+    load_environment()
+    is_windows = platform.system() == "Windows"
     npm_bin = "npm.cmd" if is_windows else "npm"
 
     print("=" * 60)
