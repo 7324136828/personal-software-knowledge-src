@@ -24,6 +24,7 @@ from typing import Any
 from app_config import ACTION_CONFIG
 from connectors import CONNECTORS
 from document_loader import SUPPORTED_EXTENSIONS
+from runtime_environment import load_environment
 
 LOGGER = logging.getLogger("batch_generator")
 _ENV_PLACEHOLDER = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
@@ -491,6 +492,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     """Load configuration and run the batch process."""
 
+    load_environment()
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
     args = build_parser().parse_args(argv)
     try:

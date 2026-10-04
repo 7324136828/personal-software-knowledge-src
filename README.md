@@ -20,6 +20,10 @@ Automatically create the Python virtual environment (`.venv`), install backend d
   ```
 *(Both scripts dispatch `setup.py`.)*
 
+Setup also creates `.env` beside `setup.py` from `.env.example` if it does not
+already exist. Edit this private file with your provider settings before running
+the application; restart running processes after changes.
+
 ### 2. Run Application
 Concurrently launch the FastAPI backend (`http://127.0.0.1:8000`) and the Vite React frontend (`http://localhost:5173`):
 
@@ -152,9 +156,19 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Copy `.env.example` to a private location or set the variables in your shell. The
-application reads the process environment directly; it does not automatically load a
-`.env` file and never stores credentials.
+Copy `.env.example` to `.env` in the repository root, or set variables in your
+shell. Web launches (`run.py`, `python server.py`, and `uvicorn server:app`) and CLI
+generation (orchestrator, direct actions, study-set prompt, batch runner, and
+experiments) automatically load this one file before reading runtime settings.
+Existing process-environment variables take precedence, including explicitly empty
+values. No `.env` is required; without it, shell configuration and built-in defaults
+continue to work. The application never searches the current working directory or
+parent directories for `.env` files. Values are literal: `${NAME}` inside `.env`
+is not expanded (`config.yaml` placeholders still work as documented below).
+
+Keep `.env` private. It is git-ignored; do not commit or share it. Loading does not
+print its contents or copy credentials into generated artifacts or API responses.
+Restart running processes after editing `.env`.
 
 ## Usage
 
