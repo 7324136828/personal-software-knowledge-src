@@ -11,6 +11,7 @@ from pathlib import Path
 from app_config import ACTION_CONFIG
 from connectors import CONNECTORS, create_connector
 from document_loader import load_document
+from diagnostic_logging import verbose_logging
 from errors import ApplicationError, InvalidArgumentsError
 from output_writer import write_output
 from pipeline.engine import PipelineOptions, PipelineResult, run_pipeline
@@ -29,7 +30,7 @@ def execute_generation(
     api_key: str | None = None,
     options: PipelineOptions | None = None,
 ) -> PipelineResult:
-    """Run one validated load, generate, and write operation."""
+    """Generate and write a complete artifact or retained partial output."""
 
     try:
         action_config = ACTION_CONFIG[action]
@@ -75,6 +76,8 @@ def execute_generation(
 def add_pipeline_arguments(parser: argparse.ArgumentParser) -> None:
     """Expose identical pipeline controls on every generation entry point."""
 
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Save diagnostic and full request/response logs to %%TEMP%%/personal-software-knowledge-src-log.")
     parser.add_argument("--strategy", choices=("baseline", "chunked", "extraction_then_generation", "multi_pass"))
     parser.add_argument("--chunk-tokens", type=int, help="Desired source tokens per semantic chunk, bounded by the model profile.")
     parser.add_argument("--chunk-overlap", type=int, help="Maximum tokens of preceding context; provenance remains attached to the original chunk.")
@@ -136,6 +139,45 @@ def configure_logging() -> None:
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 
+def run_cli_generation(
+    args: argparse.Namespace, *, action: str, input_path: Path, output_path: Path,
+) -> int:
+    """Run a CLI request with scoped diagnostics and consistent exit codes."""
+
+    configure_logging()
+    try:
+        with verbose_logging(getattr(args, "verbose", False)):
+            try:
+                result = execute_generation(
+                    connector_name=args.connector,
+                    input_path=input_path,
+                    action=action,
+                    output_path=output_path,
+                    model=args.model,
+                    options=options_from_args(args),
+                )
+                if result.validation.get("partial"):
+                    LOGGER.error("Generation incomplete; partial output retained at %s. Final validation skipped.",
+                                 output_path)
+                    return result.metrics.get("failure_exit_code", 1) or 1
+                LOGGER.info("Completed: %s provider calls, %s provider retries, %s validation retries.",
+                            result.metrics.get("provider_calls", 0), result.metrics.get("retry_count", 0),
+                            result.metrics.get("repair_count", 0))
+            except ApplicationError as exc:
+                LOGGER.error("%s", exc)
+                return exc.exit_code
+            except KeyboardInterrupt:
+                LOGGER.error("Generation interrupted.")
+                return 1
+            except Exception:
+                LOGGER.exception("Unexpected application failure")
+                return 1
+    except OSError as exc:
+        LOGGER.error("Could not save verbose logs: %s", exc)
+        return 1
+    return 0
+
+
 def build_action_parser(action: str) -> argparse.ArgumentParser:
     """Create the shared parser for a directly executable action module."""
 
@@ -153,25 +195,6 @@ def build_action_parser(action: str) -> argparse.ArgumentParser:
 def run_action_cli(action: str, argv: Sequence[str] | None = None) -> int:
     """Run one action's standalone CLI without duplicating orchestration logic."""
 
-    configure_logging()
     parser = build_action_parser(action)
     args = parser.parse_args(argv)
-    try:
-        execute_generation(
-            connector_name=args.connector,
-            input_path=args.input_path,
-            action=action,
-            output_path=args.output_path,
-            model=args.model,
-            options=options_from_args(args),
-        )
-    except ApplicationError as exc:
-        LOGGER.error("%s", exc)
-        return exc.exit_code
-    except KeyboardInterrupt:
-        LOGGER.error("Generation interrupted.")
-        return 1
-    except Exception:
-        LOGGER.exception("Unexpected application failure")
-        return 1
-    return 0
+    return run_cli_generation(args, action=action, input_path=args.input_path, output_path=args.output_path)

@@ -171,30 +171,22 @@ Directory:
 podcasts/
 ```
 
-Files for episodes 0 through 9:
+Exactly one episode file per study set/source-file dataset:
 
 ```text
 podcasts/20260907121900_episode0.json
-podcasts/20260907121900_episode1.json
-podcasts/20260907121900_episode2.json
-podcasts/20260907121900_episode3.json
-podcasts/20260907121900_episode4.json
-podcasts/20260907121900_episode5.json
-podcasts/20260907121900_episode6.json
-podcasts/20260907121900_episode7.json
-podcasts/20260907121900_episode8.json
-podcasts/20260907121900_episode9.json
 ```
 
 Template:
 
 ```text
-podcasts/{TIMESTAMP}_episode{N}.json
+podcasts/{TIMESTAMP}_episode0.json
 ```
 
-where `N` is the episode number.
-
-If a different episode range or count is requested, preserve the same timestamp and vary only the episode number.
+The `episode0` suffix is retained for compatibility and names the sole episode.
+Honor a caller-specified destination or filename. Do not generate additional
+episode files. The episode must have an estimated runtime of at most 45 minutes
+at 150 dialogue words per minute plus explicit pauses; follow `podcast-script/SKILL.md`.
 
 ### Q&A datasets
 

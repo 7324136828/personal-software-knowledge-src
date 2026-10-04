@@ -501,9 +501,10 @@ Nodes, relationships, labels, and explanatory content must be grounded in the cu
 
 # 12. PODCAST SCRIPT
 
-Generate one podcast series for **every source file**.
+Generate exactly one self-contained podcast episode for **every source file**.
 
-The podcast is therefore source-file scoped, not folder scoped.
+Each source-file dataset is one study set with one podcast, regardless of its
+folder. Produce a text script only, with one introduction and one sign-off.
 
 Follow:
 
@@ -511,34 +512,25 @@ Follow:
 skills/podcast-script/SKILL.md
 ```
 
-## Minimum duration
+## Maximum duration
 
-Each individual source-file dataset must produce at least:
-
-```text
-4,500 spoken-dialogue words
-```
-
-This represents approximately:
+Each study set's single episode must have an estimated runtime **at most 45
+minutes**, at 150 dialogue words per minute plus explicit pauses:
 
 ```text
-20 minutes at 150 words per minute
+estimated_minutes = dialogue_words / 150 + total_pause_milliseconds / 60000
 ```
 
-The 4,500-word requirement applies **independently to every source file**.
+Sum all `[pause=NNN]` durations in scene directions, including empty-dialogue
+silence scenes. With no pauses, the limit is **6,750 dialogue words**. Reduce the
+word allowance by `150 * total_pause_milliseconds / 60000` when pauses are used.
 
-For example:
+Choose a runtime suited to the source within the 45-minute cap, leaving room for
+explicit pauses. There is **no minimum runtime or word count**; short sources may
+produce shorter episodes. Summarize long material and prioritize the key concepts,
+useful examples, and a closing recap to fit the limit.
 
-```text
-心经_en.txt
-    >= 4,500 dialogue words
-道德经_en.txt
-    >= 4,500 dialogue words
-庄子_en.txt
-    >= 4,500 dialogue words
-```
-
-Do not satisfy the requirement by combining dialogue totals across multiple source files.
+Apply the limit independently to each source file's podcast.
 
 ## Dialogue count
 
@@ -560,30 +552,28 @@ Do not count:
 
 * citations
 
-toward the 4,500-word requirement.
+toward the dialogue word count. Explicit pause directions contribute to runtime
+as specified above.
 
-## Episodes
+## Single episode file
 
-Split long scripts into multiple episode files when useful.
-
-All episodes generated for one source file must use the same timestamp.
+Create exactly one podcast JSON file per study set. Do not split long sources
+into a series. Honor the caller's output destination and filename; the timestamp
+convention retains `episode0` for compatibility with the sole episode.
 
 Example:
 
 ```text
 output/podcasts/20260907121900_episode0.json
-output/podcasts/20260907121900_episode1.json
-output/podcasts/20260907121900_episode2.json
 ```
-
-The episodes together must contain at least 4,500 dialogue words.
 
 Report:
 
 ```text
-dialogue words per episode
-total dialogue words
-estimated duration at 150 wpm
+single episode file
+dialogue words
+total pause milliseconds
+estimated duration at 150 wpm plus explicit pauses (must be <= 45 minutes)
 ```
 
 All factual statements in the podcast must remain faithful to the current source file.
@@ -1152,15 +1142,10 @@ Generate the complete mind-map file set for this source.
 
 ## Step 10 — Generate podcast
 
-Generate at least:
-
-```text
-4,500 dialogue words
-```
-
-for this source-file dataset.
-
-Split into episodes if needed.
+Generate exactly one self-contained podcast episode for this source-file study
+set. Its estimated runtime must be at most 45 minutes at 150 dialogue words per
+minute plus explicit pauses. Summarize long material to fit; shorter episodes are
+allowed without a minimum word count. Follow §12.
 
 ---
 
@@ -1204,7 +1189,7 @@ Run:
 
 * timestamp validation;
 
-* podcast word-count validation;
+* podcast single-episode and runtime validation, including explicit pauses;
 
 * global validation;
 * exhaustive Q&A exercise/unit coverage validation under §§13 and 31A.
@@ -1256,7 +1241,6 @@ output/mindmaps/mindmap_20260907121900.mmd
 output/mindmaps/mindmap_20260907121900.md
 output/mindmaps/mindmap_20260907121900.json
 output/podcasts/20260907121900_episode0.json
-...
 output/qandas/20260907121900.json
 output/quizzes/quiz_20260907121900.json
 output/reports/report_20260907121900.md
@@ -1354,19 +1338,17 @@ For every supported text source file verify:
 
 ## Podcast
 
-* [ ] Podcast exists for this individual source.
-
-* [ ] Dialogue contains at least 4,500 words.
+* [ ] Exactly one self-contained podcast episode exists for this source-file study set.
 
 * [ ] Dialogue word count excludes metadata.
 
-* [ ] Estimated runtime is at least approximately 20 minutes at 150 wpm.
+* [ ] Estimated runtime is at most 45 minutes at 150 dialogue words per minute plus explicit pauses.
 
-* [ ] All episode files use the same timestamp.
+* [ ] The sole episode file follows the caller's destination, filename, and dataset timestamp.
 
-* [ ] Episode dialogue counts are recorded.
+* [ ] Dialogue word count, total pause milliseconds, and estimated runtime are recorded.
 
-* [ ] Total dialogue count is recorded.
+* [ ] One introduction and one sign-off are present; no additional episode files exist.
 
 ## Q&A
 
@@ -1474,6 +1456,7 @@ Source ID:
 Timestamp:
 Artifacts generated:
 Podcast dialogue words:
+Podcast total pause milliseconds:
 Podcast estimated duration:
 Validation status:
 ```
@@ -1485,8 +1468,9 @@ Dataset: 心经_en
 Source ID: 心经_en.txt
 Timestamp: 20260907121900
 Artifacts generated: complete
-Podcast dialogue words: 5,142
-Podcast estimated duration: 34.3 minutes
+Podcast dialogue words: 2,550
+Podcast total pause milliseconds: 30,000
+Podcast estimated duration: 17.5 minutes
 Validation status: PASS
 ```
 
@@ -1531,7 +1515,7 @@ For each individual source file, produce:
 1 flashcard set
 1 infographic set
 1 mind-map set
-1 podcast series
+1 self-contained podcast episode (estimated runtime <= 45 minutes)
 1 Q&A dataset
 1 quiz set
 1 report set
@@ -2555,9 +2539,11 @@ Save the checkpoint.
 
 Use the same resume logic.
 
-The complete podcast series for this source must still satisfy the required dialogue-word threshold.
+The single podcast episode for this source-file study set must satisfy §12,
+including the estimated runtime limit of at most 45 minutes with explicit pauses.
+Repair an existing overlong script or multi-episode output before marking it complete.
 
-After validating every required episode and the total dialogue count:
+After validating the sole episode file, dialogue count, pauses, and runtime:
 
 ```text
 podcasts = complete
@@ -2636,7 +2622,7 @@ all source IDs are correct
 all timestamps agree
 all JSON parses
 all format restrictions pass
-podcast word count passes
+podcast has exactly one episode and estimated runtime <= 45 minutes including explicit pauses
 complete source exercise inventory reconciles with Q&A records
 every exercise and required answer unit is covered
 exercise_coverage policy, hashes, and PASS satisfy section 31A
@@ -2757,6 +2743,7 @@ Checkpoint status:
 Artifacts generated:
 Artifacts reused:
 Podcast dialogue words:
+Podcast total pause milliseconds:
 Podcast estimated duration:
 Exercise blocks inspected:
 Exercises covered / found:

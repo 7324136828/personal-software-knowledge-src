@@ -1,3 +1,7 @@
+the_connector:
+  url: 'http://127.0.0.1:8301/v1'
+  timeout: '600'
+  # model: 'your-active-library-model-id'  # Otherwise discover the first active model.
 openai:
   api_key: '${OPENAI_API_KEY}'
   model: 'gpt-5.6-luna'
@@ -14,4 +18,4 @@ ollama:
   timeout: '600'
 
 provider:
-  default: 'openai'
+  default: 'the_connector'

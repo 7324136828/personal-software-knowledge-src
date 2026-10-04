@@ -1,0 +1,23 @@
+{
+    "files": [
+        {
+            "input": "./input",
+            "output": "./output",
+            "inputPattern": "*.txt",
+            "types": [
+                "datatables",
+                "flashcards",
+                "infographics",
+                "mindmaps",
+                "podcast",
+                "qandas",
+                "quizzes",
+                "reports",
+                "slides"
+            ]
+        }
+    ],
+    "connector": "the_connector",
+    "model": "space-bunny-alpha-low",
+    "verbose": true
+}

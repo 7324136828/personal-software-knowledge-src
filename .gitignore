@@ -49,3 +49,5 @@ frontend/.vite/
 .idea/
 .DS_Store
 Thumbs.db
+input/
+output/

@@ -8,12 +8,12 @@ from pathlib import Path
 from connectors.base import GenerationResponse
 from experiments.runner import SCENARIOS, compare_runs, load_scenario, parse_model_spec
 from pipeline.chunker import chunk_source
-from pipeline.engine import PipelineOptions, run_pipeline
+from pipeline.engine import PipelineOptions, _Run, run_pipeline
 from pipeline.model_profiles import ModelProfile, get_model_profile
-from pipeline.retry import backoff_delay
+from pipeline.retry import GenerationFailure, backoff_delay
 from pipeline.token_budget import TokenBudget, TokenBudgetError
 from pipeline.validator import validate_output
-from errors import ProviderError
+from errors import ConnectorConfigurationError, ProviderError
 
 
 def qanda(question_id: str = "generated-question") -> str:
@@ -324,6 +324,103 @@ class PipelineTests(unittest.TestCase):
         self.assertGreater(budget.chunk_allowance("short"), 0)
         with self.assertRaises(TokenBudgetError):
             budget.output_allowance("x" * 4000, "", 200)
+
+    def test_input_cap_includes_prompts_and_chat_overhead(self) -> None:
+        profile = ModelProfile(context_window=10000, max_input_tokens=600,
+                               max_output_tokens=400, reserved_output_tokens=400,
+                               safety_margin=100)
+        budget = TokenBudget(profile)
+        # 5 system tokens + 463 user tokens + 32 chat tokens = 500.
+        self.assertEqual(budget.input_tokens("x" * 10, "y" * 926), 500)
+        self.assertEqual(budget.output_allowance("x" * 10, "y" * 926, 300), 300)
+        # Reducing requested output cannot compensate for an oversized input.
+        for requested in (1, 300):
+            with self.subTest(requested=requested), self.assertRaisesRegex(TokenBudgetError, "input token budget"):
+                budget.output_allowance("x" * 10, "y" * 928, requested)
+
+    def test_output_cap_is_enforced_separately_from_input_cap(self) -> None:
+        budget = TokenBudget(ModelProfile(context_window=10000, max_input_tokens=600,
+                                          max_output_tokens=200, reserved_output_tokens=200,
+                                          safety_margin=100))
+        self.assertEqual(budget.output_allowance("x" * 10, "y" * 926, 500), 200)
+
+    def test_material_allowance_obeys_input_and_combined_context_caps(self) -> None:
+        for input_cap, expected in ((1000, 653), (8000, 1153), (None, 1153)):
+            with self.subTest(input_cap=input_cap):
+                profile = ModelProfile(context_window=2000, max_input_tokens=input_cap,
+                                       max_output_tokens=500, reserved_output_tokens=500,
+                                       safety_margin=100)
+                budget = TokenBudget(profile)
+                # Prompt framing is 5 + 10 + 32 = 47 tokens. Output is capped at
+                # 500; the input cap reserves no output, only margin and cushion.
+                self.assertEqual(budget.material_allowance("x" * 10, "y" * 20, 1000, cushion=200), expected)
+
+    def test_chunk_allowance_retains_profile_limits_and_obeys_input_cap(self) -> None:
+        cases = (
+            (20000, 1000, 10000, 863),
+            (2000, 10000, 10000, 1008),
+            (2000, 10000, 300, 300),
+        )
+        for context, input_cap, recommended, expected in cases:
+            with self.subTest(context=context, input_cap=input_cap, recommended=recommended):
+                profile = ModelProfile(context_window=context, max_input_tokens=input_cap,
+                                       max_output_tokens=500, reserved_output_tokens=500,
+                                       recommended_chunk_tokens=recommended, safety_margin=100)
+                self.assertEqual(TokenBudget(profile).chunk_allowance("x" * 10), expected)
+        budget = TokenBudget(ModelProfile(max_input_tokens=100, safety_margin=100))
+        with self.assertRaises(TokenBudgetError):
+            budget.chunk_allowance("short")
+
+    def test_model_profile_rejects_invalid_input_caps(self) -> None:
+        for value in (0, -1, True, 12.5, "1000"):
+            with self.subTest(value=value), self.assertRaisesRegex(ConnectorConfigurationError, "max_input_tokens"):
+                ModelProfile(max_input_tokens=value)
+        self.assertIsNone(ModelProfile().max_input_tokens)
+
+    def test_pipeline_uses_connector_discovered_profile(self) -> None:
+        class ProfileConnector(RecordingConnector):
+            def get_model_profile(self, overrides=None):
+                self.received_overrides = overrides
+                return get_model_profile("the_connector", self.model, {
+                    "context_window": 24000, "max_input_tokens": 20000,
+                    "max_output_tokens": 600, "reserved_output_tokens": 600,
+                    "safety_margin": 100, **(overrides or {}),
+                })
+
+        with tempfile.TemporaryDirectory() as directory:
+            connector = ProfileConnector()
+            overrides = {"recommended_chunk_tokens": 4000}
+            run_pipeline(
+                source_text="A compact source statement.", source_path=Path("chapter.txt"),
+                skill_text="Return canonical JSON.", connector=connector,
+                connector_name="the_connector", action="create_qandas",
+                output_path=Path(directory) / "final.json",
+                options=PipelineOptions(strategy="baseline", max_output_tokens=999,
+                                        work_dir=Path(directory) / "work", profile_overrides=overrides),
+            )
+            recorded = json.loads((Path(directory) / "work" / "run_config.json").read_text(encoding="utf-8"))
+        self.assertEqual(connector.received_overrides, overrides)
+        self.assertEqual(connector.calls[0]["context_window"], 24000)
+        self.assertEqual(connector.calls[0]["max_output_tokens"], 600)
+        self.assertEqual(recorded["model_profile"]["max_input_tokens"], 20000)
+
+    def test_podcast_assembly_cannot_bypass_independent_input_cap(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            connector = RecordingConnector()
+            run = _Run(
+                source_text="A compact source statement.", source_path=Path("chapter.txt"),
+                skill_text="Return canonical JSON.", connector=connector,
+                connector_name="the_connector", action="create_podcasts",
+                output_path=Path(directory) / "final.json",
+                options=PipelineOptions(work_dir=Path(directory) / "work", profile_overrides={
+                    "context_window": 100000, "max_input_tokens": 1000,
+                    "max_output_tokens": 500, "reserved_output_tokens": 500,
+                    "safety_margin": 100,
+                }),
+            )
+            with self.assertRaisesRegex(GenerationFailure, "too small to assemble a podcast"):
+                run.assemble_podcast(["First source draft.", "Second source draft."])
+        self.assertEqual(connector.calls, [])
 
     def test_unknown_model_uses_safe_profile_and_accepts_overrides(self) -> None:
         default = get_model_profile("openrouter", "vendor/new-model")

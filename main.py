@@ -120,6 +120,11 @@ def connector_environment(config: Mapping[str, Any], provider: str) -> dict[str,
         )
 
     variable_maps: dict[str, dict[str, str]] = {
+        "the_connector": {
+            "url": "THE_CONNECTOR_BASE_URL",
+            "model": "THE_CONNECTOR_MODEL",
+            "timeout": "THE_CONNECTOR_TIMEOUT",
+        },
         "openai": {"api_key": "OPENAI_API_KEY", "model": "OPENAI_MODEL"},
         "anthropic": {"api_key": "ANTHROPIC_API_KEY", "model": "ANTHROPIC_MODEL"},
         "claude": {"api_key": "ANTHROPIC_API_KEY", "model": "ANTHROPIC_MODEL"},

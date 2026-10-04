@@ -26,7 +26,10 @@ Refer to a source by its **bare filename** — `心经_en.txt`, not a path. Fiel
 
 **Naming scope.**
 - *dataset* skills emit one artifact per dataset: `<dataset>.<ext>`
-  (`classical_chinese.json`). Podcasts may add an episode suffix: `<dataset>_ep01.json`.
+  (`classical_chinese.json`). Podcasts emit exactly one self-contained episode per
+  study set/source-file dataset, with an estimated runtime of at most 45 minutes
+  at 150 dialogue words per minute plus explicit pauses. Honor the caller's
+  destination and naming convention, including a sole `_episode0.json` file when required.
 - *topic* skills emit one artifact per topic (one per source-file dataset unless the project README explicitly requests synthesis): `<prefix>_<topic>.<ext>`
   (`quiz_heart_sutra.json`, `mindmap_comparative_synthesis.mmd`). `<topic>` is a
   lowercase snake_case slug.

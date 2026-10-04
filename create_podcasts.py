@@ -7,6 +7,8 @@ from pathlib import Path
 from action_base import generate_artifact
 from cli_runtime import run_action_cli
 from connectors.base import LLMConnector
+from errors import ProviderError
+from pipeline.validator import validate_output
 
 
 def generate(
@@ -18,7 +20,7 @@ def generate(
 ) -> str:
     """Generate a source-grounded podcast script artifact."""
 
-    return generate_artifact(
+    result = generate_artifact(
         action="create_podcasts",
         artifact_name="text-only podcast script",
         source_text=source_text,
@@ -27,6 +29,11 @@ def generate(
         connector=connector,
         output_path=output_path,
     )
+    extension = ".md" if output_path is not None and output_path.suffix.lower() == ".md" else ".json"
+    checked = validate_output(result, "create_podcasts", extension)
+    if not checked["valid"]:
+        raise ProviderError("Invalid podcast script: " + "; ".join(checked["errors"][:3]))
+    return checked["text"]
 
 
 if __name__ == "__main__":
