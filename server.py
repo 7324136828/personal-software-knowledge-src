@@ -108,6 +108,21 @@ def _append_log(record: dict[str, Any], message: str) -> None:
     record["log"] = entries[-50:]
 
 
+def _active_notebooklm_cache_users(owner_id: str) -> bool:
+    """Keep a shared generation cache until its active companions release it."""
+
+    for identifier in ACTIVE_CONVERSIONS:
+        if identifier == owner_id:
+            continue
+        try:
+            active = _read_record(identifier)
+        except HTTPException:
+            continue
+        if active.get("notebooklm_generation_owner_id") == owner_id:
+            return True
+    return False
+
+
 def _remove_conversion_files(record: dict[str, Any]) -> None:
     """Keep failed removals visible so users can retry deleting their history."""
 
@@ -153,6 +168,9 @@ def _public_record(record: dict[str, Any]) -> dict[str, Any]:
         "updated_at": record.get("updated_at"),
         "completed_at": record.get("completed_at"),
         "input_filename": record.get("input_filename"),
+        "input_type": record.get("input_type", "document"),
+        "notebooklm_mode": (record.get("notebooklm_task") or {}).get("mode"),
+        "notebooklm_source_id": ((record.get("notebooklm_task") or {}).get("source") or {}).get("source_id"),
         "action": record.get("action"),
         "action_title": record.get("action_title"),
         "connector": record.get("connector"),
@@ -432,8 +450,24 @@ def get_connector_models(connector: str) -> dict[str, Any]:
 def _options_from_record(record: dict[str, Any], conversion_dir: Path) -> PipelineOptions:
     values = dict(record.get("options") or {})
     values["work_dir"] = conversion_dir / record.get("work_path", "work")
+    owner_id = record.get("notebooklm_generation_owner_id")
+    if owner_id and owner_id != record["id"]:
+        try:
+            owner = _read_record(owner_id)
+            if owner.get("import_id") == record.get("import_id") and owner.get("status") != "discarding":
+                values["work_dir"] = _conversion_dir(owner_id) / owner.get("work_path", "work")
+        except HTTPException:
+            # A completed companion remains independently retryable after the
+            # history entry that owned its shared generation cache is removed.
+            pass
     values["cancel_check"] = CANCEL_EVENTS[record["id"]].is_set
     return PipelineOptions(**values)
+
+
+def _notebooklm_task_from_record(record: dict[str, Any], conversion_dir: Path):
+    from notebooklm_workflow import task_from_dict
+
+    return task_from_dict(record["notebooklm_task"], base_dir=conversion_dir / "package")
 
 
 def _conversion_response(record: dict[str, Any]) -> dict[str, Any]:
@@ -471,6 +505,9 @@ def _run_conversion(conversion_id: str, api_key: str | None = None) -> dict[str,
             raise HTTPException(status_code=409, detail="History deletion failed. Please retry deleting this conversion.")
         if record.get("status") not in {"queued", "in_progress", "failed"}:
             raise HTTPException(status_code=409, detail="Only unfinished conversions can be continued.")
+        queued_api_key = QUEUED_API_KEYS.pop(conversion_id, None)
+        if not api_key or not api_key.strip():
+            api_key = queued_api_key
         DISPATCHED_CONVERSIONS.discard(conversion_id)
         ACTIVE_CONVERSIONS.add(conversion_id)
         CANCEL_EVENTS[conversion_id] = threading.Event()
@@ -484,15 +521,42 @@ def _run_conversion(conversion_id: str, api_key: str | None = None) -> dict[str,
     discard_after_run = False
     try:
         with verbose_logging(bool(record.get("verbose", False))):
-            result = execute_generation(
-                connector_name=record["connector"],
-                input_path=conversion_dir / record["input_path"],
-                action=record["action"],
-                output_path=conversion_dir / record["output_path"],
-                model=record.get("model") or None,
-                api_key=api_key.strip() if api_key and api_key.strip() else None,
-                options=_options_from_record(record, conversion_dir),
-            )
+            if record.get("input_type") == "notebooklm":
+                cancel_check = CANCEL_EVENTS[conversion_id].is_set
+                if cancel_check():
+                    raise GenerationCancelled("Conversion cancelled.")
+                if record.get("notebooklm_task"):
+                    from notebooklm_workflow import execute_notebooklm_task
+
+                    task = _notebooklm_task_from_record(record, conversion_dir)
+                    result = execute_notebooklm_task(
+                        task, conversion_dir / record["output_path"],
+                        connector_name=record["connector"], model=record.get("model") or None,
+                        api_key=api_key.strip() if api_key and api_key.strip() else None,
+                        options=_options_from_record(record, conversion_dir) if task.mode != "convert" else None,
+                        cancel_check=cancel_check,
+                    )
+                else:
+                    # Preserve conversion-only histories created before hybrid tasks.
+                    from notebooklm_converter import artifact_from_metadata, convert_notebooklm_artifact
+
+                    artifact = artifact_from_metadata(
+                        conversion_dir / record["notebooklm_metadata_path"],
+                        source_names=record.get("notebooklm_source_names"),
+                    )
+                    result = convert_notebooklm_artifact(
+                        artifact, conversion_dir / record["output_path"], cancel_check=cancel_check,
+                    )
+            else:
+                result = execute_generation(
+                    connector_name=record["connector"],
+                    input_path=conversion_dir / record["input_path"],
+                    action=record["action"],
+                    output_path=conversion_dir / record["output_path"],
+                    model=record.get("model") or None,
+                    api_key=api_key.strip() if api_key and api_key.strip() else None,
+                    options=_options_from_record(record, conversion_dir),
+                )
         with HISTORY_LOCK:
             current = _read_record(conversion_id)
             if current.get("status") == "discarding":
@@ -550,8 +614,19 @@ def _run_conversion(conversion_id: str, api_key: str | None = None) -> dict[str,
         with HISTORY_LOCK:
             ACTIVE_CONVERSIONS.discard(conversion_id)
             CANCEL_EVENTS.pop(conversion_id, None)
-            if discard_after_run and conversion_dir.is_dir():
+            if discard_after_run and conversion_dir.is_dir() and not _active_notebooklm_cache_users(conversion_id):
                 _remove_conversion_files(current or record)
+            owner_id = record.get("notebooklm_generation_owner_id")
+            if owner_id and owner_id != conversion_id and owner_id not in ACTIVE_CONVERSIONS:
+                try:
+                    owner = _read_record(owner_id)
+                except HTTPException:
+                    owner = None
+                if owner and owner.get("status") == "discarding" and not _active_notebooklm_cache_users(owner_id):
+                    try:
+                        _remove_conversion_files(owner)
+                    except OSError:
+                        LOGGER.exception("Could not finish deleting shared generation owner %s.", owner_id)
         QUEUE_WAKE.set()
 
     if discard_after_run:
@@ -559,14 +634,16 @@ def _run_conversion(conversion_id: str, api_key: str | None = None) -> dict[str,
     return _conversion_response(record)
 
 
-def _stage_study_set_import(prepared, archive_filename: str) -> dict[str, Any]:
+def _stage_study_set_import(prepared, archive_filename: str, api_key: str | None = None) -> dict[str, Any]:
     """Copy a validated package into durable jobs before exposing the queue."""
 
     import_id = uuid.uuid4().hex
-    groups: dict[Path, str] = {}
+    groups: dict[object, str] = {}
+    generation_owners: dict[object, str] = {}
     records = []
     created = []
     priority = time.time_ns()
+    api_key = api_key.strip() if api_key and api_key.strip() else None
     with HISTORY_LOCK:
         try:
             for index, job in enumerate(prepared.jobs):
@@ -580,39 +657,107 @@ def _stage_study_set_import(prepared, archive_filename: str) -> dict[str, Any]:
                 work_relative = job.args.work_dir.relative_to(prepared.root)
                 input_path = package / source_relative
                 output_path = package / output_relative
+                group_key: object = job.source
                 input_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(prepared.root / "study-set-config.json", package / "study-set-config.json")
-                shutil.copy2(job.source, input_path)
+                notebooklm_metadata_path = None
+                task_values = None
+                uses_model = job.input_type != "notebooklm"
+                if job.input_type == "notebooklm":
+                    task = getattr(job, "notebooklm_task", None)
+                    artifact = job.notebooklm_artifact or (task.artifact if task is not None else None)
+                    if artifact is None and task is None:
+                        raise ValueError("NotebookLM job is missing its artifact metadata.")
+                    if task is not None:
+                        from notebooklm_workflow import task_to_dict
+
+                        dependencies = set(task.dependencies) | {task.source.path}
+                        group_key = task.source.source_id
+                        source_relative = task.source.path.relative_to(prepared.root)
+                        input_path = package / source_relative
+                        task_values = task_to_dict(task, base_dir=prepared.root)
+                        uses_model = task.mode != "convert"
+                    else:
+                        dependencies = set(artifact.dependencies) | {artifact.metadata_path, artifact.source}
+                    dependency_directories = {path for path in dependencies if path.is_dir()}
+                    for dependency in sorted(dependencies):
+                        if any(parent in dependency.parents for parent in dependency_directories):
+                            continue
+                        target = package / dependency.relative_to(prepared.root)
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        if dependency.is_dir():
+                            shutil.copytree(dependency, target, dirs_exist_ok=True)
+                        else:
+                            shutil.copy2(dependency, target)
+                    if artifact is not None:
+                        notebooklm_metadata_path = str(
+                            (package / artifact.metadata_path.relative_to(prepared.root)).relative_to(directory)
+                        )
+                        if task is None and artifact.source_names:
+                            group_key = (artifact.source.parent.relative_to(prepared.root), tuple(artifact.source_names))
+                        # Legacy slide conversion histories use their metadata
+                        # as the durable input file when the export is a folder.
+                        if input_path.is_dir():
+                            input_path = directory / notebooklm_metadata_path
+                    options = asdict(options_from_args(job.args)) if uses_model else {}
+                    options.pop("work_dir", None)
+                    options.pop("cancel_check", None)
+                else:
+                    shutil.copy2(job.source, input_path)
+                    options = asdict(options_from_args(job.args))
+                    options.pop("work_dir", None)
+                    options.pop("cancel_check", None)
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                options = asdict(options_from_args(job.args))
-                options.pop("work_dir", None)
-                options.pop("cancel_check", None)
                 now = _now()
                 record = {
                     "version": 1, "id": conversion_id, "status": "preparing",
                     "created_at": now, "updated_at": now, "completed_at": None,
-                    "input_filename": job.source.name, "input_path": str(input_path.relative_to(directory)),
+                    "input_filename": task.source.filename if task_values else job.source.name,
+                    "input_path": str(input_path.relative_to(directory)),
+                    "input_type": job.input_type,
                     "action": job.action, "action_title": ACTION_METADATA[job.action]["title"],
                     "connector": job.args.connector, "model": job.args.model,
-                    "output_format": job.output.suffix.lstrip("."), "output_filename": job.output.name,
+                    "output_format": getattr(job.args, "output_format", job.output.suffix.lstrip(".")),
+                    "output_filename": job.output.name,
                     "output_path": str(output_path.relative_to(directory)),
                     "work_path": str(Path("package") / work_relative), "options": options,
-                    "verbose": job.args.verbose, "api_key_was_supplied": False,
+                    "verbose": job.args.verbose, "api_key_was_supplied": bool(api_key and uses_model),
                     "error": None, "metrics": None, "priority": priority + index,
-                    "source_group_id": groups.setdefault(job.source, uuid.uuid4().hex),
+                    "source_group_id": groups.setdefault(group_key, uuid.uuid4().hex),
                     "import_id": import_id, "archive_filename": archive_filename,
                     "package_source_path": source_relative.as_posix(),
                     "package_output_path": output_relative.as_posix(),
                     "run_attempts": 0,
                     "log": [{"at": now, "message": f"Imported from {archive_filename}; awaiting package queue commit."}],
                 }
+                if job.input_type == "notebooklm":
+                    record["notebooklm_dependency_paths"] = [
+                        str((package / dependency.relative_to(prepared.root)).relative_to(directory))
+                        for dependency in sorted(dependencies)
+                    ]
+                if task_values is not None:
+                    record["notebooklm_task"] = task_values
+                    if uses_model:
+                        identity = (task.mode, task.source.source_id, task.action,
+                                    task.artifact.metadata_path.relative_to(prepared.root) if task.artifact else source_relative,
+                                    work_relative)
+                        record["notebooklm_generation_owner_id"] = generation_owners.setdefault(identity, conversion_id)
+                if notebooklm_metadata_path is not None:
+                    record["notebooklm_metadata_path"] = notebooklm_metadata_path
+                    record["notebooklm_source_names"] = list(artifact.source_names)
                 _write_record(record)
                 records.append(record)
             for record in records:
                 record["status"] = "queued"
                 _append_log(record, "Package validated and added to the conversion queue.")
                 _write_record(record)
+            if api_key:
+                for record in records:
+                    if record["api_key_was_supplied"]:
+                        QUEUED_API_KEYS[record["id"]] = api_key
         except Exception:
+            for record in records:
+                QUEUED_API_KEYS.pop(record["id"], None)
             for directory in created:
                 if directory.is_dir():
                     shutil.rmtree(directory)
@@ -625,7 +770,7 @@ def _stage_study_set_import(prepared, archive_filename: str) -> dict[str, Any]:
 
 
 @app.post("/api/study-sets/import")
-async def import_study_set(file: UploadFile = File(...)) -> dict[str, Any]:
+async def import_study_set(file: UploadFile = File(...), api_key: str | None = Form(None)) -> dict[str, Any]:
     """Queue every configuration-defined artifact in an uploaded ZIP package."""
 
     from study_package import MAX_ARCHIVE_BYTES, prepare_study_set_archive
@@ -645,7 +790,7 @@ async def import_study_set(file: UploadFile = File(...)) -> dict[str, Any]:
                         raise HTTPException(status_code=413, detail="Study-set ZIP exceeds the upload size limit.")
                     stream.write(chunk)
             prepared = await run_in_threadpool(prepare_study_set_archive, archive_path, root / "extracted")
-            response = await run_in_threadpool(_stage_study_set_import, prepared, archive_filename)
+            response = await run_in_threadpool(_stage_study_set_import, prepared, archive_filename, api_key)
         _ensure_queue_dispatcher()
         return response
     except HTTPException:
@@ -818,7 +963,8 @@ def list_conversion_history() -> dict[str, list[dict[str, Any]]]:
             if record.get("status") == "preparing":
                 continue
             directory = _conversion_dir(record["id"])
-            if record.get("status") == "discarding" and directory.name not in ACTIVE_CONVERSIONS:
+            if (record.get("status") == "discarding" and directory.name not in ACTIVE_CONVERSIONS
+                    and not _active_notebooklm_cache_users(record["id"])):
                 try:
                     _remove_conversion_files(record)
                 except OSError:
@@ -871,10 +1017,12 @@ def discard_conversion(conversion_id: str) -> dict[str, Any]:
     conversion_dir = _conversion_dir(conversion_id)
     with HISTORY_LOCK:
         record = _read_record(conversion_id)
-        if conversion_id in ACTIVE_CONVERSIONS:
+        if conversion_id in ACTIVE_CONVERSIONS or _active_notebooklm_cache_users(conversion_id):
             record.update({"status": "discarding", "updated_at": _now()})
             _write_record(record)
-            CANCEL_EVENTS[conversion_id].set()
+            if conversion_id in ACTIVE_CONVERSIONS:
+                CANCEL_EVENTS[conversion_id].set()
+            QUEUED_API_KEYS.pop(conversion_id, None)
             return {"discarded": False, "discarding": True}
         _remove_conversion_files(record)
         QUEUED_API_KEYS.pop(conversion_id, None)
@@ -1063,19 +1211,110 @@ def _study_set_snapshot(
     return records, included, manifest
 
 
+def _archive_local_path(
+    archive: zipfile.ZipFile, path: Path, archive_name: str, conversion_dir: Path,
+    written: set[str] | None = None,
+) -> None:
+    """Archive contained regular files while preserving a directory's structure."""
+
+    written = written if written is not None else set()
+    if path.is_symlink():
+        raise HTTPException(status_code=409, detail="Conversion archive contains an unsafe file link.")
+    path.resolve().relative_to(conversion_dir.resolve())
+    files = sorted(path.rglob("*")) if path.is_dir() else [path]
+    for source in files:
+        if source.is_symlink():
+            raise HTTPException(status_code=409, detail="Conversion archive contains an unsafe file link.")
+        if not source.is_file():
+            continue
+        source.resolve().relative_to(conversion_dir.resolve())
+        member = (f"{archive_name.rstrip('/')}/{source.relative_to(path).as_posix()}"
+                  if path.is_dir() else archive_name)
+        if member not in written:
+            archive.write(source, member)
+            written.add(member)
+
+
+def _archive_conversion_source(
+    archive: zipfile.ZipFile, record: dict[str, Any], prefix: str, written: set[str] | None = None,
+) -> None:
+    conversion_dir = _conversion_dir(record["id"])
+    if record.get("input_type") == "notebooklm":
+        package = conversion_dir / "package"
+        written = written if written is not None else set()
+        if record.get("notebooklm_task"):
+            task = _notebooklm_task_from_record(record, conversion_dir)
+            dependencies = set(task.dependencies) | {task.source.path}
+        else:
+            from notebooklm_converter import artifact_from_metadata
+
+            metadata_path = conversion_dir / record["notebooklm_metadata_path"]
+            artifact = artifact_from_metadata(metadata_path, source_names=record.get("notebooklm_source_names"))
+            dependencies = set(artifact.dependencies) | {artifact.metadata_path, artifact.source}
+        dependencies.update(conversion_dir / path for path in record.get("notebooklm_dependency_paths", []))
+        for dependency in sorted(dependencies):
+            relative = dependency.relative_to(package).as_posix()
+            _archive_local_path(archive, dependency, f"{prefix}{relative}", conversion_dir, written)
+    else:
+        _archive_local_path(
+            archive, conversion_dir / record["input_path"],
+            f"{prefix}{Path(record['input_filename']).name}", conversion_dir, written,
+        )
+
+
+def _archive_conversion_output(
+    archive: zipfile.ZipFile, record: dict[str, Any], prefix: str, written: set[str] | None = None,
+) -> None:
+    conversion_dir = _conversion_dir(record["id"])
+    written = written if written is not None else set()
+    output_path = conversion_dir / record["output_path"]
+    _archive_local_path(archive, output_path, f"{prefix}{Path(record['output_filename']).name}", conversion_dir, written)
+    metadata = output_path.with_suffix(".metadata.json")
+    if metadata.is_file():
+        _archive_local_path(archive, metadata, f"{prefix}{metadata.name}", conversion_dir, written)
+    assets = output_path.parent / "assets"
+    if assets.is_dir():
+        _archive_local_path(archive, assets, f"{prefix}assets", conversion_dir, written)
+
+
+def _notebooklm_archive_location(record: dict[str, Any]) -> tuple[str, str] | None:
+    """Use the same source UUID and plural artifact folder as the CLI planner."""
+
+    if record.get("input_type") != "notebooklm" or not record.get("notebooklm_task"):
+        return None
+    task = _notebooklm_task_from_record(record, _conversion_dir(record["id"]))
+    return task.source.source_id, task.action.removeprefix("create_")
+
+
 def _write_study_set_snapshot(
     archive: zipfile.ZipFile, included: list[dict[str, Any]], manifest: dict[str, Any], prefix: str = "",
 ) -> None:
-    archive.writestr(f"{prefix}manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+    locations = {record["id"]: _notebooklm_archive_location(record) for record in included}
+    source_ids = {location[0] for location in locations.values() if location is not None}
+    for source_id in sorted(source_ids):
+        source_manifest = {**manifest, "notebooklm_source_id": source_id}
+        archive.writestr(f"{prefix}{source_id}/manifest.json", json.dumps(source_manifest, ensure_ascii=False, indent=2) + "\n")
+    if any(location is None for location in locations.values()):
+        archive.writestr(f"{prefix}manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     source_record = included[0]
-    source_path = _conversion_dir(source_record["id"]) / source_record["input_path"]
-    if source_path.is_file():
-        archive.write(source_path, f"{prefix}source/{Path(source_record['input_filename']).name}")
+    written: set[str] = set()
+    source_records = [record for record in included if record.get("input_type") == "notebooklm"]
+    if not source_records:
+        source_records = [source_record]
+    for record in source_records:
+        location = locations[record["id"]]
+        source_prefix = f"{prefix}{location[0]}/source/" if location else f"{prefix}source/"
+        _archive_conversion_source(archive, record, source_prefix, written)
     for record in included:
-        conversion_dir = _conversion_dir(record["id"])
-        artifact_prefix = f"{prefix}artifacts/{record['action']}-{record['id']}"
-        archive.write(conversion_dir / record["output_path"], f"{artifact_prefix}/{Path(record['output_filename']).name}")
-        archive.writestr(f"{artifact_prefix}/conversion.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+        location = locations[record["id"]]
+        if location:
+            artifact_prefix = f"{prefix}{location[0]}/{location[1]}"
+            history_path = f"{prefix}{location[0]}/metadata/{record['id']}.json"
+        else:
+            artifact_prefix = f"{prefix}artifacts/{record['action']}-{record['id']}"
+            history_path = f"{artifact_prefix}/conversion.json"
+        _archive_conversion_output(archive, record, f"{artifact_prefix}/", written)
+        archive.writestr(history_path, json.dumps(record, ensure_ascii=False, indent=2) + "\n")
 
 
 @app.post("/api/history/download")
@@ -1131,8 +1370,12 @@ def download_conversion_archive(conversion_id: str) -> FileResponse:
             with tempfile.NamedTemporaryFile(prefix="conversion-", suffix=".zip", delete=False) as temporary:
                 archive_path = Path(temporary.name)
             with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-                archive.write(conversion_dir / record["input_path"], f"source/{record['input_filename']}")
-                archive.write(conversion_dir / record["output_path"], f"output/{record['output_filename']}")
+                location = _notebooklm_archive_location(record)
+                source_prefix = f"{location[0]}/source/" if location else "source/"
+                output_prefix = f"{location[0]}/{location[1]}/" if location else "output/"
+                written: set[str] = set()
+                _archive_conversion_source(archive, record, source_prefix, written)
+                _archive_conversion_output(archive, record, output_prefix, written)
                 archive.writestr("conversion.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
         safe_stem = Path(record["input_filename"]).stem or "conversion"
         suffix = "-partial" if record.get("output_partial") else ""

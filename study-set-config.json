@@ -3,7 +3,6 @@
         {
             "input": "./input",
             "output": "./output",
-            "inputPattern": "*.txt",
             "types": [
                 "datatables",
                 "flashcards",
@@ -14,7 +13,8 @@
                 "quizzes",
                 "reports",
                 "slides"
-            ]
+            ],
+            "type": "notebooklm"
         }
     ],
     "connector": "the_connector",

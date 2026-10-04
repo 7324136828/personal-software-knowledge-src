@@ -87,7 +87,9 @@ input/
 ```
 
 Use the [CLI configuration schema](#interactive-study-set-prompt), with a model
-specified globally or for every `files` entry. An entry with `"input": "./input"`,
+specified globally or for every entry that needs generation. NotebookLM export
+entries use `"type": "notebooklm"` to combine existing artifacts with generation
+from their original sources. An entry with `"input": "./input"`,
 `"output": "./output"`, `"inputPattern": ["*.txt", "*.pdf"]`, and
 `"types": ["podcast"]` queues a podcast for each of these files. The configured
 `context_window` has the same precedence and 8,192-token Connector fallback as
@@ -215,8 +217,9 @@ Place `study-set-config.json` in the folder where you will run `generate`:
 }
 ```
 
-Each `files` entry selects an input folder, output folder, matching file pattern,
-and study-set types. `inputPattern` can also be a list, such as
+Each document `files` entry selects an input folder, output folder, matching file
+pattern, and study-set types. The default entry `type` is `"document"`.
+`inputPattern` can also be a list, such as
 `["*.txt", "*.pdf"]`. Relative paths are resolved from the configuration folder.
 For each matching file and requested type, the CLI creates
 `<output>/<input-stem>/<study-set-type>/<plural-type>.json`. For example,
@@ -240,9 +243,127 @@ type; each result uses the corresponding filename extension.
 | `report` | `json`, `md`, `html` |
 | `slide` | `json`, `md` |
 
+### NotebookLM study sets
+
+Set a `files` entry's `type` to `"notebooklm"` to build a study set from an exported
+notebook. Python converts existing structured quizzes, flashcards, mind maps,
+tables, and canonical content. The configured connector/model generates requested
+types that are missing from each original source. A top-level `type` sets the
+default for all entries, and each entry can override it, so document generation
+and NotebookLM processing can share one configuration.
+
+```json
+{
+  "connector": "the_connector",
+  "model": "ACTIVE_LIBRARY_MODEL_ID",
+  "files": [
+    {
+      "type": "notebooklm",
+      "input": "./input",
+      "output": "./output",
+      "types": ["quiz", "flashcard", "mindmap", "datatable", "podcast", "infographic", "slide", "qanda", "report"]
+    }
+  ]
+}
+```
+
+Point `input` at the exported notebook folder, its `Artifacts` folder, or its
+`Sources` folder. Keep
+each `<name> metadata.json` beside its exported content: extensionless HTML apps,
+Markdown tables, PNG infographics, WAV audio, or a slide asset folder named
+`<name>`. Keep the sibling `Sources` folder, including its source documents and
+metadata, for generation. Omit `inputPattern` for NotebookLM entries. Discovery
+reads metadata recursively and filters by `types`; any legacy `inputPattern`
+value is ignored.
+
+Every NotebookLM entry requires `<notebook-root>/metadata/sources.metadata.json`,
+including entries that only convert existing artifacts. Its keys are the exact
+filenames of the original source metadata files, and each `id` is that source's
+recorded NotebookLM UUID. Create it using this template:
+
+```json
+{
+  "{metadata.json}": {
+    "id": "source_id"
+  }
+}
+```
+
+Replace `{metadata.json}` with a filename such as `chapter.txt metadata.json`
+and `source_id` with its recorded UUID. Each source metadata filename must have a
+different recorded UUID; duplicate IDs are rejected. This map is authoritative;
+embedded IDs on source metadata and inferred table mappings are ignored. A
+missing file stops processing and reports the required path and template. A
+missing source entry reports the exact metadata filename to add.
+
+Each original source gets its own study set. Existing artifacts are associated
+using their exported source IDs and unambiguous source references. Missing
+requested types, including Q&A and reports, are generated separately from each
+source document. Ambiguous source associations report an error instead of mixing
+different documents. The source UUID recorded in `sources.metadata.json` supplies
+the output folder identity. UUIDs are never invented.
+An export explicitly shared by several source UUIDs is retained in each bundle
+with all of its original references. Generated jobs use one original document
+at a time.
+
+Podcasts are always generated from each original file in `Sources` using the
+configured connector/model. NotebookLM WAV exports are skipped. Image-only
+slides and infographics use local OCR to obtain their text, then the configured
+model produces the complete canonical artifact. Text-bearing slides supply
+their existing text to the model; canonical `.content.json` exports convert
+directly. Missing required
+OCR tools or original source files produce a clear error and remain retryable.
+Slide OCR uses installed Tesseract; scanned PDFs also require `pdftoppm`.
+
+Set `connector` and a nonblank `model` globally or on the entry whenever any
+generation is needed. Provider credentials use the same backend environment as
+ordinary document generation. An entry that only converts existing structured
+artifacts requires no connector, model, or provider credentials. Requested missing
+types and podcasts require original `Sources` documents.
+
+NotebookLM outputs follow the field structures and text layouts in
+`output-example`. Artifact folders use plural names and filenames include one
+timestamp for the batch. For example, a quiz produces
+`<output>/<source-uuid>/quizzes/quiz_20261004120000.json`, flashcards produce
+`flashcards/flashcards_20261004120000.json` and `.txt`, a mind map produces
+`mindmaps/mindmap_20261004120000.json`, `.md`, and `.mmd`, and a table produces
+`datatables/20261004120000.json` and `.csv`. JSON citations retain the original
+bare source filename, including its extension. Podcasts use
+`podcasts/<timestamp>_episode0.json` and `.md` inside each source UUID folder.
+CLI output and NotebookLM ZIP downloads use the same `<source-uuid>/<pluraltype>/<filename>` layout.
+
+Omit `formats` to create every applicable example format:
+
+| NotebookLM artifact | Default formats |
+|---|---|
+| `datatable` | `json`, `csv` |
+| `flashcard` | `json`, `txt` |
+| `infographic` | `json`, `md`, `html`, `svg`, `wireframe.txt` |
+| `mindmap` | `json`, `md`, `mmd` |
+| `podcast`, `slide` | `json`, `md` |
+| `quiz` | `json` |
+| `report` | `json`, `md`, `html` |
+| `qanda` | `json` |
+
+Set an explicit `formats` list, such as `["json"]`, to select fewer formats.
+
+Quizzes, flashcards, mind maps, and tables use the application's canonical JSON
+schemas without extra conversion fields. Quiz correct-answer indices and answer
+explanations are preserved. Original export metadata, source UUIDs, and conversion
+details are written to a separate `.metadata.json` file. Source filenames are
+resolved when the exported references provide an unambiguous mapping; unresolved
+references retain the export filename for direct conversion. Tables use `"N/A"`
+when no page is supplied. A `.content.json` sidecar can supply canonical structured
+content for direct conversion, including reports and Q&A. Invalid or incomplete
+export content reports an error. Companion formats reuse the canonical result,
+and interrupted generation retains the existing pipeline's partial-output status
+for retry. No OCR tool is downloaded automatically.
+
+### Document generation settings
+
 The Connector is the default provider. Set a top-level `model` for all `files`
 entries, or set `model` on each entry. An entry's `model` overrides the top-level
-setting. Every entry must resolve to a nonblank model string; missing, `null`, and
+setting. Every document entry must resolve to a nonblank model string; missing, `null`, and
 blank models are rejected before generation begins. For The Connector, use an
 active library model ID. An optional top-level `connector` selects another provider,
 and an entry can override it for its own inputs. Optional top-level `pipeline`

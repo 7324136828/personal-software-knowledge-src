@@ -110,9 +110,17 @@ def prepare_study_set_archive(archive_path: Path, extraction_dir: Path) -> Prepa
     jobs = plan_study_sets(root, contained=True, max_jobs=MAX_GENERATION_JOBS)
     sources = {job.source for job in jobs}
     for job in jobs:
-        if job.source.suffix.lower() not in SUPPORTED_EXTENSIONS:
+        task = getattr(job, "notebooklm_task", None)
+        if task is not None:
+            sources.update(task.dependencies)
+            sources.add(task.source.path)
+        if job.input_type == "notebooklm" and job.notebooklm_artifact is not None:
+            sources.add(job.notebooklm_artifact.metadata_path)
+            sources.update(job.notebooklm_artifact.dependencies)
+    for job in jobs:
+        if job.input_type != "notebooklm" and job.source.suffix.lower() not in SUPPORTED_EXTENSIONS:
             raise InvalidArgumentsError(f"Unsupported input file in study-set ZIP: {job.source.relative_to(root)}")
-        if job.output in sources:
+        if job.output in sources or any(source.is_dir() and source in job.output.parents for source in sources):
             raise InvalidArgumentsError("Study-set output must not overwrite its input file.")
         for field, target, is_directory in (("output", job.output, False), ("work directory", job.args.work_dir, True)):
             relative_package_parts(target.relative_to(root).as_posix())
