@@ -33,7 +33,14 @@ def _openrouter(model: str | None, api_key: str | None = None) -> LLMConnector:
     return OpenRouterConnector(model=model, api_key=api_key)
 
 
+def _the_connector(model: str | None, api_key: str | None = None) -> LLMConnector:
+    from .the_connector import TheConnector
+
+    return TheConnector(model=model)
+
+
 CONNECTORS: dict[str, Callable[[str | None, str | None], LLMConnector]] = {
+    "the_connector": _the_connector,
     "anthropic": _claude,
     "openai": _openai,
     "ollama": _ollama,

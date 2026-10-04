@@ -49,6 +49,17 @@ class ApplicationTests(unittest.TestCase):
         for action, config in ACTION_CONFIG.items():
             with self.subTest(action=action):
                 connector = FakeConnector()
+                if action == "create_podcasts":
+                    connector.result = json.dumps({
+                        "episode_title": "Study overview", "podcast_show": "Study together",
+                        "cast": [
+                            {"speaker_id": "maya", "host_id": "HOST_A", "name": "Maya", "voice_file": "af_heart", "style": "Calm"},
+                            {"speaker_id": "leo", "host_id": "HOST_B", "name": "Leo", "voice_file": "am_michael", "style": "Curious"},
+                        ],
+                        "script": [{"segment_name": "Overview", "scenes": [
+                            {"speaker_id": "maya", "dialogue": "The source describes an idea."},
+                        ]}],
+                    })
                 module = importlib.import_module(config["module"])
                 result = module.generate(
                     source_text,
@@ -57,7 +68,10 @@ class ApplicationTests(unittest.TestCase):
                     connector,
                     Path("tmp/result.txt"),
                 )
-                self.assertEqual(result, "generated artifact")
+                if action == "create_podcasts":
+                    self.assertEqual(json.loads(result), json.loads(connector.result))
+                else:
+                    self.assertEqual(result, "generated artifact")
                 system_prompt, user_prompt = connector.calls[0]
                 self.assertIn(skill_text, system_prompt)
                 self.assertIn(source_text, user_prompt)

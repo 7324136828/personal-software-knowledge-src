@@ -11,6 +11,8 @@ import json
 import re
 from collections import Counter
 
+from podcast_policy import podcast_errors
+
 from .chunker import source_inventory
 from .schemas import ITEM_KEYS, canonical_action, get_schema, schema_errors
 
@@ -140,6 +142,7 @@ def validate_artifact(data, action: str, *, final: bool = False) -> list[str]:
             if section["type"] == "svg" and section["value"] and not re.fullmatch(r"assets/[\w-]+\.svg", section["value"]):
                 errors.append(f"$.sections[{index}].value: must reference assets/<slug>.svg")
     elif action == "create_podcasts":
+        errors.extend(podcast_errors(data))
         speakers = [cast["speaker_id"] for cast in data["cast"]]
         if len(speakers) != len(set(speakers)):
             errors.append("$.cast: speaker ids must be unique")
@@ -172,10 +175,6 @@ def editorial_warnings(data, action: str) -> list[str]:
         value = data.get(key)
         if isinstance(value, list) and not minimum <= len(value) <= maximum:
             warnings.append(f"{key}: {len(value)} items; skill recommends {minimum}–{maximum}. Preserve coverage when consolidating.")
-    if action == "create_podcasts":
-        count = sum(len(scene.get("dialogue", "").split()) for segment in data.get("script", []) if isinstance(segment, dict) for scene in segment.get("scenes", []) if isinstance(scene, dict))
-        if count < 4500:
-            warnings.append(f"Dialogue has {count} words; skill requires at least 4500 across episodes.")
     if action == "create_quizzes":
         levels = {q.get("difficulty") for q in data.get("questions", []) if isinstance(q, dict)}
         if len(levels) < 4:
@@ -278,6 +277,8 @@ def validate_output(text: str, action: str, extension: str = ".json", finish_rea
                 errors.extend(latex_errors(value))
             text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     else:
+        if canonical_action(action) == "create_podcasts":
+            errors.extend(podcast_errors(text))
         if len(re.findall(r"^\s*```", text, re.M)) % 2:
             errors.append("Unfinished Markdown code fence")
             truncated = True

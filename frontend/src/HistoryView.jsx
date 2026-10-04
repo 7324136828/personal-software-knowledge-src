@@ -35,6 +35,7 @@ export default function HistoryView() {
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState({});
   const [busyId, setBusyId] = useState(null);
+  const [downloadGroupId, setDownloadGroupId] = useState(null);
   const [draggedGroup, setDraggedGroup] = useState(null);
   const [retryArtifact, setRetryArtifact] = useState(null);
   const [chunkCharacters, setChunkCharacters] = useState('2048');
@@ -100,6 +101,30 @@ export default function HistoryView() {
     }
   };
 
+  const downloadCompleted = async (group) => {
+    setDownloadGroupId(group.id);
+    setError(null);
+    try {
+      const response = await fetch(`/api/history/groups/${encodeURIComponent(group.id)}/download`);
+      if (!response.ok) throw new Error(await responseError(response, 'Could not download completed artifacts.'));
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const stem = group.filename.replace(/\.[^/.]+$/, '') || 'study-set';
+      const partial = group.items.some((item) => item.status !== 'completed');
+      link.download = `${stem}-study-set${partial ? '-partial' : ''}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      setError(err.message || 'Could not download completed artifacts.');
+    } finally {
+      setDownloadGroupId(null);
+    }
+  };
+
   const retryConversion = async () => {
     const size = Number(chunkCharacters);
     if (!Number.isInteger(size) || size < 256) {
@@ -107,7 +132,7 @@ export default function HistoryView() {
       return;
     }
     const artifact = retryArtifact;
-    if (artifact.api_key_was_supplied && artifact.connector !== 'ollama' && !retryApiKey.trim()) {
+    if (artifact.api_key_was_supplied && !['ollama', 'the_connector'].includes(artifact.connector) && !retryApiKey.trim()) {
       setError('Re-enter the API key used by this artifact. API keys are never stored in history.');
       return;
     }
@@ -169,6 +194,7 @@ export default function HistoryView() {
           {groups.map((group) => {
             const isOpen = Boolean(expanded[group.id]);
             const unfinished = group.items.some((item) => ['queued', 'in_progress', 'failed'].includes(item.status));
+            const completedCount = group.items.filter((item) => item.status === 'completed').length;
             const canDrag = group.status === 'queued';
             return (
               <article className={`file-history-card ${draggedGroup === group.id ? 'dragging' : ''}`} key={group.id} draggable={canDrag} onDragStart={() => setDraggedGroup(group.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => reorderGroups(group.id)}>
@@ -176,7 +202,14 @@ export default function HistoryView() {
                   <button type="button" className="accordion-toggle" onClick={() => setExpanded((current) => ({ ...current, [group.id]: !isOpen }))}>
                     {canDrag && <GripVertical size={18} className="drag-handle" />}{isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}<FileText size={22} color="#60a5fa" /><span className="file-history-name">{group.filename}</span><span className={`status-badge status-${group.status}`}>{group.status.replace('_', ' ')}</span>
                   </button>
-                  <div className="file-history-summary"><span>{group.items.length} artifact{group.items.length === 1 ? '' : 's'}</span><span><Clock3 size={13} /> {formatDate(group.created_at)}</span>{unfinished && <button type="button" className="btn-secondary btn-danger" onClick={() => cancelGroup(group)}>Cancel</button>}</div>
+                  <div className="file-history-summary">
+                    <span>{completedCount} / {group.items.length} completed</span>
+                    <span><Clock3 size={13} /> {formatDate(group.created_at)}</span>
+                    {completedCount > 0 && <button type="button" className="btn-secondary" disabled={downloadGroupId !== null} onClick={() => downloadCompleted(group)}>
+                      {downloadGroupId === group.id ? <RefreshCw size={15} className="spinner" /> : <Download size={15} />} Download completed
+                    </button>}
+                    {unfinished && <button type="button" className="btn-secondary btn-danger" onClick={() => cancelGroup(group)}>Cancel</button>}
+                  </div>
                 </div>
                 {isOpen && <div className="artifact-tree">{group.items.map((artifact) => (
                   <div className="artifact-row" key={artifact.id}>
@@ -199,7 +232,7 @@ export default function HistoryView() {
       {retryArtifact && <div className="modal-backdrop" role="presentation" onMouseDown={() => setRetryArtifact(null)}><div className="retry-modal" role="dialog" aria-modal="true" aria-labelledby="retry-title" onMouseDown={(event) => event.stopPropagation()}>
         <button type="button" className="modal-close" onClick={() => setRetryArtifact(null)} aria-label="Close"><X size={18} /></button><h3 id="retry-title">Try {retryArtifact.action_title} again</h3>
         <label className="form-label" htmlFor="chunk-characters"># of characters of chunk separation</label><div className="character-input"><input id="chunk-characters" type="number" min="256" step="1" className="form-input" value={chunkCharacters} onChange={(event) => setChunkCharacters(event.target.value)} /><span>characters</span></div>
-        {retryArtifact.connector !== 'ollama' && <input type="password" className="form-input" placeholder={retryArtifact.api_key_was_supplied ? 'API key (not stored)' : 'API key override (optional)'} value={retryApiKey} onChange={(event) => setRetryApiKey(event.target.value)} />}
+        {!['ollama', 'the_connector'].includes(retryArtifact.connector) && <input type="password" className="form-input" placeholder={retryArtifact.api_key_was_supplied ? 'API key (not stored)' : 'API key override (optional)'} value={retryApiKey} onChange={(event) => setRetryApiKey(event.target.value)} />}
         <div className="modal-actions"><button type="button" className="btn-secondary" onClick={retryConversion}>Okay</button><button type="button" className="btn-secondary" onClick={() => setRetryArtifact(null)}>No</button></div>
       </div></div>}
     </main>

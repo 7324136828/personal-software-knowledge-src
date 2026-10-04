@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from connectors.base import LLMConnector
+from podcast_policy import PODCAST_PROMPT_CONSTRAINT
 from result_processor import process_result
 
 
@@ -33,6 +34,9 @@ document is authoritative. Do not invent definitions, exercises, formulas, quota
 or factual claims absent from it unless the skill explicitly allows external knowledge.
 Return only the requested generated artifact, with no preamble or commentary, unless the
 skill explicitly requires otherwise."""
+
+    if action == "create_podcasts":
+        system_prompt += "\n\n" + PODCAST_PROMPT_CONSTRAINT
 
     output_requirement = (
         str(output_path)

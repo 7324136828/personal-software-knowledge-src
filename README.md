@@ -33,10 +33,18 @@ Concurrently launch the FastAPI backend (`http://127.0.0.1:8000`) and the Vite R
   ```
 *(Both scripts dispatch `run.py`.)*
 
+On Windows, use `run_lan.bat` to allow access from other devices on your LAN.
+It binds both servers to `0.0.0.0`, starting with UI port **5110** and API port
+**8310**. Open `http://<your-PC-LAN-IP>:5110` on another device; if a port is busy,
+use the actual port printed at startup. `run_lan.bat -Local` (also used by
+`run_default.bat`) uses the same ports with access limited to this PC.
+Set `FRONTEND_PORT` or `BACKEND_PORT` before launching to override these defaults.
+
 Open your browser at **http://localhost:5173**. In the UI you can:
 - **Select or drop multiple PDF files** (or Word, Markdown, plain text).
 - **Paste PDF files** directly from your clipboard (or paste raw text).
-- Choose one or more of the 9 content-generation skills; every selected artifact is generated for every selected source.
+- All 9 content-generation skills are selected by default; deselect any you do not need. Every selected artifact is generated for every selected source.
+- The Connector is the default local provider. Select an active library model from the model picker, or refresh it after updating The Connector's configurations.
 - Persist each job in an isolated `conversion_history/` folder so completed and interrupted conversions survive restarts.
 - Open **File History** to expand each source into its artifact jobs, inspect retry logs,
   retry failures with a chosen character-based chunk size, cancel work, or download
@@ -53,6 +61,10 @@ work. Each selected artifact is generated for every selected file.
 **File History** keeps related artifact jobs together under their source file. Expand a
 file to see individual statuses and recent logs. Failed artifacts can be retried with a
 custom character-based chunk size; completed artifacts can be downloaded as ZIP files.
+Use **Download completed** on a file to download its finished study artifacts together,
+even while other types are queued, running, or failed. The ZIP includes the source,
+completed outputs and their metadata, plus a `manifest.json` listing the status of
+every artifact at download time. Download again later to include newly completed types.
 Queued files can be moved higher or lower in the processing order by dragging them.
 
 ![File History: grouped artifact jobs, logs, and queue controls](images/history_page.png)
@@ -148,10 +160,27 @@ source-of-truth representation as plain UTF-8 text.
 
 | Connector | Required configuration | Model setting/default |
 |---|---|---|
+| `the_connector` | running local The Connector backend; no API key | `THE_CONNECTOR_MODEL` / first discovered active library model |
 | `openai` | `OPENAI_API_KEY` | `OPENAI_MODEL` / `gpt-4.1-mini` |
 | `anthropic` / `claude` | `ANTHROPIC_API_KEY` | `ANTHROPIC_MODEL` / `claude-sonnet-4-5` |
 | `openrouter` | `OPENROUTER_API_KEY` | `OPENROUTER_MODEL` / `openai/gpt-4.1-mini` |
 | `ollama` | local Ollama server | `OLLAMA_MODEL` / `llama3.2` |
+
+The Connector defaults to `http://127.0.0.1:8301/v1` (`THE_CONNECTOR_BASE_URL`).
+The app discovers active saved configuration IDs with `GET /v1/models` and generates
+study artifacts with `POST /v1/chat/completions`. Start The Connector and save/activate
+at least one library configuration first. Use its library `model_id`, rather than a
+raw upstream model name. Upstream credentials and routing remain in The Connector.
+`THE_CONNECTOR_TIMEOUT` defaults to 600 seconds; model discovery uses at most 10 seconds.
+The web UI proxies discovery through this app's backend, including for LAN clients.
+Unknown library aliases use conservative pipeline budgets and prompt-based JSON so
+optional provider settings do not override the saved route. Deployment-specific
+budget overrides remain available through the existing pipeline controls.
+
+For CLI generation, use `--connector the_connector --model <active-library-model-id>`;
+omit `--model` to use `THE_CONNECTOR_MODEL` or discover the first active model.
+`config.yaml` now selects `the_connector` by default, with `url`, `model`, and `timeout`
+settings in its `the_connector` section. Other providers remain selectable.
 
 Ollama defaults to `http://localhost:11434` (`OLLAMA_BASE_URL`). Its request timeout is
 controlled by `OLLAMA_TIMEOUT`. OpenRouter also supports `OPENROUTER_BASE_URL`,
@@ -174,6 +203,12 @@ text or sensitive request details.
 | `create_quizzes` | `skills/quizzes/SKILL.md` |
 | `create_reports` | `skills/reports/SKILL.md` |
 | `create_slides` | `skills/slides/SKILL.md` |
+
+Podcasts produce exactly one self-contained episode per study set, with an estimated
+runtime of at most 20 minutes at 150 dialogue words per minute plus explicit pauses.
+Long sources are summarized to fit; there is no minimum length. Chunked podcast
+drafts use a final model assembly pass even with `--aggregation deterministic` so
+the episode has one introduction and sign-off. Overlong results fail validation.
 
 ## Input formats
 

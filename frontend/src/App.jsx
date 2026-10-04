@@ -27,9 +27,13 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
 
   // Configuration state
-  const [actions, setActions] = useState(['create_flashcards']);
-  const [connector, setConnector] = useState('openai');
+  const [actions, setActions] = useState([]);
+  const [connector, setConnector] = useState('the_connector');
   const [model, setModel] = useState('');
+  const [availableModels, setAvailableModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState('');
+  const [modelsRefresh, setModelsRefresh] = useState(0);
   const [outputFormat, setOutputFormat] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -54,6 +58,38 @@ export default function App() {
   useEffect(() => {
     fetchConfig();
   }, []);
+
+  useEffect(() => {
+    if (connector !== 'the_connector') return;
+    const controller = new AbortController();
+    setModelsLoading(true);
+    setModelsError('');
+    setAvailableModels([]);
+    const loadModels = async () => {
+      try {
+        const response = await fetch('/api/connectors/the_connector/models', { signal: controller.signal });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Could not fetch The Connector models.');
+        if (controller.signal.aborted) return;
+        setAvailableModels(data.models);
+        setModel((current) => {
+          if (data.models.some((entry) => entry.id === current)) return current;
+          return data.models.some((entry) => entry.id === data.default_model) ? data.default_model : (data.models[0]?.id || '');
+        });
+        if (data.models.length === 0) {
+          setModelsError('No active models. Save and activate a configuration in The Connector, then refresh.');
+        }
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setModel('');
+        setModelsError(err.message);
+      } finally {
+        if (!controller.signal.aborted) setModelsLoading(false);
+      }
+    };
+    loadModels();
+    return () => controller.abort();
+  }, [connector, modelsRefresh]);
 
   useEffect(() => {
     const handleHashChange = () => setView(window.location.hash === '#history' ? 'history' : 'convert');
@@ -84,10 +120,11 @@ export default function App() {
       if (!res.ok) throw new Error('Backend responded with error');
       const data = await res.json();
       setConfigMeta(data);
+      setActions(Object.keys(data.actions || {}));
       setBackendStatus('online');
 
       // Initialize default model if connector default exists
-      if (data.connectors && data.connectors[connector]) {
+      if (connector !== 'the_connector' && data.connectors && data.connectors[connector]) {
         setModel(data.connectors[connector].default_model || '');
       }
     } catch (err) {
@@ -98,6 +135,7 @@ export default function App() {
 
   const handleConnectorChange = (newConnector) => {
     setConnector(newConnector);
+    setApiKey('');
     if (configMeta?.connectors?.[newConnector]) {
       setModel(configMeta.connectors[newConnector].default_model || '');
     }
@@ -172,6 +210,11 @@ export default function App() {
       return;
     }
 
+    if (connector === 'the_connector' && (modelsLoading || !model || modelsError)) {
+      setError(modelsError || 'Select an active model from The Connector before generating.');
+      return;
+    }
+
     setLoading(true);
     const groupId = () => crypto.randomUUID().replaceAll('-', '');
     const sources = activeTab === 'upload'
@@ -190,7 +233,7 @@ export default function App() {
       formData.append('source_group_id', job.source.groupId);
       if (model.trim()) formData.append('model', model.trim());
       if (outputFormat.trim()) formData.append('output_format', outputFormat.trim());
-      if (apiKey.trim()) formData.append('api_key', apiKey.trim());
+      if (!['ollama', 'the_connector'].includes(connector) && apiKey.trim()) formData.append('api_key', apiKey.trim());
       if (strategy) formData.append('strategy', strategy);
       if (chunkTokens) formData.append('chunk_tokens', chunkTokens);
       if (temperature) formData.append('temperature', temperature);
@@ -440,6 +483,7 @@ export default function App() {
                   value={connector}
                   onChange={(e) => handleConnectorChange(e.target.value)}
                 >
+                  <option value="the_connector">The Connector (Local)</option>
                   <option value="openai">OpenAI</option>
                   <option value="anthropic">Anthropic (Claude)</option>
                   <option value="openrouter">OpenRouter</option>
@@ -448,14 +492,25 @@ export default function App() {
               </div>
 
               <div>
-                <label className="form-label">Model Override</label>
-                <input
+                <label className="form-label">{connector === 'the_connector' ? 'Active Model' : 'Model Override'}</label>
+                {connector === 'the_connector' ? (
+                  <>
+                    <select className="form-select" value={model} disabled={modelsLoading || availableModels.length === 0} onChange={(e) => setModel(e.target.value)}>
+                      {availableModels.length === 0 && <option value="">{modelsLoading ? 'Loading models...' : 'No active models'}</option>}
+                      {availableModels.map((entry) => <option key={entry.id} value={entry.id}>{entry.id}</option>)}
+                    </select>
+                    <button type="button" className="btn-secondary" disabled={modelsLoading} onClick={() => setModelsRefresh((value) => value + 1)} style={{ marginTop: '0.5rem' }}>
+                      <RefreshCw size={14} /> Refresh models
+                    </button>
+                    {modelsError && <p role="alert" className="selection-help">{modelsError}</p>}
+                  </>
+                ) : <input
                   type="text"
                   className="form-input"
                   placeholder="Default provider model"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                />
+                />}
               </div>
             </div>
 
@@ -472,7 +527,7 @@ export default function App() {
             </div>
 
             {/* Optional API Key */}
-            {connector !== 'ollama' && (
+            {!['ollama', 'the_connector'].includes(connector) && (
               <div className="form-group">
                 <label className="form-label">API Key Override (Optional)</label>
                 <input

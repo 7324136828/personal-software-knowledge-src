@@ -27,6 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
+from starlette.background import BackgroundTask
 
 from app_config import ACTION_CONFIG
 from cli_runtime import execute_generation
@@ -230,7 +231,7 @@ ACTION_METADATA = {
     },
     "create_podcasts": {
         "title": "Podcast Scripts",
-        "description": "Generate conversational multi-speaker audio/podcast scripts.",
+        "description": "Generate one conversational podcast per study set, up to 20 minutes.",
         "default_ext": "txt",
         "supported_exts": ["txt", "json", "md"],
     },
@@ -261,6 +262,13 @@ ACTION_METADATA = {
 }
 
 CONNECTOR_METADATA = {
+    "the_connector": {
+        "label": "The Connector (Local)",
+        "default_model": os.getenv("THE_CONNECTOR_MODEL", ""),
+        "env_configured": True,
+        "requires_key": False,
+        "discover_models": True,
+    },
     "openai": {
         "label": "OpenAI",
         "default_model": os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
@@ -306,10 +314,24 @@ def get_config() -> dict[str, Any]:
     return {
         "actions": ACTION_METADATA,
         "connectors": CONNECTOR_METADATA,
+        "default_connector": "the_connector",
         "supported_extensions": sorted(list(SUPPORTED_EXTENSIONS)),
         "system_temp_dir": tempfile.gettempdir(),
         "history_dir": str(HISTORY_DIR),
     }
+
+
+@app.get("/api/connectors/{connector}/models")
+def get_connector_models(connector: str) -> dict[str, Any]:
+    """Proxy local model discovery so browsers on the LAN reach the gateway."""
+    if connector != "the_connector":
+        raise HTTPException(status_code=400, detail="Model discovery is available for the_connector.")
+    from connectors.the_connector import discover_models
+
+    try:
+        return {"models": discover_models(), "default_model": os.getenv("THE_CONNECTOR_MODEL", "")}
+    except ApplicationError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 def _options_from_record(record: dict[str, Any], conversion_dir: Path) -> PipelineOptions:
@@ -701,6 +723,64 @@ def download_output_file(session_id: str, filename: str) -> FileResponse:
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@app.get("/api/history/groups/{group_id}/download")
+def download_study_set_archive(group_id: str) -> FileResponse:
+    """Snapshot the completed artifacts of a study set while other jobs continue."""
+
+    archive_path = None
+    try:
+        # Keep completed files stable while copying them; each request has its own
+        # ZIP so simultaneous downloads cannot overwrite one another.
+        with HISTORY_LOCK:
+            records = [record for record in _records_on_disk() if (
+                record.get("source_group_id") or f"legacy:{record.get('input_filename', record['id'])}"
+            ) == group_id]
+            if not records:
+                raise HTTPException(status_code=404, detail="Study set was not found.")
+            records.sort(key=lambda record: (record.get("action", ""), record["id"]))
+            completed = [record for record in records if record.get("status") == "completed"
+                         and (_conversion_dir(record["id"]) / record["output_path"]).is_file()]
+            if not completed:
+                raise HTTPException(status_code=409, detail="No completed artifacts are available to download yet.")
+            included_ids = {record["id"] for record in completed}
+            partial = len(completed) < len(records)
+            manifest = {
+                "source_group_id": group_id,
+                "input_filename": records[0]["input_filename"],
+                "exported_at": _now(), "partial": partial,
+                "completed_artifacts": len(completed), "total_artifacts": len(records),
+                "artifacts": [{
+                    "id": record["id"], "action": record["action"],
+                    "status": record.get("status"), "included": record["id"] in included_ids,
+                    "output_filename": record.get("output_filename"),
+                } for record in records],
+            }
+            with tempfile.NamedTemporaryFile(prefix="study-set-", suffix=".zip", delete=False) as temporary:
+                archive_path = Path(temporary.name)
+            with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+                source_record = completed[0]
+                source_path = _conversion_dir(source_record["id"]) / source_record["input_path"]
+                if source_path.is_file():
+                    archive.write(source_path, f"source/{source_record['input_filename']}")
+                for record in completed:
+                    conversion_dir = _conversion_dir(record["id"])
+                    prefix = f"artifacts/{record['action']}-{record['id']}"
+                    archive.write(conversion_dir / record["output_path"], f"{prefix}/{record['output_filename']}")
+                    archive.writestr(f"{prefix}/conversion.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+        safe_stem = Path(records[0]["input_filename"]).stem or "study-set"
+        suffix = "-partial" if partial else ""
+        return FileResponse(
+            path=archive_path, filename=f"{safe_stem}-study-set{suffix}.zip",
+            media_type="application/zip",
+            background=BackgroundTask(archive_path.unlink, missing_ok=True),
+        )
+    except Exception:
+        if archive_path is not None:
+            archive_path.unlink(missing_ok=True)
+        raise
 
 
 @app.get("/api/history/{conversion_id}/download")

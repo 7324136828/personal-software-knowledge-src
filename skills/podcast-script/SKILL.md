@@ -1,25 +1,28 @@
 ---
 name: podcast-script
-description: Build a two-host podcast script over a dataset as JSON, split into numbered episodes when long, with a minimum total running time. Use when the user wants a podcast script, audio dialogue, or spoken-word walkthrough of a corpus.
+description: Build one self-contained two-host podcast script per study-set dataset as JSON, with an estimated running time of at most 20 minutes. Use when the user wants a podcast script, audio dialogue, or spoken-word walkthrough of a corpus.
 ---
 
 # podcast-script
 
 A conversational script (two hosts by default) that walks through the texts of a
-dataset. Scope: **dataset**. Text only — **never** emit audio files.
+dataset. Scope: **dataset** — exactly one episode per study set/source-file dataset.
+Text only — **never** emit audio files.
 
 ## Files
 
 - Single episode: `output/podcasts/<dataset>.json`
-- Split: `output/podcasts/<dataset>_ep01.json`, `<dataset>_ep02.json`, …
-- Optional companion transcript: `output/podcasts/<dataset>.md` (or `_epNN.md`)
+- Optional companion transcript: `output/podcasts/<dataset>.md`
+- Honor the caller's output path and naming convention. A compatibility filename
+  such as `<timestamp>_episode0.json` still represents the sole episode; create no
+  additional episode files.
 
 ## JSON schema
 
 ```json
 {
-  "episode_title": "string — include 'Episode N of M' when split",
-  "podcast_show": "string — the show name, constant across episodes",
+  "episode_title": "string — title of the self-contained episode",
+  "podcast_show": "string — the show name",
   "cast": [
     {
       "speaker_id": "maya",
@@ -51,19 +54,21 @@ dataset. Scope: **dataset**. Text only — **never** emit audio files.
 
 ## Running-time rule
 
-Spoken rate ≈ **150 words per minute**, counting only `dialogue` text.
+Estimate speech at **150 dialogue words per minute** and include every explicit
+`[pause=NNN]` in scene directions, including empty-dialogue silence scenes:
 
-* Minimum total: **10 minutes ⇒ ≥ 1,500 words** of dialogue across all episode files.
+```text
+estimated_minutes = dialogue_words / 150 + total_pause_milliseconds / 60000
+```
 
-* If one episode would exceed ~25 minutes (~3,800 words), **split** it into multiple episodes. Each episode file must be self-contained, with:
-
-  * its own introduction and sign-off;
-  * its own `episode_title` ending with `"— Episode N of M"`; and
-  * the same unchanged `podcast_show`.
-
-  The episodes together must still provide **at least 10 minutes (≥ 1,500 words)** of total dialogue.
-
-* Name split files `<dataset>_epNN.json`, where `NN` is a zero-padded 2-digit episode number (for example, `_ep01.json`, `_ep02.json`).
+* The single episode must have an estimated runtime **at most 20 minutes**.
+  With no pauses, the limit is **3,000 dialogue words**; reduce that allowance by
+  `150 * total_pause_milliseconds / 60000` when pauses are present.
+* Aim for 15–18 minutes when the source supports useful coverage. There is **no
+  minimum runtime or word count**; a short source can produce a shorter episode.
+* Summarize long material and prioritize key concepts, useful examples, and a
+  closing recap to fit the limit. Do not split a study set into a podcast series.
+* Include one introduction and one sign-off. Keep the episode self-contained.
 
 ## Markdown companion (optional)
 
@@ -79,7 +84,8 @@ Skip empty-dialogue pause scenes in the `.md`.
 
 ## Checklist
 
-- [ ] total dialogue words ≥ 4,500 (sum across episodes); note the count when reporting
+- [ ] exactly one self-contained episode for the study set/source-file dataset
+- [ ] estimated runtime ≤ 20 minutes, including explicit pauses; report dialogue words and runtime
 - [ ] every scene `speaker_id` is in `cast`; `directions` uses only bracket tags
-- [ ] split files are individually self-contained and numbered `epNN`
+- [ ] filename and destination follow the caller's requirements
 - [ ] no audio files written

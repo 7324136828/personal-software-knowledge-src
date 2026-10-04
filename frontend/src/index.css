@@ -785,7 +785,7 @@ body {
 .accordion-toggle { min-width: 0; display: flex; align-items: center; gap: 0.55rem; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
 .file-history-name { max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
 .drag-handle { color: var(--text-muted); cursor: grab; }
-.file-history-summary { display: flex; align-items: center; justify-content: flex-end; gap: 0.8rem; color: var(--text-muted); font-size: 0.76rem; white-space: nowrap; }
+.file-history-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.8rem; color: var(--text-muted); font-size: 0.76rem; white-space: nowrap; }
 .file-history-summary span { display: inline-flex; align-items: center; gap: 0.25rem; }
 .artifact-tree { padding: 0 1rem 1rem 2.1rem; border-top: 1px solid var(--border-color); background: rgba(15, 23, 42, 0.28); }
 .artifact-row { display: flex; gap: 0.6rem; padding-top: 0.9rem; }

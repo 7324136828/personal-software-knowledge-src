@@ -81,7 +81,10 @@ def main() -> int:
         requested_port("FRONTEND_PORT", 5173), {backend_port}
     )
     host = os.getenv("HOST", "127.0.0.1")
-    backend_url = f"http://{host}:{backend_port}"
+    frontend_host = os.getenv("FRONTEND_HOST", host)
+    # Wildcard addresses are bind targets; the local Vite proxy uses loopback.
+    backend_connect_host = "127.0.0.1" if host == "0.0.0.0" else host
+    backend_url = f"http://{backend_connect_host}:{backend_port}"
     frontend_url = f"http://localhost:{frontend_port}"
 
     # 1. Start backend process
@@ -107,6 +110,8 @@ def main() -> int:
             "run",
             "dev",
             "--",
+            "--host",
+            frontend_host,
             "--port",
             str(frontend_port),
             "--strictPort",

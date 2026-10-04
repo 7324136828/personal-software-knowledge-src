@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import tempfile
 import threading
 import time
@@ -253,6 +254,92 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(len(history), 2)
         self.assertEqual({item["source_group_id"] for item in history}, {group_id})
         self.assertEqual({item["status"] for item in history}, {"queued"})
+
+    def test_partial_study_set_archive_snapshots_only_finished_artifacts(self) -> None:
+        group_id = "b" * 32
+        records = []
+        with patch("server._ensure_queue_dispatcher"):
+            # Duplicate artifact types exercise ZIP filename collision handling.
+            for action, status in (("create_reports", "completed"), ("create_reports", "completed"),
+                                   ("create_qandas", "in_progress"), ("create_quizzes", "failed"),
+                                   ("create_flashcards", "queued")):
+                response = self.client.post("/api/convert", data={
+                    "action": action, "connector": "the_connector", "pasted_text": "Study source",
+                    "input_filename": "chapter.txt", "enqueue": "true", "source_group_id": group_id,
+                })
+                self.assertEqual(response.status_code, 200)
+                record = server._read_record(response.json()["session_id"])
+                record["status"] = status
+                directory = server._conversion_dir(record["id"])
+                # Even unfinished jobs with output files must be excluded.
+                (directory / record["output_path"]).write_text(f"{status}-{record['id']}", encoding="utf-8")
+                server._write_record(record)
+                records.append(record)
+
+        # An unrelated finished study set must never enter this download.
+        unrelated = dict(records[0], id="c" * 32, source_group_id="d" * 32)
+        server._write_record(unrelated)
+        server.ACTIVE_CONVERSIONS.add(records[2]["id"])
+        before = {record["id"]: server._metadata_path(record["id"]).read_bytes() for record in records}
+        archive_paths = []
+        real_temporary_file = server.tempfile.NamedTemporaryFile
+
+        def tracked_temporary_file(**kwargs):
+            temporary = real_temporary_file(**kwargs)
+            archive_paths.append(Path(temporary.name))
+            return temporary
+
+        with patch("server.tempfile.NamedTemporaryFile", side_effect=tracked_temporary_file):
+            response = self.client.get(f"/api/history/groups/{group_id}/download")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("chapter-study-set-partial.zip", response.headers["content-disposition"])
+        self.assertFalse(archive_paths[0].exists(), "Temporary ZIP should be removed after sending")
+        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+            manifest = json.loads(archive.read("manifest.json"))
+            self.assertTrue(manifest["partial"])
+            self.assertEqual((manifest["completed_artifacts"], manifest["total_artifacts"]), (2, 5))
+            self.assertEqual(archive.read("source/chapter.txt"), b"Study source")
+            outputs = [name for name in archive.namelist() if name.startswith("artifacts/") and not name.endswith("conversion.json")]
+            self.assertEqual(len(outputs), 2)
+            for record in records[:2]:
+                expected = f"artifacts/{record['action']}-{record['id']}/{record['output_filename']}"
+                self.assertIn(expected, outputs)
+                self.assertEqual(archive.read(expected).decode(), f"completed-{record['id']}")
+            self.assertEqual({item["status"] for item in manifest["artifacts"] if not item["included"]}, {"queued", "failed", "in_progress"})
+        self.assertIn(records[2]["id"], server.ACTIVE_CONVERSIONS)
+        self.assertEqual(before, {record["id"]: server._metadata_path(record["id"]).read_bytes() for record in records})
+
+        # A later download includes newly finished types, instead of a cached ZIP.
+        for record in records[2:]:
+            record["status"] = "completed"
+            server._write_record(record)
+        with patch("server.tempfile.NamedTemporaryFile", side_effect=tracked_temporary_file):
+            refreshed = self.client.get(f"/api/history/groups/{group_id}/download")
+        self.assertNotEqual(archive_paths[0], archive_paths[1])
+        self.assertFalse(archive_paths[1].exists())
+        with zipfile.ZipFile(io.BytesIO(refreshed.content)) as archive:
+            manifest = json.loads(archive.read("manifest.json"))
+            self.assertFalse(manifest["partial"])
+            self.assertEqual(manifest["completed_artifacts"], 5)
+        self.assertIn("chapter-study-set.zip", refreshed.headers["content-disposition"])
+
+    def test_study_set_download_rejects_unknown_or_unfinished_groups(self) -> None:
+        self.assertEqual(self.client.get(f"/api/history/groups/{'e' * 32}/download").status_code, 404)
+        group_id = "f" * 32
+        with patch("server._ensure_queue_dispatcher"):
+            response = self.client.post("/api/convert", data={
+                "action": "create_reports", "connector": "the_connector", "pasted_text": "Study source",
+                "enqueue": "true", "source_group_id": group_id,
+            })
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(f"/api/history/groups/{group_id}/download")
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("No completed artifacts", response.json()["detail"])
+        # A completed record whose output is missing is also unavailable.
+        record = server._records_on_disk()[0]
+        record["status"] = "completed"
+        server._write_record(record)
+        self.assertEqual(self.client.get(f"/api/history/groups/{group_id}/download").status_code, 409)
 
     def test_active_conversion_appears_in_history_and_can_be_discarded(self) -> None:
         started = threading.Event()

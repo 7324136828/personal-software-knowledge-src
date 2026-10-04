@@ -19,6 +19,7 @@ from typing import Any
 from action_base import build_generation_prompts
 from connectors.base import GenerationResponse, LLMConnector
 from errors import GenerationCancelled, InvalidArgumentsError, ProviderError
+from podcast_policy import podcast_runtime
 
 from .aggregator import hierarchical_aggregate, merge_artifacts, provenance_index
 from .checkpoint import Checkpoint, atomic_json, atomic_text, digest, evidence_prefix
@@ -668,6 +669,102 @@ class _Run:
             nodes, level = parents, level + 1
         return merge(nodes)
 
+    @staticmethod
+    def podcast_material(value: dict | str) -> str:
+        """Keep spoken draft material available for a source-grounded summary."""
+
+        if isinstance(value, str):
+            return value
+        lines = [json.dumps({key: value[key] for key in ("episode_title", "podcast_show", "cast")},
+                            ensure_ascii=False, separators=(",", ":"))]
+        for segment in value["script"]:
+            lines.append("\n" + segment["segment_name"])
+            for scene in segment["scenes"]:
+                lines.append(f"{scene['speaker_id']}: {scene.get('directions', '')} {scene['dialogue']}")
+        return "\n".join(lines)
+
+    def assemble_podcast(self, values: list[dict | str]) -> dict | str:
+        """Summarize chunk drafts into one episode instead of appending episodes."""
+
+        if len(values) == 1:
+            return values[0]
+        system, _ = build_generation_prompts(
+            action=self.action, artifact_name="single text-only podcast episode",
+            source_text="", source_path=self.source_path, skill_text=self.skill_text,
+            output_path=Path("episode.json" if self.uses_json else "episode.md"),
+        )
+        header = (
+            "Assemble the source-grounded drafts below into exactly one self-contained podcast "
+            "episode for this study set. Use one introduction, a connected discussion, and one "
+            "closing/sign-off. Summarize and prioritize the key concepts and examples to fit; "
+            "remove repeated introductions, recaps, and sign-offs. Do not invent facts or split "
+            "the result into episodes. Runtime must be at most 20 minutes at 150 dialogue words "
+            "per minute plus all scripted pauses. There is no minimum length.\n"
+        )
+        if self.uses_json:
+            header += "Return exactly one JSON object using this schema:\n" + json.dumps(get_schema(self.action)) + "\n"
+        else:
+            header += "Return the canonical Markdown transcript with bold speaker labels.\n"
+        requested = self.options.max_output_tokens or self.profile.reserved_output_tokens
+        capacity = (self.profile.context_window - self.profile.safety_margin
+                    - self.budget.input_tokens(system, header)
+                    - min(requested, self.profile.max_output_tokens) - 256)
+        if capacity < 1024:
+            raise GenerationFailure("Model context budget is too small to assemble a podcast; increase the verified context limit.")
+        word_limit = min(2700, max(50, (capacity // 2 - 600) // 4))
+        header += f"Keep dialogue to at most {word_limit} words, allowing room for pauses.\nDRAFT MATERIAL\n"
+        material = "\n\n".join(self.podcast_material(value) for value in values)
+        nodes = []
+        for chunk in chunk_source(material, self.source_path.name, capacity, 0, estimate_tokens):
+            if chunk.estimated_input_tokens <= capacity:
+                nodes.append(chunk.text)
+            else:
+                # Drafts can be excerpted for synthesis even when they contain a
+                # large protected block. Keep every character within the budget.
+                width = max(1, capacity // 4)
+                nodes.extend(chunk.text[start:start + width] for start in range(0, len(chunk.text), width))
+
+        def synthesize(drafts: list[str], stage: str, *, intermediate: bool) -> dict | str:
+            prompt = header + "\n\n".join(drafts)
+            fingerprint = digest({"system": system, "prompt": prompt, "profile": asdict(self.profile),
+                                  "model": self.connector.model, "requested_output": requested,
+                                  "intermediate": intermediate})
+            key = "podcast:" + stage
+            if cached := self.checkpoint.get(key, fingerprint):
+                return cached["data"]
+            errors: list[str] = []
+            for attempt in range(self.retries + 1):
+                response = self.call_with_retries(
+                    stage=f"podcast_{stage}_{attempt}", system_prompt=system,
+                    user_prompt=prompt + ("\nFix these validation failures:\n- " + "\n- ".join(errors) if errors else ""),
+                    json_mode=self.uses_json,
+                )
+                checked = validate_output(response.text, self.action, ".json" if self.uses_json else self.extension,
+                                          response.finish_reason)
+                value = checked["data"] if self.uses_json else checked["text"]
+                errors = list(checked["errors"])
+                if checked["valid"] and intermediate and estimate_tokens(self.podcast_material(value)) > capacity // 2:
+                    errors.append(f"Condense the complete draft to at most {capacity // 2} estimated input tokens for assembly.")
+                if not errors:
+                    self.checkpoint.save(key, fingerprint, self.aggregate_dir / f"podcast_{stage}.checkpoint.json", {"data": value})
+                    return value
+                self.metrics["repair_count"] += 1
+            self.checkpoint.fail(key, fingerprint, "; ".join(errors[:8]))
+            raise GenerationFailure("Podcast assembly failed validation: " + "; ".join(errors[:3]))
+
+        # Large sets get bounded summaries before the final assembly request.
+        if len(nodes) > 1:
+            nodes = [self.podcast_material(synthesize([node], f"draft_{index:04d}", intermediate=True))
+                     for index, node in enumerate(nodes, 1)]
+        level = 0
+        while len(nodes) > 2:
+            nodes = [self.podcast_material(synthesize(nodes[start:start + 2], f"level_{level:02d}_{start:04d}", intermediate=True))
+                     for start in range(0, len(nodes), 2)]
+            level += 1
+        result = synthesize(nodes, "final", intermediate=False)
+        self.metrics["recovery_events"].append({"stage": "podcast:final", "strategy": "single_episode_assembly"})
+        return result
+
     def run(self) -> PipelineResult:
         self.ensure_not_cancelled()
         self.work_dir.mkdir(parents=True, exist_ok=True)
@@ -752,14 +849,19 @@ class _Run:
             self.metrics["chunk_count"] = len(chunks)
             if self.uses_json:
                 objects = [value for value in values if isinstance(value, dict)]
-                final_value = (hierarchical_aggregate(objects, self.action, self.aggregate_dir, self.options.group_size)
-                               if self.options.aggregation == "hierarchical" else merge_artifacts(objects, self.action))
+                if self.action == "create_podcasts":
+                    final_value = self.assemble_podcast(objects)
+                elif self.options.aggregation == "hierarchical":
+                    final_value = hierarchical_aggregate(objects, self.action, self.aggregate_dir, self.options.group_size)
+                else:
+                    final_value = merge_artifacts(objects, self.action)
                 atomic_json(self.aggregate_dir / "aggregate.json", final_value)
                 atomic_json(self.aggregate_dir / "provenance.json", provenance_index(
                     final_value, objects, [self.provenance(chunk, "generation") for chunk in chunks]
                 ))
             else:
-                final_value = self.aggregate_text([str(value) for value in values])
+                final_value = (self.assemble_podcast(values) if self.action == "create_podcasts" else
+                               self.aggregate_text([str(value) for value in values]))
                 atomic_text(self.aggregate_dir / ("aggregate" + self.extension), final_value)
 
         final_text = (json.dumps(final_value, ensure_ascii=False, indent=2) + "\n"
@@ -771,6 +873,8 @@ class _Run:
             "valid": final_check["valid"], "output_errors": final_check["errors"],
             "truncated": final_check["truncated"], "passed": final_check["valid"],
         })
+        if self.action == "create_podcasts":
+            validation["podcast_runtime"] = podcast_runtime(final_value)
         self.metrics.update({
             "runtime_seconds": time.perf_counter() - self.started,
             "output_bytes": len(final_text.encode("utf-8")),
@@ -779,6 +883,8 @@ class _Run:
         })
         atomic_json(self.work_dir / "metrics.json", self.metrics)
         atomic_json(self.work_dir / "validation.json", validation)
+        if self.action == "create_podcasts" and not final_check["valid"]:
+            raise GenerationFailure("Final podcast failed validation: " + "; ".join(final_check["errors"][:3]))
         return PipelineResult(final_text, self.metrics, validation, self.work_dir)
 
     def estimated_cost(self) -> float | None:
