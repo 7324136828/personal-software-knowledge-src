@@ -4,16 +4,12 @@
 from __future__ import annotations
 
 import argparse
-import logging
 from collections.abc import Sequence
 from pathlib import Path
 
 from app_config import ACTION_CONFIG
-from cli_runtime import add_pipeline_arguments, configure_logging, execute_generation, options_from_args
+from cli_runtime import add_pipeline_arguments, run_cli_generation
 from connectors import CONNECTORS
-from errors import ApplicationError
-
-LOGGER = logging.getLogger("content_generator")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -59,27 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse command-line arguments and run the requested action."""
 
-    configure_logging()
     args = build_parser().parse_args(argv)
-    try:
-        execute_generation(
-            connector_name=args.connector,
-            input_path=args.input_path,
-            action=args.action,
-            output_path=args.output_path,
-            model=args.model,
-            options=options_from_args(args),
-        )
-    except ApplicationError as exc:
-        LOGGER.error("%s", exc)
-        return exc.exit_code
-    except KeyboardInterrupt:
-        LOGGER.error("Generation interrupted.")
-        return 1
-    except Exception:
-        LOGGER.exception("Unexpected application failure")
-        return 1
-    return 0
+    return run_cli_generation(args, action=args.action, input_path=args.input_path, output_path=args.output_path)
 
 
 if __name__ == "__main__":

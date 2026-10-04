@@ -18,6 +18,7 @@ from typing import Any
 
 from action_base import build_generation_prompts
 from connectors.base import GenerationResponse, LLMConnector
+from diagnostic_logging import record_exchange
 from errors import GenerationCancelled, InvalidArgumentsError, ProviderError
 from podcast_policy import podcast_runtime
 
@@ -201,6 +202,10 @@ class _Run:
         }
         if payload_adjustment:
             request_record["payload_adjustment"] = payload_adjustment
+        record_exchange("pipeline_request", request_record)
+        LOGGER.debug("Request %s: connector=%s model=%s output_budget=%s input_estimate=%s",
+                     stage, self.connector_name, self.connector.model, allowance,
+                     self.budget.input_tokens(system_prompt, user_prompt))
         prefix = evidence_prefix(self.raw_dir, stage) if self.options.keep_raw else None
         if prefix:
             atomic_json(prefix.with_name(prefix.name + "_request.json"), request_record)
@@ -220,8 +225,20 @@ class _Run:
                     system_prompt=system_prompt, user_prompt=user_prompt
                 )
             result = _response(generated)
+            record_exchange("pipeline_response", {
+                "stage": stage, "connector": self.connector_name, "model": self.connector.model,
+                "text": result.text, "finish_reason": result.finish_reason,
+                "input_tokens": result.input_tokens, "output_tokens": result.output_tokens,
+                "metadata": result.raw_metadata,
+            })
+            LOGGER.debug("Response %s: finish_reason=%s input_tokens=%s output_tokens=%s characters=%s",
+                         stage, result.finish_reason, result.input_tokens, result.output_tokens, len(result.text))
             self.ensure_not_cancelled()
         except Exception as exc:
+            record_exchange("pipeline_failure", {"stage": stage, "connector": self.connector_name,
+                                                   "model": self.connector.model, "error_type": type(exc).__name__,
+                                                   "error": _safe_error(exc), "status_code": getattr(exc, "status_code", None)})
+            LOGGER.debug("Request %s failed: %s", stage, _safe_error(exc))
             if prefix:
                 atomic_json(prefix.with_name(prefix.name + "_response.json"),
                             {"error_type": type(exc).__name__, "error": _safe_error(exc)})
@@ -386,6 +403,9 @@ class _Run:
             atomic_json(self.chunks_dir / f"{chunk.chunk_id}.json", metadata)
         atomic_json(self.work_dir / "source_inventory.json", source_inventory(self.source_text))
         self.metrics["chunk_count"] = len(chunks)
+        LOGGER.debug("Prepared %s source chunks: target=%s %s available_input_tokens=%s overlap_tokens=%s",
+                     len(chunks), target, "characters" if self.options.chunk_characters is not None else "tokens",
+                     available, overlap)
         if self.options.chunk_characters is None:
             self.metrics["target_chunk_tokens"] = target
         return chunks
@@ -396,6 +416,7 @@ class _Run:
                               "prompt": EXTRACTION_SYSTEM, "profile": asdict(self.profile)})
         path = self.intermediate_dir / "extractions" / f"{chunk.chunk_id}.json"
         if cached := self.checkpoint.get(key, fingerprint):
+            LOGGER.debug("Using completed extraction checkpoint for %s", chunk.chunk_id)
             return cached
         prompt = extraction_prompt(chunk.overlap_text + chunk.text, chunk.source, chunk.section)
         errors: list[str] = []
@@ -523,6 +544,7 @@ class _Run:
         suffix = ".json" if self.uses_json else self.extension
         path = self.intermediate_dir / "generated" / f"{chunk.chunk_id}{suffix}"
         if cached := self.checkpoint.get(key, fingerprint):
+            LOGGER.debug("Using completed generation checkpoint for %s", chunk.chunk_id)
             return cached["data"]
         system, user = self.generation_prompts(chunk, knowledge)
         retry_source = self.generation_source(chunk, knowledge)
@@ -531,6 +553,8 @@ class _Run:
             json_mode=self.uses_json,
         )
         checked = validate_output(response.text, self.action, ".json" if self.uses_json else self.extension, response.finish_reason)
+        LOGGER.debug("Validation %s: valid=%s truncated=%s errors=%s", chunk.chunk_id,
+                     checked["valid"], checked["truncated"], checked["errors"][:8])
 
         # Text continuation is safe to append. JSON is repaired as a whole because a
         # continuation fragment alone is not a valid or reliably joinable document.
@@ -552,6 +576,8 @@ class _Run:
             attempts += 1
             self.metrics["repair_count"] += 1
             retry_source, truncation = self.truncate_validation_retry_source(retry_source)
+            LOGGER.debug("Validation retry %s attempt=%s source_characters=%s errors=%s",
+                         chunk.chunk_id, attempts, len(retry_source), checked["errors"][:8])
             self.metrics["recovery_events"].append({
                 "stage": key, "strategy": "validation_prompt_retry", "attempt": attempts,
                 "errors": checked["errors"][:8],
@@ -593,6 +619,7 @@ class _Run:
                               "action": self.action, "model": self.connector.model})
         path = self.intermediate_dir / "repaired" / f"{chunk.chunk_id}.json"
         if cached := self.checkpoint.get(key, fingerprint):
+            LOGGER.debug("Using completed coverage repair checkpoint for %s", chunk.chunk_id)
             return cached
         coverage = validate_coverage(chunk.text, artifact, self.action, self.source_path.name)
         missing = {
@@ -688,6 +715,7 @@ class _Run:
 
         if len(values) == 1:
             return values[0]
+        LOGGER.debug("Assembling one podcast from %s chunk drafts", len(values))
         system, _ = build_generation_prompts(
             action=self.action, artifact_name="single text-only podcast episode",
             source_text="", source_path=self.source_path, skill_text=self.skill_text,
@@ -712,6 +740,7 @@ class _Run:
         if capacity < 1024:
             raise GenerationFailure("Model context budget is too small to assemble a podcast; increase the verified context limit.")
         word_limit = min(2700, max(50, (capacity // 2 - 600) // 4))
+        LOGGER.debug("Podcast assembly input_capacity=%s dialogue_word_target=%s", capacity, word_limit)
         header += f"Keep dialogue to at most {word_limit} words, allowing room for pauses.\nDRAFT MATERIAL\n"
         material = "\n\n".join(self.podcast_material(value) for value in values)
         nodes = []
@@ -731,6 +760,7 @@ class _Run:
                                   "intermediate": intermediate})
             key = "podcast:" + stage
             if cached := self.checkpoint.get(key, fingerprint):
+                LOGGER.debug("Using completed podcast assembly checkpoint for %s", stage)
                 return cached["data"]
             errors: list[str] = []
             for attempt in range(self.retries + 1):
@@ -767,6 +797,8 @@ class _Run:
 
     def run(self) -> PipelineResult:
         self.ensure_not_cancelled()
+        LOGGER.debug("Pipeline started: action=%s strategy=%s source_characters=%s output=%s profile=%s",
+                     self.action, self.options.strategy, len(self.source_text), self.output_path, asdict(self.profile))
         self.work_dir.mkdir(parents=True, exist_ok=True)
         option_values = {
             item.name: getattr(self.options, item.name)
@@ -824,6 +856,8 @@ class _Run:
                         "stage": chunk.chunk_id, "strategy": "smaller_chunk",
                         "depth": depth + 1, "children": len(children),
                     })
+                    LOGGER.debug("Splitting %s after %s into %s smaller chunks at depth %s",
+                                 chunk.chunk_id, type(exc).__name__, len(children), depth + 1)
                     for number, child in enumerate(children, 1):
                         adjusted = replace(
                             child, chunk_id=f"{chunk.chunk_id}_{number:02d}",
@@ -869,6 +903,9 @@ class _Run:
         validation = (validate_coverage(self.source_text, final_value, self.action, self.source_path.name)
                       if self.options.validate else {"valid": True, "validation_skipped": True})
         final_check = validate_output(final_text, self.action, ".json" if self.uses_json else self.extension)
+        LOGGER.debug("Final validation: valid=%s errors=%s provider_calls=%s retries=%s repairs=%s",
+                     final_check["valid"], final_check["errors"][:8], self.metrics["provider_calls"],
+                     self.metrics["retry_count"], self.metrics["repair_count"])
         validation.update({
             "valid": final_check["valid"], "output_errors": final_check["errors"],
             "truncated": final_check["truncated"], "passed": final_check["valid"],

@@ -89,7 +89,50 @@ application reads the process environment directly; it does not automatically lo
 
 ## Usage
 
-The main interface requires a connector, input, action, and exact output path:
+### Generate one study artifact
+
+Pass a source file and the artifact type to the short CLI:
+
+```bash
+python study_set.py "input/book.txt" podcast
+python study_set.py "input/book.txt" podcast -o "output/podcast.json" -v
+```
+
+On Windows, the wrapper uses your active Python environment or the project's
+`.venv` when available:
+
+```cmd
+study_set.bat "input/book.txt" podcast -v
+```
+
+The Connector is the default provider. Use `--connector` to choose another provider
+and `--model` to select a model or active library configuration ID. The equivalent
+flag form is:
+
+```bash
+python study_set.py -i "input/book.txt" -t podcast -o "output/podcast.json" --connector the_connector --model ACTIVE_LIBRARY_MODEL_ID
+```
+
+Types are `datatable`, `flashcard`, `infographic`, `mindmap`, `podcast`, `qanda`,
+`quiz`, `report`, and `slide`. Their plural forms and existing `create_*` action
+names also work. The default result is `output/<input-stem>/<plural-type>.json`;
+`-o`/`--output` preserves the exact destination. A successful run prints the saved
+file's absolute path; artifact content is written to that file. Failures return a
+nonzero exit code. The pipeline, budget, retry, and checkpoint flags shown below
+also work with `study_set.py`.
+
+`-v`/`--verbose` saves each run's `run.log`, `requests/*.json`, `responses/*.json`,
+and diagnostic `events/*.json` in a unique folder under
+`%TEMP%\personal-software-knowledge-src-log`. These logs retain the supplied source,
+prompts, and generated content. Transport headers, authentication, and explicit
+credential fields are omitted. Logs are saved even with `--no-keep-raw`; use
+`--force` to make new provider requests when a run would otherwise resume cached
+results. Verbose logging also works with the orchestrator and directly executable
+action modules.
+
+### Existing CLI forms
+
+The existing orchestrator interface requires a connector, input, action, and exact output path:
 
 ```bash
 python orchestrator.py \

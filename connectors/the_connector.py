@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from dataclasses import dataclass
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 
+from diagnostic_logging import record_exchange
 from errors import ConnectorConfigurationError, ProviderError
 
 from .base import (
@@ -32,17 +35,52 @@ def _request(base_url: str, path: str, timeout: float,
         headers={"Content-Type": "application/json"},
         method="POST" if body is not None else "GET",
     )
+    destination = urlsplit(request.full_url)
+    hostname = destination.hostname or ""
+    if ":" in hostname:
+        hostname = f"[{hostname}]"
+    try:
+        port = destination.port
+    except ValueError:
+        port = None
+    origin = f"{destination.scheme}://{hostname}" + (f":{port}" if port is not None else "")
+    exchange = {"connector": "the_connector", "method": request.get_method(),
+                "origin": origin, "path": destination.path}
+    record_exchange("connector_request", {**exchange, "timeout_seconds": timeout, "body": body})
+    started = time.monotonic()
+    response_text = None
     try:
         with urlopen(request, timeout=timeout) as response:
-            data = json.loads(response.read().decode("utf-8"))
+            response_text = response.read().decode("utf-8")
+            data = json.loads(response_text)
+            record_exchange("connector_response", {
+                **exchange, "status": getattr(response, "status", None), "body": data,
+                "elapsed_seconds": time.monotonic() - started,
+            })
     except HTTPError as exc:
+        try:
+            error_text = exc.read().decode("utf-8", errors="replace")
+            try:
+                error_body = json.loads(error_text)
+            except ValueError:
+                error_body = error_text
+        except OSError:
+            error_body = None
+        record_exchange("connector_response", {**exchange, "status": exc.code, "body": error_body,
+                                                "elapsed_seconds": time.monotonic() - started})
+        record_exchange("connector_failure", {**exchange, "status": exc.code, "error_type": type(exc).__name__,
+                                               "elapsed_seconds": time.monotonic() - started})
         error = ProviderError(f"The Connector request failed (HTTP {exc.code}). Check its active configuration and routing settings.")
         error.status_code = exc.code
         exc.close()
         raise error from exc
     except (URLError, OSError) as exc:
+        record_exchange("connector_failure", {**exchange, "error_type": type(exc).__name__,
+                                               "elapsed_seconds": time.monotonic() - started})
         raise ProviderError("Could not reach The Connector. Start its backend and check THE_CONNECTOR_BASE_URL.") from exc
     except (ValueError, UnicodeError) as exc:
+        record_exchange("connector_failure", {**exchange, "error_type": type(exc).__name__, "response_text": response_text,
+                                               "elapsed_seconds": time.monotonic() - started})
         raise ProviderError("The Connector returned invalid JSON.") from exc
     if not isinstance(data, dict) or data.get("error"):
         raise ProviderError("The Connector returned an invalid or error response.")
