@@ -80,26 +80,34 @@ class DiagnosticLoggingTests(unittest.TestCase):
 
     def test_connector_exact_body_and_complete_response_including_discovery(self) -> None:
         catalog = {"object": "list", "data": [{"id": "study-route", "details": {"active": True}}]}
+        configuration = {"gross_max_input_token": 32000, "gross_max_output_token": 4096,
+                         "provider_credentials": "private-configuration-value"}
         completion = {
             "id": "completion-1", "provider_detail": {"cached": True},
             "choices": [{"message": {"role": "assistant", "content": "A useful response."}, "finish_reason": "stop"}],
             "usage": {"prompt_tokens": 20, "completion_tokens": 8},
         }
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"TEMP": directory}), \
-                patch("connectors.the_connector.urlopen", side_effect=[http_response(catalog), http_response(completion)]) as urlopen:
+                patch("connectors.the_connector.urlopen", side_effect=[http_response(catalog), http_response(configuration),
+                                                                       http_response(completion)]) as urlopen:
             with verbose_logging(True) as run_dir:
-                self.assertEqual(discover_models("http://localhost:8301/v1"), catalog["data"])
-                TheConnector(model="study-route").generate_response(
+                connector = TheConnector(base_url="http://localhost:8301/v1")
+                self.assertEqual(connector.model, "study-route")
+                connector.generate_response(
                     system_prompt="The full skill", user_prompt="The source", max_output_tokens=128,
                 )
             saved = events(run_dir)
             requests = [event["payload"] for event in saved if event["kind"] == "connector_request"]
             responses = [event["payload"] for event in saved if event["kind"] == "connector_response"]
             self.assertEqual((requests[0]["method"], requests[0]["path"], requests[0]["body"]), ("GET", "/v1/models", None))
-            self.assertEqual((requests[1]["method"], requests[1]["path"]), ("POST", "/v1/chat/completions"))
-            self.assertEqual(requests[1]["body"], json.loads(urlopen.call_args_list[1].args[0].data))
+            self.assertEqual((requests[1]["method"], requests[1]["path"]),
+                             ("GET", "/api/configuration/detail/study-route"))
+            self.assertEqual((requests[2]["method"], requests[2]["path"]), ("POST", "/v1/chat/completions"))
+            self.assertEqual(requests[2]["body"], json.loads(urlopen.call_args_list[2].args[0].data))
             self.assertEqual(responses[0]["body"], catalog)
-            self.assertEqual(responses[1]["body"], completion)
+            self.assertNotIn("body", responses[1])
+            self.assertEqual(responses[2]["body"], completion)
+            self.assertNotIn("private-configuration-value", json.dumps(saved))
             self.assertNotIn("headers", json.dumps(saved).lower())
 
     def test_failed_connector_request_and_response_are_saved_without_credentials(self) -> None:

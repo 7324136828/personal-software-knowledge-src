@@ -17,12 +17,15 @@ import {
   X
 } from 'lucide-react';
 import HistoryView from './HistoryView';
+import GlobalSettingsModal from './GlobalSettingsModal';
 
 export default function App() {
   const [view, setView] = useState(window.location.hash === '#history' ? 'history' : 'convert');
+  const [showGlobalSettings, setShowGlobalSettings] = useState(false);
   // Input state
-  const [activeTab, setActiveTab] = useState('upload'); // 'upload' or 'paste'
+  const [activeTab, setActiveTab] = useState('upload'); // 'upload', 'paste', or 'zip'
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [selectedZip, setSelectedZip] = useState(null);
   const [pastedText, setPastedText] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
@@ -34,6 +37,7 @@ export default function App() {
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsError, setModelsError] = useState('');
   const [modelsRefresh, setModelsRefresh] = useState(0);
+  const [contextWindow, setContextWindow] = useState('');
   const [outputFormat, setOutputFormat] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -53,6 +57,9 @@ export default function App() {
   const [batchProgress, setBatchProgress] = useState({ completed: 0, total: 0 });
 
   const fileInputRef = useRef(null);
+  const zipInputRef = useRef(null);
+  const contextInputRef = useRef(null);
+  const isZipMode = activeTab === 'zip';
 
   // Fetch backend configuration on mount
   useEffect(() => {
@@ -106,13 +113,13 @@ export default function App() {
   useEffect(() => {
     const handlePaste = (e) => {
       if (e.clipboardData && e.clipboardData.files.length > 0) {
-        appendFiles(Array.from(e.clipboardData.files));
-        setActiveTab('upload');
+        if (loading) return;
+        receiveFiles(Array.from(e.clipboardData.files), isZipMode);
       }
     };
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, []);
+  }, [isZipMode, loading]);
 
   const fetchConfig = async () => {
     try {
@@ -142,6 +149,7 @@ export default function App() {
   };
 
   const handleActionChange = (newAction) => {
+    if (isZipMode) return;
     setActions((current) => (
       current.includes(newAction)
         ? current.filter((item) => item !== newAction)
@@ -162,6 +170,23 @@ export default function App() {
     });
   };
 
+  const receiveFiles = (incomingFiles, zipOnly = false) => {
+    if (loading) return;
+    const archives = incomingFiles.filter((file) => file.name.toLowerCase().endsWith('.zip'));
+    if (zipOnly || archives.length > 0) {
+      if (incomingFiles.length !== 1 || archives.length !== 1) {
+        setError('Select one ZIP file by itself to import a study set.');
+        return;
+      }
+      setSelectedZip(archives[0]);
+      setActiveTab('zip');
+    } else {
+      appendFiles(incomingFiles);
+      setActiveTab('upload');
+    }
+    setError(null);
+  };
+
   // Drag and drop handlers
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -176,13 +201,13 @@ export default function App() {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      appendFiles(Array.from(e.dataTransfer.files));
+      receiveFiles(Array.from(e.dataTransfer.files), isZipMode);
     }
   };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      appendFiles(Array.from(e.target.files));
+      receiveFiles(Array.from(e.target.files), isZipMode);
       e.target.value = '';
     }
   };
@@ -197,6 +222,35 @@ export default function App() {
     setError(null);
     setResults([]);
 
+    if (isZipMode) {
+      if (!selectedZip) {
+        setError('Select or drop a study-set ZIP file to import.');
+        return;
+      }
+      setLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedZip);
+        const response = await fetch('/api/study-sets/import', { method: 'POST', body: formData });
+        let data = {};
+        try {
+          data = await response.json();
+        } catch {
+          // Preserve useful HTTP status text for non-JSON proxy errors.
+        }
+        if (!response.ok) {
+          throw new Error(data.detail || response.statusText || 'Study-set import failed.');
+        }
+        if (!data.queued) throw new Error('The study set could not be queued.');
+        navigate('history');
+      } catch (err) {
+        setError(err.message || 'Study-set import failed.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (activeTab === 'upload' && selectedFiles.length === 0) {
       setError('Please select or drop one or more PDF or document files to convert.');
       return;
@@ -207,6 +261,13 @@ export default function App() {
     }
     if (actions.length === 0) {
       setError('Please select at least one learning artifact.');
+      return;
+    }
+
+    const requestedContext = contextWindow.trim();
+    if (contextInputRef.current?.validity.badInput
+        || (requestedContext && (!Number.isSafeInteger(Number(requestedContext)) || Number(requestedContext) < 1))) {
+      setError('Context window must be a positive whole number of tokens.');
       return;
     }
 
@@ -232,6 +293,7 @@ export default function App() {
       formData.append('enqueue', 'true');
       formData.append('source_group_id', job.source.groupId);
       if (model.trim()) formData.append('model', model.trim());
+      if (requestedContext) formData.append('context_window', String(Number(requestedContext)));
       if (outputFormat.trim()) formData.append('output_format', outputFormat.trim());
       if (!['ollama', 'the_connector'].includes(connector) && apiKey.trim()) formData.append('api_key', apiKey.trim());
       if (strategy) formData.append('strategy', strategy);
@@ -289,7 +351,7 @@ export default function App() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const sourceCount = activeTab === 'upload' ? selectedFiles.length : (pastedText.trim() ? 1 : 0);
+  const sourceCount = isZipMode ? 0 : (activeTab === 'upload' ? selectedFiles.length : (pastedText.trim() ? 1 : 0));
   const plannedConversions = sourceCount * actions.length;
 
   return (
@@ -320,12 +382,17 @@ export default function App() {
           >
             <History size={16} /> History
           </button>
+          <button type="button" className="nav-btn" onClick={() => setShowGlobalSettings(true)} aria-haspopup="dialog">
+            <Settings size={16} /> Settings
+          </button>
           <span className={`backend-badge ${backendStatus === 'offline' ? 'offline' : ''}`}>
             <span className="dot"></span>
             {backendStatus === 'online' ? 'Backend Ready' : backendStatus === 'offline' ? 'Backend Offline' : 'Connecting...'}
           </span>
         </div>
       </header>
+
+      {showGlobalSettings && <GlobalSettingsModal onClose={() => setShowGlobalSettings(false)} />}
 
       {view === 'history' ? <HistoryView /> : (
         <>
@@ -335,7 +402,7 @@ export default function App() {
         <div className="error-banner">
           <AlertCircle style={{ flexShrink: 0, marginTop: 2 }} size={20} />
           <div>
-            <strong>Conversion Error:</strong> {error}
+            <strong>{isZipMode ? 'Import Error:' : 'Conversion Error:'}</strong> {error}
           </div>
         </div>
       )}
@@ -355,6 +422,7 @@ export default function App() {
               <button
                 type="button"
                 className={`tab-btn ${activeTab === 'upload' ? 'active' : ''}`}
+                disabled={loading}
                 onClick={() => setActiveTab('upload')}
               >
                 <Upload size={16} /> Select / Drop Files
@@ -362,9 +430,18 @@ export default function App() {
               <button
                 type="button"
                 className={`tab-btn ${activeTab === 'paste' ? 'active' : ''}`}
+                disabled={loading}
                 onClick={() => setActiveTab('paste')}
               >
                 <Copy size={16} /> Paste Content
+              </button>
+              <button
+                type="button"
+                className={`tab-btn ${isZipMode ? 'active' : ''}`}
+                disabled={loading}
+                onClick={() => setActiveTab('zip')}
+              >
+                <Folder size={16} /> Study-set ZIP
               </button>
             </div>
 
@@ -375,7 +452,7 @@ export default function App() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => !loading && fileInputRef.current?.click()}
                 >
                   <Upload className="dropzone-icon" />
                   <p className="dropzone-text">Click to choose files or drag & drop them here</p>
@@ -389,7 +466,8 @@ export default function App() {
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept=".pdf,.docx,.txt,.md,.markdown,.tex,.rst,.json,.csv,.html,.htm"
+                    accept=".pdf,.docx,.txt,.md,.markdown,.tex,.rst,.json,.csv,.html,.htm,.zip"
+                    disabled={loading}
                     onChange={handleFileChange}
                     style={{ display: 'none' }}
                   />
@@ -399,7 +477,7 @@ export default function App() {
                   <div className="selected-files">
                     <div className="selection-summary">
                       <span>{selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'} selected</span>
-                      <button type="button" className="text-btn" onClick={() => setSelectedFiles([])}>Clear all</button>
+                      <button type="button" className="text-btn" disabled={loading} onClick={() => setSelectedFiles([])}>Clear all</button>
                     </div>
                     {selectedFiles.map((selectedFile) => (
                       <div className="file-badge" key={`${selectedFile.name}-${selectedFile.size}-${selectedFile.lastModified}`}>
@@ -410,7 +488,7 @@ export default function App() {
                             <div className="file-size">{(selectedFile.size / 1024).toFixed(1)} KB</div>
                           </div>
                         </div>
-                        <button type="button" className="remove-btn" onClick={() => clearSelectedFile(selectedFile)} title="Remove file">
+                        <button type="button" className="remove-btn" disabled={loading} onClick={() => clearSelectedFile(selectedFile)} title="Remove file">
                           <X size={18} />
                         </button>
                       </div>
@@ -418,15 +496,68 @@ export default function App() {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : activeTab === 'paste' ? (
               <div>
                 <label className="form-label">Paste Raw Document Text / Markdown</label>
                 <textarea
                   className="form-textarea"
                   placeholder="Paste text content or book chapter here..."
+                  disabled={loading}
                   value={pastedText}
                   onChange={(e) => setPastedText(e.target.value)}
                 />
+              </div>
+            ) : (
+              <div>
+                <div
+                  className={`dropzone ${isDragging ? 'dragover' : ''}`}
+                  role="button"
+                  tabIndex={loading ? -1 : 0}
+                  aria-label="Choose a study-set ZIP file"
+                  aria-disabled={loading}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => !loading && zipInputRef.current?.click()}
+                  onKeyDown={(event) => {
+                    if (!loading && (event.key === 'Enter' || event.key === ' ')) {
+                      event.preventDefault();
+                      zipInputRef.current?.click();
+                    }
+                  }}
+                >
+                  <Upload className="dropzone-icon" />
+                  <p className="dropzone-text">Choose a study-set ZIP or drop it here</p>
+                  <p className="dropzone-hint">
+                    Include study-set-config.json and its input files at the archive root or inside one containing folder.
+                  </p>
+                  <input
+                    ref={zipInputRef}
+                    type="file"
+                    accept=".zip"
+                    aria-label="Study-set ZIP file"
+                    disabled={loading}
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+                {selectedZip && (
+                  <div className="selected-files">
+                    <div className="file-badge">
+                      <div className="file-badge-left">
+                        <Folder size={24} color="#3b82f6" />
+                        <div>
+                          <div className="file-name">{selectedZip.name}</div>
+                          <div className="file-size">{(selectedZip.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                      </div>
+                      <button type="button" className="remove-btn" disabled={loading}
+                        onClick={() => setSelectedZip(null)} title="Remove ZIP file">
+                        <X size={18} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -437,6 +568,14 @@ export default function App() {
               <Layers size={20} color="#3b82f6" /> 2. Generation Settings
             </h2>
 
+            {isZipMode && (
+              <div className="config-source-notice" id="zip-config-notice" role="status">
+                <strong>Settings come from study-set-config.json</strong>
+                <p>Archive models, artifact types, formats and context settings determine every job. Upload the ZIP and import the study set.</p>
+              </div>
+            )}
+            <fieldset className="generation-controls" disabled={isZipMode}
+              aria-label="Manual generation settings" aria-describedby={isZipMode ? 'zip-config-notice' : undefined}>
             {/* Actions Grid */}
             <div className="form-group">
               <label className="form-label">
@@ -453,9 +592,10 @@ export default function App() {
                       onClick={() => handleActionChange(actKey)}
                       role="checkbox"
                       aria-checked={actions.includes(actKey)}
-                      tabIndex={0}
+                      aria-disabled={isZipMode}
+                      tabIndex={isZipMode ? -1 : 0}
                       onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
+                        if (!isZipMode && (event.key === 'Enter' || event.key === ' ')) {
                           event.preventDefault();
                           handleActionChange(actKey);
                         }
@@ -502,7 +642,7 @@ export default function App() {
                     <button type="button" className="btn-secondary" disabled={modelsLoading} onClick={() => setModelsRefresh((value) => value + 1)} style={{ marginTop: '0.5rem' }}>
                       <RefreshCw size={14} /> Refresh models
                     </button>
-                    {modelsError && <p role="alert" className="selection-help">{modelsError}</p>}
+                    {!isZipMode && modelsError && <p role="alert" className="selection-help">{modelsError}</p>}
                   </>
                 ) : <input
                   type="text"
@@ -512,6 +652,28 @@ export default function App() {
                   onChange={(e) => setModel(e.target.value)}
                 />}
               </div>
+            </div>
+
+            {/* Context Token Budget */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="context-window">Context window (tokens)</label>
+              <input
+                id="context-window"
+                ref={contextInputRef}
+                type="number"
+                min="1"
+                step="1"
+                className="form-input"
+                placeholder="Auto"
+                aria-describedby="context-window-help"
+                value={contextWindow}
+                onChange={(e) => setContextWindow(e.target.value)}
+              />
+              <p id="context-window-help" className="selection-help" style={{ margin: '0.5rem 0 0' }}>
+                {connector === 'the_connector'
+                  ? 'Saved Connector input limits take precedence. Enter a fallback budget, or leave blank for 8,192 tokens when no input limit is available.'
+                  : 'Enter a token budget, or leave blank to use the model’s default.'}
+              </p>
             </div>
 
             {/* Output Format */}
@@ -544,7 +706,8 @@ export default function App() {
             <div>
               <div
                 className="collapsible-header"
-                onClick={() => setShowAdvanced(!showAdvanced)}
+                aria-disabled={isZipMode}
+                onClick={() => !isZipMode && setShowAdvanced(!showAdvanced)}
               >
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Settings size={16} /> Advanced Pipeline Controls
@@ -597,6 +760,7 @@ export default function App() {
                 </div>
               )}
             </div>
+            </fieldset>
 
             {/* Convert Button */}
             <div style={{ marginTop: '1.5rem' }}>
@@ -609,12 +773,12 @@ export default function App() {
                 {loading ? (
                   <>
                     <RefreshCw size={20} className="spinner" />
-                    Queueing {batchProgress.completed} of {batchProgress.total}...
+                    {isZipMode ? 'Importing study set…' : `Queueing ${batchProgress.completed} of ${batchProgress.total}...`}
                   </>
                 ) : (
                   <>
                     <Sparkles size={20} />
-                    Start {plannedConversions || ''} Conversion{plannedConversions === 1 ? '' : 's'}
+                    {isZipMode ? 'Import study set' : `Start ${plannedConversions || ''} Conversion${plannedConversions === 1 ? '' : 's'}`}
                   </>
                 )}
               </button>
@@ -677,7 +841,9 @@ export default function App() {
                 <FileText size={48} style={{ margin: '0 auto 1rem', opacity: 0.4 }} />
                 <p style={{ fontWeight: 500, color: '#94a3b8' }}>No output generated yet</p>
                 <p style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                  Select one or more files and artifacts on the left, then start the conversion batch.
+                  {isZipMode
+                    ? 'Import your ZIP to queue the study sets configured in study-set-config.json. Track the jobs in File History.'
+                    : 'Select one or more files and artifacts on the left, then start the conversion batch.'}
                 </p>
               </div>
             )}

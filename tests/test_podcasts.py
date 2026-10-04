@@ -36,19 +36,19 @@ class PodcastConnector:
 
 
 class PodcastPolicyTests(unittest.TestCase):
-    def test_exact_twenty_minute_boundary_without_pauses(self) -> None:
-        self.assertEqual(podcast_errors(podcast(3000)), [])
-        self.assertEqual(podcast_runtime(podcast(3000))["estimated_duration_minutes"], 20)
-        self.assertTrue(podcast_errors(podcast(3001)))
-        self.assertTrue(validate_output(json.dumps(podcast(3000)), "create_podcasts")["valid"])
-        self.assertFalse(validate_output(json.dumps(podcast(3001)), "create_podcasts")["valid"])
+    def test_exact_forty_five_minute_boundary_without_pauses(self) -> None:
+        self.assertEqual(podcast_errors(podcast(6750)), [])
+        self.assertEqual(podcast_runtime(podcast(6750))["estimated_duration_minutes"], 45)
+        self.assertTrue(podcast_errors(podcast(6751)))
+        self.assertTrue(validate_output(json.dumps(podcast(6750)), "create_podcasts")["valid"])
+        self.assertFalse(validate_output(json.dumps(podcast(6751)), "create_podcasts")["valid"])
 
     def test_pauses_reduce_dialogue_allowance_at_exact_boundary(self) -> None:
-        script = podcast(2999, pauses="[calm] [pause=100] [pause=300]")
+        script = podcast(6749, pauses="[calm] [pause=100] [pause=300]")
         self.assertEqual(podcast_runtime(script), {
-            "dialogue_words": 2999,
+            "dialogue_words": 6749,
             "pause_milliseconds": 400,
-            "estimated_duration_minutes": 20,
+            "estimated_duration_minutes": 45,
         })
         self.assertEqual(validate_artifact(script, "create_podcasts"), [])
         script["script"][0]["scenes"][0]["directions"] += " [pause=1]"
@@ -58,7 +58,7 @@ class PodcastPolicyTests(unittest.TestCase):
         script = podcast(10, pauses="[pause=200]")
         script["episode_title"] = "metadata " * 4000
         script["cast"][0]["style"] = "metadata " * 4000
-        script["metadata"] = {"text": "metadata " * 4000, "directions": "[pause=1200001]"}
+        script["metadata"] = {"text": "metadata " * 4000, "directions": "[pause=2700001]"}
         script["script"][0]["segment_name"] = "metadata " * 4000
         runtime = podcast_runtime(script)
         self.assertEqual(runtime["dialogue_words"], 10)
@@ -90,22 +90,23 @@ class PodcastPolicyTests(unittest.TestCase):
         self.assertTrue(validate_output(text, "create_podcasts", ".md")["valid"])
 
     def test_transcript_formatting_does_not_evade_cap(self) -> None:
-        for text in ("**Maya:** " + "idea " * 3001, "Maya: " + "idea " * 3001, "idea " * 3001):
+        for text in ("**Maya:** " + "idea " * 6751, "Maya: " + "idea " * 6751, "idea " * 6751):
             with self.subTest(prefix=text[:10]):
-                self.assertEqual(podcast_runtime(text)["dialogue_words"], 3001)
+                self.assertEqual(podcast_runtime(text)["dialogue_words"], 6751)
                 self.assertFalse(validate_output(text, "create_podcasts", ".md")["valid"])
 
     def test_late_italicized_dialogue_is_counted(self) -> None:
-        text = "# Study overview\n_Study together_\n\n## Discussion\n_" + " ".join(["idea"] * 3001) + "_"
-        self.assertEqual(podcast_runtime(text)["dialogue_words"], 3001)
+        text = "# Study overview\n_Study together_\n\n## Discussion\n_" + " ".join(["idea"] * 6751) + "_"
+        self.assertEqual(podcast_runtime(text)["dialogue_words"], 6751)
         self.assertFalse(validate_output(text, "create_podcasts", ".md")["valid"])
 
     def test_custom_skill_prompt_retains_authoritative_limit(self) -> None:
         system, _ = build_generation_prompts(
             action="create_podcasts", artifact_name="podcast", source_text="A source.",
-            source_path=Path("chapter.txt"), skill_text="Split into 9 episodes with at least 4500 words.",
+            source_path=Path("chapter.txt"), skill_text="Split into 9 episodes with at least 7000 words.",
         )
-        self.assertIn("at most 20 minutes", system)
+        self.assertIn("at most 45 minutes", system)
+        self.assertIn("6,750 dialogue words", system)
         self.assertIn("exactly one complete podcast episode", system)
         self.assertIn("no minimum runtime", system)
 
@@ -118,7 +119,7 @@ class PodcastPolicyTests(unittest.TestCase):
                 self.assertIn("selected" + extension, connector.calls[0]["user_prompt"])
 
     def test_direct_wrapper_rejects_overlong_or_invalid_output(self) -> None:
-        for extension, text in ((".json", json.dumps(podcast(3001))), (".json", "{}"), (".md", "**Maya:** " + "idea " * 3001)):
+        for extension, text in ((".json", json.dumps(podcast(6751))), (".json", "{}"), (".md", "**Maya:** " + "idea " * 6751)):
             with self.subTest(extension=extension, length=len(text)):
                 with self.assertRaises(ProviderError):
                     generate("Source", Path("chapter.txt"), "Custom skill", PodcastConnector(text), Path("selected" + extension))

@@ -27,7 +27,7 @@ Refer to a source by its **bare filename** — `心经_en.txt`, not a path. Fiel
 **Naming scope.**
 - *dataset* skills emit one artifact per dataset: `<dataset>.<ext>`
   (`classical_chinese.json`). Podcasts emit exactly one self-contained episode per
-  study set/source-file dataset, with an estimated runtime of at most 20 minutes
+  study set/source-file dataset, with an estimated runtime of at most 45 minutes
   at 150 dialogue words per minute plus explicit pauses. Honor the caller's
   destination and naming convention, including a sole `_episode0.json` file when required.
 - *topic* skills emit one artifact per topic (one per source-file dataset unless the project README explicitly requests synthesis): `<prefix>_<topic>.<ext>`

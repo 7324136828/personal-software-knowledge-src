@@ -514,7 +514,7 @@ skills/podcast-script/SKILL.md
 
 ## Maximum duration
 
-Each study set's single episode must have an estimated runtime **at most 20
+Each study set's single episode must have an estimated runtime **at most 45
 minutes**, at 150 dialogue words per minute plus explicit pauses:
 
 ```text
@@ -522,13 +522,13 @@ estimated_minutes = dialogue_words / 150 + total_pause_milliseconds / 60000
 ```
 
 Sum all `[pause=NNN]` durations in scene directions, including empty-dialogue
-silence scenes. With no pauses, the limit is **3,000 dialogue words**. Reduce the
+silence scenes. With no pauses, the limit is **6,750 dialogue words**. Reduce the
 word allowance by `150 * total_pause_milliseconds / 60000` when pauses are used.
 
-Aim for 15–18 minutes when useful material supports it. There is **no minimum
-runtime or word count**; short sources may produce shorter episodes. Summarize
-long material and prioritize the key concepts, useful examples, and a closing
-recap to fit the limit.
+Choose a runtime suited to the source within the 45-minute cap, leaving room for
+explicit pauses. There is **no minimum runtime or word count**; short sources may
+produce shorter episodes. Summarize long material and prioritize the key concepts,
+useful examples, and a closing recap to fit the limit.
 
 Apply the limit independently to each source file's podcast.
 
@@ -573,7 +573,7 @@ Report:
 single episode file
 dialogue words
 total pause milliseconds
-estimated duration at 150 wpm plus explicit pauses (must be <= 20 minutes)
+estimated duration at 150 wpm plus explicit pauses (must be <= 45 minutes)
 ```
 
 All factual statements in the podcast must remain faithful to the current source file.
@@ -1143,7 +1143,7 @@ Generate the complete mind-map file set for this source.
 ## Step 10 — Generate podcast
 
 Generate exactly one self-contained podcast episode for this source-file study
-set. Its estimated runtime must be at most 20 minutes at 150 dialogue words per
+set. Its estimated runtime must be at most 45 minutes at 150 dialogue words per
 minute plus explicit pauses. Summarize long material to fit; shorter episodes are
 allowed without a minimum word count. Follow §12.
 
@@ -1342,7 +1342,7 @@ For every supported text source file verify:
 
 * [ ] Dialogue word count excludes metadata.
 
-* [ ] Estimated runtime is at most 20 minutes at 150 dialogue words per minute plus explicit pauses.
+* [ ] Estimated runtime is at most 45 minutes at 150 dialogue words per minute plus explicit pauses.
 
 * [ ] The sole episode file follows the caller's destination, filename, and dataset timestamp.
 
@@ -1515,7 +1515,7 @@ For each individual source file, produce:
 1 flashcard set
 1 infographic set
 1 mind-map set
-1 self-contained podcast episode (estimated runtime <= 20 minutes)
+1 self-contained podcast episode (estimated runtime <= 45 minutes)
 1 Q&A dataset
 1 quiz set
 1 report set
@@ -2540,7 +2540,7 @@ Save the checkpoint.
 Use the same resume logic.
 
 The single podcast episode for this source-file study set must satisfy §12,
-including the estimated runtime limit of at most 20 minutes with explicit pauses.
+including the estimated runtime limit of at most 45 minutes with explicit pauses.
 Repair an existing overlong script or multi-episode output before marking it complete.
 
 After validating the sole episode file, dialogue count, pauses, and runtime:
@@ -2622,7 +2622,7 @@ all source IDs are correct
 all timestamps agree
 all JSON parses
 all format restrictions pass
-podcast has exactly one episode and estimated runtime <= 20 minutes including explicit pauses
+podcast has exactly one episode and estimated runtime <= 45 minutes including explicit pauses
 complete source exercise inventory reconciles with Q&A records
 every exercise and required answer unit is covered
 exercise_coverage policy, hashes, and PASS satisfy section 31A

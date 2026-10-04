@@ -63,8 +63,8 @@ def transcript(value: dict) -> str:
 class RecordingPodcastConnector:
     model = "fake-podcast-model"
 
-    def __init__(self, *, markdown: bool = False, draft_words: int = 1800,
-                 assembly_words: tuple[int, ...] = (2600,)) -> None:
+    def __init__(self, *, markdown: bool = False, draft_words: int = 4000,
+                 assembly_words: tuple[int, ...] = (6000,)) -> None:
         self.markdown = markdown
         self.draft_words = draft_words
         self.assembly_words = assembly_words
@@ -97,8 +97,8 @@ def options(work_dir: Path, *, aggregation: str = "hierarchical",
         work_dir=work_dir,
         profile_overrides={
             "context_window": 128000,
-            "max_output_tokens": 12000,
-            "reserved_output_tokens": 12000,
+            "max_output_tokens": 24000,
+            "reserved_output_tokens": 24000,
         },
     )
 
@@ -124,8 +124,8 @@ class PodcastPipelineTests(unittest.TestCase):
                 self.assertEqual(len(connector.calls), 3)
                 self.assertEqual(len(connector.drafts), 2)
                 draft_runtimes = [podcast_runtime(value) for value in connector.drafts]
-                self.assertTrue(all(value["estimated_duration_minutes"] <= 20 for value in draft_runtimes))
-                self.assertGreater(sum(value["estimated_duration_minutes"] for value in draft_runtimes), 20)
+                self.assertTrue(all(value["estimated_duration_minutes"] <= 45 for value in draft_runtimes))
+                self.assertGreater(sum(value["estimated_duration_minutes"] for value in draft_runtimes), 45)
                 assembly_calls = [request for request in connector.calls if ASSEMBLY_REQUEST in request["user_prompt"]]
                 self.assertEqual(len(assembly_calls), 1)
                 self.assertIn("alpha alpha", assembly_calls[0]["user_prompt"])
@@ -143,10 +143,11 @@ class PodcastPipelineTests(unittest.TestCase):
                 self.assertIn("beta", spoken)
                 self.assertTrue(result.validation["valid"], result.validation)
                 runtime = result.validation["podcast_runtime"]
-                self.assertEqual(runtime["dialogue_words"], 2600)
+                self.assertEqual(runtime["dialogue_words"], 6000)
                 self.assertEqual(runtime["pause_milliseconds"], 3000)
-                self.assertAlmostEqual(runtime["estimated_duration_minutes"], 2600 / 150 + 3000 / 60000)
-                self.assertLessEqual(runtime["estimated_duration_minutes"], 20)
+                self.assertAlmostEqual(runtime["estimated_duration_minutes"], 6000 / 150 + 3000 / 60000)
+                self.assertGreater(runtime["estimated_duration_minutes"], 20)
+                self.assertLessEqual(runtime["estimated_duration_minutes"], 45)
 
                 checkpoint = root / "work" / "aggregate" / "podcast_final.checkpoint.json"
                 self.assertTrue(checkpoint.is_file())
@@ -188,11 +189,12 @@ class PodcastPipelineTests(unittest.TestCase):
             self.assertIn("alpha beta", text)
             self.assertTrue(result.validation["valid"], result.validation)
             runtime = result.validation["podcast_runtime"]
-            self.assertEqual(runtime["dialogue_words"], 2600)
+            self.assertEqual(runtime["dialogue_words"], 6000)
             self.assertGreater(len(text.split()), runtime["dialogue_words"])
             self.assertEqual(runtime["pause_milliseconds"], 3000)
-            self.assertAlmostEqual(runtime["estimated_duration_minutes"], 2600 / 150 + 3000 / 60000)
-            self.assertLessEqual(runtime["estimated_duration_minutes"], 20)
+            self.assertAlmostEqual(runtime["estimated_duration_minutes"], 6000 / 150 + 3000 / 60000)
+            self.assertGreater(runtime["estimated_duration_minutes"], 20)
+            self.assertLessEqual(runtime["estimated_duration_minutes"], 45)
 
     def test_baseline_runtime_failure_does_not_write_requested_destination(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -200,9 +202,9 @@ class PodcastPipelineTests(unittest.TestCase):
             source = root / "chapter.txt"
             source.write_text(SOURCE, encoding="utf-8")
             output = root / "requested" / "podcast.json"
-            connector = RecordingPodcastConnector(draft_words=3001)
+            connector = RecordingPodcastConnector(draft_words=6751)
             with patch("cli_runtime.create_connector", return_value=connector):
-                with self.assertRaisesRegex(ProviderError, "maximum is 20 minutes"):
+                with self.assertRaisesRegex(ProviderError, "maximum is 45 minutes"):
                     execute_generation(
                         connector_name="ollama", input_path=source,
                         action="create_podcasts", output_path=output,
@@ -218,7 +220,7 @@ class PodcastPipelineTests(unittest.TestCase):
             source = root / "chapter.txt"
             source.write_text(SOURCE, encoding="utf-8")
             output = root / "podcast.json"
-            connector = RecordingPodcastConnector(assembly_words=(3100, 2600))
+            connector = RecordingPodcastConnector(assembly_words=(6751, 6000))
             with patch("cli_runtime.create_connector", return_value=connector):
                 result = execute_generation(
                     connector_name="ollama", input_path=source,
@@ -228,11 +230,12 @@ class PodcastPipelineTests(unittest.TestCase):
             self.assertEqual(len(connector.calls), 4)
             self.assertEqual(connector.assembly_calls, 2)
             self.assertIn("Fix these validation failures", connector.calls[-1]["user_prompt"])
-            self.assertIn("maximum is 20 minutes", connector.calls[-1]["user_prompt"])
+            self.assertIn("maximum is 45 minutes", connector.calls[-1]["user_prompt"])
             self.assertEqual(result.metrics["repair_count"], 1)
             self.assertTrue(result.validation["valid"], result.validation)
-            self.assertEqual(result.validation["podcast_runtime"]["dialogue_words"], 2600)
-            self.assertLessEqual(result.validation["podcast_runtime"]["estimated_duration_minutes"], 20)
+            self.assertEqual(result.validation["podcast_runtime"]["dialogue_words"], 6000)
+            self.assertGreater(result.validation["podcast_runtime"]["estimated_duration_minutes"], 20)
+            self.assertLessEqual(result.validation["podcast_runtime"]["estimated_duration_minutes"], 45)
             final = json.loads(output.read_text(encoding="utf-8"))
             self.assertIsInstance(final, dict)
             self.assertEqual(list(root.glob("*.json")), [output])
@@ -258,26 +261,36 @@ class PodcastPipelineTests(unittest.TestCase):
             self.assertEqual(connector.assembly_calls, 1)
             self.assertTrue(result.validation["valid"], result.validation)
             self.assertEqual(result.validation["podcast_runtime"]["dialogue_words"], 100)
-            self.assertLessEqual(result.validation["podcast_runtime"]["estimated_duration_minutes"], 20)
+            self.assertLessEqual(result.validation["podcast_runtime"]["estimated_duration_minutes"], 45)
             self.assertIsInstance(json.loads(output.read_text(encoding="utf-8")), dict)
 
-    def test_repeatedly_overlong_assembly_exhausts_retries_without_writing(self) -> None:
+    def test_repeatedly_overlong_assembly_retains_partial_drafts_without_final_validation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "chapter.txt"
             source.write_text(SOURCE, encoding="utf-8")
             output = root / "podcast.json"
-            connector = RecordingPodcastConnector(assembly_words=(3100,))
-            with patch("cli_runtime.create_connector", return_value=connector):
-                with self.assertRaisesRegex(ProviderError, "Podcast assembly failed validation"):
-                    execute_generation(
-                        connector_name="ollama", input_path=source,
-                        action="create_podcasts", output_path=output,
-                        options=options(root / "work", retries=1),
-                    )
+            connector = RecordingPodcastConnector(assembly_words=(6751,))
+            with patch("cli_runtime.create_connector", return_value=connector), patch(
+                "pipeline.engine.validate_coverage",
+            ) as coverage:
+                result = execute_generation(
+                    connector_name="ollama", input_path=source,
+                    action="create_podcasts", output_path=output,
+                    options=options(root / "work", retries=1),
+                )
             self.assertEqual(len(connector.calls), 4)
             self.assertEqual(connector.assembly_calls, 2)
-            self.assertFalse(output.exists())
+            coverage.assert_not_called()
+            self.assertTrue(output.exists())
+            self.assertEqual(result.metrics["status"], "partial")
+            self.assertTrue(result.validation["partial"])
+            self.assertTrue(result.validation["validation_skipped"])
+            final = json.loads(output.read_text(encoding="utf-8"))
+            spoken = " ".join(scene["dialogue"] for segment in final["script"] for scene in segment["scenes"])
+            self.assertIn("alpha alpha", spoken)
+            self.assertIn("beta beta", spoken)
+            self.assertGreater(podcast_runtime(final)["estimated_duration_minutes"], 45)
             self.assertFalse((root / "work" / "aggregate" / "podcast_final.checkpoint.json").exists())
 
 

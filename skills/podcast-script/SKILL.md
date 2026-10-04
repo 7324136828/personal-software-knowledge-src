@@ -1,6 +1,6 @@
 ---
 name: podcast-script
-description: Build one self-contained two-host podcast script per study-set dataset as JSON, with an estimated running time of at most 20 minutes. Use when the user wants a podcast script, audio dialogue, or spoken-word walkthrough of a corpus.
+description: Build one self-contained two-host podcast script per study-set dataset as JSON, with an estimated running time of at most 45 minutes. Use when the user wants a podcast script, audio dialogue, or spoken-word walkthrough of a corpus.
 ---
 
 # podcast-script
@@ -61,11 +61,12 @@ Estimate speech at **150 dialogue words per minute** and include every explicit
 estimated_minutes = dialogue_words / 150 + total_pause_milliseconds / 60000
 ```
 
-* The single episode must have an estimated runtime **at most 20 minutes**.
-  With no pauses, the limit is **3,000 dialogue words**; reduce that allowance by
+* The single episode must have an estimated runtime **at most 45 minutes**.
+  With no pauses, the limit is **6,750 dialogue words**; reduce that allowance by
   `150 * total_pause_milliseconds / 60000` when pauses are present.
-* Aim for 15–18 minutes when the source supports useful coverage. There is **no
-  minimum runtime or word count**; a short source can produce a shorter episode.
+* Choose a runtime suited to the source within the 45-minute cap, leaving room
+  for explicit pauses. There is **no minimum runtime or word count**; a short
+  source can produce a shorter episode.
 * Summarize long material and prioritize key concepts, useful examples, and a
   closing recap to fit the limit. Do not split a study set into a podcast series.
 * Include one introduction and one sign-off. Keep the episode self-contained.
@@ -85,7 +86,7 @@ Skip empty-dialogue pause scenes in the `.md`.
 ## Checklist
 
 - [ ] exactly one self-contained episode for the study set/source-file dataset
-- [ ] estimated runtime ≤ 20 minutes, including explicit pauses; report dialogue words and runtime
+- [ ] estimated runtime ≤ 45 minutes, including explicit pauses; report dialogue words and runtime
 - [ ] every scene `speaker_id` is in `cast`; `directions` uses only bracket tags
 - [ ] filename and destination follow the caller's requirements
 - [ ] no audio files written

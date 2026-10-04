@@ -185,7 +185,7 @@ podcasts/{TIMESTAMP}_episode0.json
 
 The `episode0` suffix is retained for compatibility and names the sole episode.
 Honor a caller-specified destination or filename. Do not generate additional
-episode files. The episode must have an estimated runtime of at most 20 minutes
+episode files. The episode must have an estimated runtime of at most 45 minutes
 at 150 dialogue words per minute plus explicit pauses; follow `podcast-script/SKILL.md`.
 
 ### Q&A datasets

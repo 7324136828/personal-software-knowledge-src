@@ -30,7 +30,7 @@ def execute_generation(
     api_key: str | None = None,
     options: PipelineOptions | None = None,
 ) -> PipelineResult:
-    """Run one validated load, generate, and write operation."""
+    """Generate and write a complete artifact or retained partial output."""
 
     try:
         action_config = ACTION_CONFIG[action]
@@ -156,6 +156,10 @@ def run_cli_generation(
                     model=args.model,
                     options=options_from_args(args),
                 )
+                if result.validation.get("partial"):
+                    LOGGER.error("Generation incomplete; partial output retained at %s. Final validation skipped.",
+                                 output_path)
+                    return result.metrics.get("failure_exit_code", 1) or 1
                 LOGGER.info("Completed: %s provider calls, %s provider retries, %s validation retries.",
                             result.metrics.get("provider_calls", 0), result.metrics.get("retry_count", 0),
                             result.metrics.get("repair_count", 0))

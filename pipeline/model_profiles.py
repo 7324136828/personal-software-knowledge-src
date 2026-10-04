@@ -26,6 +26,9 @@ class ModelProfile:
     retries: int = 2
     input_cost_per_million: float | None = None
     output_cost_per_million: float | None = None
+    # Some routes publish separate input and output limits rather than one
+    # combined context limit. Keep the input cap independent of output reserves.
+    max_input_tokens: int | None = None
 
     def __post_init__(self) -> None:
         for name in ("context_window", "max_output_tokens", "recommended_chunk_tokens", "reserved_output_tokens"):
@@ -36,6 +39,12 @@ class ModelProfile:
             value = getattr(self, name)
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise ConnectorConfigurationError(f"Model profile {name} must be a nonnegative integer.")
+        if self.max_input_tokens is not None and (
+            not isinstance(self.max_input_tokens, int)
+            or isinstance(self.max_input_tokens, bool)
+            or self.max_input_tokens <= 0
+        ):
+            raise ConnectorConfigurationError("Model profile max_input_tokens must be a positive integer.")
         if not 0 < self.preferred_input_ratio < 1:
             raise ConnectorConfigurationError("preferred_input_ratio must be between zero and one.")
         if self.safety_margin >= self.context_window:

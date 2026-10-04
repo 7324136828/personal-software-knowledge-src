@@ -20,7 +20,7 @@ from action_base import build_generation_prompts
 from connectors.base import GenerationResponse, LLMConnector
 from diagnostic_logging import record_exchange
 from errors import GenerationCancelled, InvalidArgumentsError, ProviderError
-from podcast_policy import podcast_runtime
+from podcast_policy import PODCAST_MAX_MINUTES, PODCAST_WORDS_PER_MINUTE, podcast_runtime
 
 from .aggregator import hierarchical_aggregate, merge_artifacts, provenance_index
 from .checkpoint import Checkpoint, atomic_json, atomic_text, digest, evidence_prefix
@@ -141,7 +141,9 @@ class _Run:
         self.action = action
         self.output_path = Path(output_path)
         self.options = options
-        self.profile = get_model_profile(connector_name, connector.model, options.profile_overrides)
+        resolve_profile = getattr(connector, "get_model_profile", None)
+        self.profile = (resolve_profile(options.profile_overrides) if callable(resolve_profile)
+                        else get_model_profile(connector_name, connector.model, options.profile_overrides))
         self.budget = TokenBudget(self.profile)
         try:
             self.output_path.resolve().relative_to(Path.cwd().resolve())
@@ -602,11 +604,17 @@ class _Run:
         value: dict | str = checked["data"] if self.uses_json else checked["text"]
         payload = {"data": value, "provenance": self.provenance(chunk, "generation"),
                    "repairs": checked["repairs"]}
-        self.checkpoint.save(key, fingerprint, path.with_suffix(path.suffix + ".checkpoint.json"), payload)
-        if self.uses_json:
-            atomic_json(path, value)
-        else:
-            atomic_text(path, str(value))
+        try:
+            self.checkpoint.save(key, fingerprint, path.with_suffix(path.suffix + ".checkpoint.json"), payload)
+            if self.uses_json:
+                atomic_json(path, value)
+            else:
+                atomic_text(path, str(value))
+        except OSError as exc:
+            # The model's validated draft survives even if its intermediate or
+            # checkpoint file cannot be written. The run still reports failure.
+            exc.pipeline_chunk_value = value
+            raise
         return value
 
     def coverage_repair(self, chunk: Chunk, artifact: dict) -> dict:
@@ -654,12 +662,14 @@ class _Run:
                     raise GenerationFailure("Coverage repair produced an invalid merged artifact.")
                 self.checkpoint.save(key, fingerprint, path, merged)
                 return merged
+        except GenerationCancelled:
+            raise
         except Exception as exc:
             LOGGER.warning("Coverage repair for %s was not accepted: %s", chunk.chunk_id, type(exc).__name__)
         self.checkpoint.save(key, fingerprint, path, artifact)
         return artifact
 
-    def aggregate_text(self, values: list[str]) -> str:
+    def aggregate_text(self, values: list[str], *, persist_levels: bool = True) -> str:
         """Tree-reduce text while removing exact repeated blocks or CSV rows."""
 
         if len(values) == 1:
@@ -691,10 +701,56 @@ class _Run:
             parents = []
             for number, start in enumerate(range(0, len(nodes), self.options.group_size), 1):
                 parent = merge(nodes[start:start + self.options.group_size])
-                atomic_text(self.aggregate_dir / f"level_{level:02d}_node_{number:04d}{self.extension}", parent)
+                if persist_levels:
+                    atomic_text(self.aggregate_dir / f"level_{level:02d}_node_{number:04d}{self.extension}", parent)
                 parents.append(parent)
             nodes, level = parents, level + 1
         return merge(nodes)
+
+    def partial_result(
+        self, values: list[dict | str], chunks: list[Chunk], failures: list[dict[str, Any]],
+        *, failure_exit_code: int = ProviderError.exit_code,
+    ) -> PipelineResult:
+        """Retain completed drafts without validating them as a complete artifact."""
+
+        self.ensure_not_cancelled()
+        if self.uses_json:
+            objects = [value for value in values if isinstance(value, dict)]
+            final_value = merge_artifacts(objects, self.action)
+            final_text = json.dumps(final_value, ensure_ascii=False, indent=2) + "\n"
+            try:
+                atomic_json(self.aggregate_dir / "aggregate.json", final_value)
+                atomic_json(self.aggregate_dir / "provenance.json", provenance_index(
+                    final_value, objects, [self.provenance(chunk, "generation") for chunk in chunks]
+                ))
+            except OSError:
+                LOGGER.warning("Could not save partial aggregation diagnostics; retaining output for the destination file.")
+        else:
+            final_text = self.aggregate_text([str(value) for value in values], persist_levels=False)
+            try:
+                atomic_text(self.aggregate_dir / ("aggregate" + self.extension), final_text)
+            except OSError:
+                LOGGER.warning("Could not save partial aggregation diagnostics; retaining output for the destination file.")
+        validation = {
+            "valid": False, "passed": False, "partial": True,
+            "validation_skipped": True, "reason": "incomplete_generation",
+            "failed_chunks": failures,
+        }
+        self.metrics.update({
+            "runtime_seconds": time.perf_counter() - self.started,
+            "output_bytes": len(final_text.encode("utf-8")),
+            "estimated_cost": self.estimated_cost(), "status": "partial",
+            "chunk_count": len(chunks), "failed_chunks": failures,
+            "failure_exit_code": failure_exit_code,
+        })
+        try:
+            atomic_json(self.work_dir / "metrics.json", self.metrics)
+            atomic_json(self.work_dir / "validation.json", validation)
+        except OSError:
+            LOGGER.warning("Could not save partial run diagnostics; retaining output for the destination file.")
+        LOGGER.warning("Retained partial %s output from %s completed chunks; final validation skipped.",
+                       self.action, len(chunks))
+        return PipelineResult(final_text, self.metrics, validation, self.work_dir)
 
     @staticmethod
     def podcast_material(value: dict | str) -> str:
@@ -726,7 +782,7 @@ class _Run:
             "episode for this study set. Use one introduction, a connected discussion, and one "
             "closing/sign-off. Summarize and prioritize the key concepts and examples to fit; "
             "remove repeated introductions, recaps, and sign-offs. Do not invent facts or split "
-            "the result into episodes. Runtime must be at most 20 minutes at 150 dialogue words "
+            f"the result into episodes. Runtime must be at most {PODCAST_MAX_MINUTES} minutes at {PODCAST_WORDS_PER_MINUTE} dialogue words "
             "per minute plus all scripted pauses. There is no minimum length.\n"
         )
         if self.uses_json:
@@ -734,12 +790,11 @@ class _Run:
         else:
             header += "Return the canonical Markdown transcript with bold speaker labels.\n"
         requested = self.options.max_output_tokens or self.profile.reserved_output_tokens
-        capacity = (self.profile.context_window - self.profile.safety_margin
-                    - self.budget.input_tokens(system, header)
-                    - min(requested, self.profile.max_output_tokens) - 256)
+        capacity = self.budget.material_allowance(system, header, requested, cushion=256)
         if capacity < 1024:
             raise GenerationFailure("Model context budget is too small to assemble a podcast; increase the verified context limit.")
-        word_limit = min(2700, max(50, (capacity // 2 - 600) // 4))
+        runtime_word_target = PODCAST_MAX_MINUTES * PODCAST_WORDS_PER_MINUTE * 9 // 10
+        word_limit = min(runtime_word_target, max(50, (capacity // 2 - 600) // 4))
         LOGGER.debug("Podcast assembly input_capacity=%s dialogue_word_target=%s", capacity, word_limit)
         header += f"Keep dialogue to at most {word_limit} words, allowing room for pauses.\nDRAFT MATERIAL\n"
         material = "\n\n".join(self.podcast_material(value) for value in values)
@@ -832,12 +887,30 @@ class _Run:
             chunks = self.make_chunks()
             values = []
             processed_chunks: list[Chunk] = []
+            failures: list[dict[str, Any]] = []
+            failure_errors: list[Exception] = []
+
+            def record_failure(chunk: Chunk, error: Exception, *, stage: str = "generation") -> None:
+                failure_errors.append(error)
+                failures.append({
+                    "stage": stage, "chunk_id": chunk.chunk_id,
+                    "error_type": type(error).__name__, "error": _safe_error(error),
+                })
+                LOGGER.warning("Chunk %s failed; retaining completed chunks and continuing: %s",
+                               chunk.chunk_id, _safe_error(error))
 
             def process(chunk: Chunk, depth: int = 0) -> None:
                 try:
                     knowledge = self.extraction(chunk) if self.options.strategy in {"extraction_then_generation", "multi_pass"} else None
                     value = self.generate_chunk(chunk, knowledge)
+                except GenerationCancelled:
+                    raise
                 except Exception as exc:
+                    if (retained := getattr(exc, "pipeline_chunk_value", None)) is not None:
+                        record_failure(chunk, exc, stage="write")
+                        processed_chunks.append(chunk)
+                        values.append(retained)
+                        return
                     can_split = (
                         depth < 6 and estimate_tokens(chunk.text) > 256 and
                         (
@@ -847,11 +920,13 @@ class _Run:
                         )
                     )
                     if not can_split:
-                        raise
+                        record_failure(chunk, exc)
+                        return
                     target = max(128, estimate_tokens(chunk.text) // 2)
                     children = chunk_source(chunk.text, chunk.source, target, 0, estimate_tokens)
                     if len(children) < 2:
-                        raise
+                        record_failure(chunk, exc)
+                        return
                     self.metrics["recovery_events"].append({
                         "stage": chunk.chunk_id, "strategy": "smaller_chunk",
                         "depth": depth + 1, "children": len(children),
@@ -864,16 +939,31 @@ class _Run:
                             sequence=len(processed_chunks) + 1,
                             start=chunk.start + child.start, end=chunk.start + child.end,
                         )
-                        atomic_text(self.chunks_dir / f"{adjusted.chunk_id}.txt", adjusted.text)
-                        metadata = adjusted.to_dict()
-                        metadata.pop("text", None)
-                        metadata.pop("overlap_text", None)
-                        atomic_json(self.chunks_dir / f"{adjusted.chunk_id}.json", metadata)
+                        try:
+                            atomic_text(self.chunks_dir / f"{adjusted.chunk_id}.txt", adjusted.text)
+                            metadata = adjusted.to_dict()
+                            metadata.pop("text", None)
+                            metadata.pop("overlap_text", None)
+                            atomic_json(self.chunks_dir / f"{adjusted.chunk_id}.json", metadata)
+                        except GenerationCancelled:
+                            raise
+                        except Exception as child_error:
+                            record_failure(adjusted, child_error, stage="chunk_write")
                         process(adjusted, depth + 1)
                     return
                 if isinstance(value, dict) and self.options.strategy == "multi_pass":
-                    value = self.coverage_repair(chunk, value)
-                    atomic_json(self.intermediate_dir / "generated" / f"{chunk.chunk_id}.json", value)
+                    try:
+                        value = self.coverage_repair(chunk, value)
+                    except GenerationCancelled:
+                        raise
+                    except Exception as exc:
+                        record_failure(chunk, exc, stage="coverage_repair")
+                    try:
+                        atomic_json(self.intermediate_dir / "generated" / f"{chunk.chunk_id}.json", value)
+                    except GenerationCancelled:
+                        raise
+                    except Exception as exc:
+                        record_failure(chunk, exc, stage="write")
                 processed_chunks.append(chunk)
                 values.append(value)
 
@@ -881,22 +971,40 @@ class _Run:
                 process(chunk)
             chunks = processed_chunks
             self.metrics["chunk_count"] = len(chunks)
-            if self.uses_json:
-                objects = [value for value in values if isinstance(value, dict)]
-                if self.action == "create_podcasts":
-                    final_value = self.assemble_podcast(objects)
-                elif self.options.aggregation == "hierarchical":
-                    final_value = hierarchical_aggregate(objects, self.action, self.aggregate_dir, self.options.group_size)
+            if failures:
+                if not values:
+                    self.metrics["failed_chunks"] = failures
+                    raise failure_errors[0]
+                return self.partial_result(
+                    values, chunks, failures,
+                    failure_exit_code=getattr(failure_errors[0], "exit_code", 1),
+                )
+            try:
+                if self.uses_json:
+                    objects = [value for value in values if isinstance(value, dict)]
+                    if self.action == "create_podcasts":
+                        final_value = self.assemble_podcast(objects)
+                    elif self.options.aggregation == "hierarchical":
+                        final_value = hierarchical_aggregate(objects, self.action, self.aggregate_dir, self.options.group_size)
+                    else:
+                        final_value = merge_artifacts(objects, self.action)
+                    atomic_json(self.aggregate_dir / "aggregate.json", final_value)
+                    atomic_json(self.aggregate_dir / "provenance.json", provenance_index(
+                        final_value, objects, [self.provenance(chunk, "generation") for chunk in chunks]
+                    ))
                 else:
-                    final_value = merge_artifacts(objects, self.action)
-                atomic_json(self.aggregate_dir / "aggregate.json", final_value)
-                atomic_json(self.aggregate_dir / "provenance.json", provenance_index(
-                    final_value, objects, [self.provenance(chunk, "generation") for chunk in chunks]
-                ))
-            else:
-                final_value = (self.assemble_podcast(values) if self.action == "create_podcasts" else
-                               self.aggregate_text([str(value) for value in values]))
-                atomic_text(self.aggregate_dir / ("aggregate" + self.extension), final_value)
+                    final_value = (self.assemble_podcast(values) if self.action == "create_podcasts" else
+                                   self.aggregate_text([str(value) for value in values]))
+                    atomic_text(self.aggregate_dir / ("aggregate" + self.extension), final_value)
+            except GenerationCancelled:
+                raise
+            except Exception as exc:
+                return self.partial_result(
+                    values, chunks, [{
+                        "stage": "aggregation", "chunk_id": None,
+                        "error_type": type(exc).__name__, "error": _safe_error(exc),
+                    }], failure_exit_code=getattr(exc, "exit_code", 1),
+                )
 
         final_text = (json.dumps(final_value, ensure_ascii=False, indent=2) + "\n"
                       if self.uses_json else str(final_value))

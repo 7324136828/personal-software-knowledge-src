@@ -46,16 +46,39 @@ class TokenBudget:
 
     def output_allowance(self, system_prompt: str, user_prompt: str, requested: int | None = None) -> int:
         requested = self._requested(requested)
-        remaining = self.profile.context_window - self.profile.safety_margin - self.input_tokens(system_prompt, user_prompt)
+        input_tokens = self.input_tokens(system_prompt, user_prompt)
+        if (self.profile.max_input_tokens is not None
+                and input_tokens > self.profile.max_input_tokens - self.profile.safety_margin):
+            raise TokenBudgetError("Prompt exceeds the configured input token budget; reduce the chunk or prompt size.")
+        remaining = self.profile.context_window - self.profile.safety_margin - input_tokens
         if remaining < 1:
             raise TokenBudgetError("Prompt exceeds the configured context budget; reduce the chunk or prompt size.")
         return min(requested, remaining)
 
-    def chunk_allowance(self, system_prompt: str, extra_prompt: str = "", requested_output: int | None = None) -> int:
+    def material_allowance(
+        self, system_prompt: str, user_prompt: str,
+        requested_output: int | None = None, cushion: int = 0,
+    ) -> int:
+        """Return space for additional source material under every token limit.
+
+        A separate input cap includes prompts and chat framing but excludes
+        output. A combined context cap must reserve space for both. A cushion
+        keeps room for later instructions and validation feedback.
+        """
+        if not isinstance(cushion, int) or isinstance(cushion, bool) or cushion < 0:
+            raise TokenBudgetError("Token cushion must be a nonnegative integer.")
         output = self._requested(requested_output)
+        overhead = self.input_tokens(system_prompt, user_prompt)
+        remaining = self.profile.context_window - self.profile.safety_margin - overhead - output - cushion
+        if self.profile.max_input_tokens is not None:
+            remaining = min(remaining, self.profile.max_input_tokens - self.profile.safety_margin - overhead - cushion)
+        return remaining
+
+    def chunk_allowance(self, system_prompt: str, extra_prompt: str = "", requested_output: int | None = None) -> int:
         overhead = self.input_tokens(system_prompt, extra_prompt)
         usable = self.profile.context_window - self.profile.safety_margin
-        remaining = min(usable - output - overhead, int(usable * self.profile.preferred_input_ratio) - overhead)
+        remaining = min(self.material_allowance(system_prompt, extra_prompt, requested_output),
+                        int(usable * self.profile.preferred_input_ratio) - overhead)
         if remaining < 1:
             raise TokenBudgetError("Skill and instruction prompts leave no source budget; increase the verified context limit or simplify the skill.")
         return min(self.profile.recommended_chunk_tokens, remaining)

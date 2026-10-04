@@ -8,6 +8,7 @@ import time
 import unittest
 import zipfile
 from pathlib import Path
+from contextlib import nullcontext
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -16,6 +17,16 @@ from connectors.base import GenerationResponse
 from errors import ApplicationError, GenerationCancelled
 from pipeline.engine import PipelineResult
 import server
+
+
+def study_set_zip(config: dict, inputs: dict[str, str], *, wrapper: str = "") -> bytes:
+    stream = io.BytesIO()
+    prefix = wrapper + "/" if wrapper else ""
+    with zipfile.ZipFile(stream, "w") as archive:
+        archive.writestr(prefix + "study-set-config.json", json.dumps(config))
+        for name, content in inputs.items():
+            archive.writestr(prefix + name, content)
+    return stream.getvalue()
 
 
 class ServerTests(unittest.TestCase):
@@ -49,6 +60,152 @@ class ServerTests(unittest.TestCase):
         self.assertIn("connectors", data)
         self.assertIn("openai", data["connectors"])
         self.assertIn("system_temp_dir", data)
+
+    def test_zip_import_queues_config_defined_jobs_and_survives_temp_cleanup(self) -> None:
+        config = {
+            "model": "package-model", "context_window": 24000, "verbose": True,
+            "pipeline": {"strategy": "baseline", "retries": 0, "work_dir": "cache",
+                         "model_profile": "profiles/budget.json"},
+            "files": [
+                {"input": "inputs", "output": "results", "inputPattern": "chapter*.txt",
+                 "types": ["datatable"], "formats": ["json", "csv"]},
+                {"input": "inputs", "output": "custom/results", "inputPattern": "chapter1.txt",
+                 "types": ["quiz"], "model": "quiz-model", "pipeline": {"temperature": 0.3}},
+            ],
+        }
+        temporary_paths = []
+        real_temporary = tempfile.TemporaryDirectory
+
+        def tracked_temporary(**kwargs):
+            temporary = real_temporary(**kwargs)
+            temporary_paths.append(Path(temporary.name))
+            return temporary
+
+        def assert_committed():
+            records = server._records_on_disk()
+            latest_import = max(records, key=lambda record: record["priority"])["import_id"]
+            records = [record for record in records if record["import_id"] == latest_import]
+            self.assertEqual(len(records), 5)
+            self.assertTrue(all(record["status"] == "queued" for record in records))
+            self.assertTrue(all((server._conversion_dir(record["id"]) / record["input_path"]).is_file()
+                                for record in records))
+            self.assertTrue(all(not path.exists() for path in temporary_paths))
+
+        for wrapper in ("", "wrapped-study"):
+            with self.subTest(wrapper=wrapper), patch("server._ensure_queue_dispatcher", side_effect=assert_committed), \
+                    patch("server.tempfile.TemporaryDirectory", side_effect=tracked_temporary), \
+                    patch("server.execute_generation") as generate:
+                response = self.client.post("/api/study-sets/import", data={
+                    "model": "ui-model", "action": "create_reports", "context_window": "1000",
+                }, files={"file": ("Study.ZIP", study_set_zip(config, {
+                    "inputs/chapter1.txt": "First chapter", "inputs/chapter2.txt": "Second chapter",
+                    "inputs/ignored.txt": "Not matched",
+                    "profiles/budget.json": json.dumps({"max_output_tokens": 3072, "reserved_output_tokens": 2048}),
+                }, wrapper=wrapper), "application/zip")})
+                self.assertEqual(response.status_code, 200, response.text)
+                generate.assert_not_called()
+                payload = response.json()
+                self.assertEqual((payload["source_count"], payload["job_count"]), (2, 5))
+                self.assertEqual(payload["archive_filename"], "Study.ZIP")
+                records = [server._read_record(identifier) for identifier in payload["session_ids"]]
+                self.assertEqual({record["import_id"] for record in records}, {payload["import_id"]})
+                self.assertEqual({record["action"] for record in records}, {"create_datatables", "create_quizzes"})
+                self.assertEqual({record["output_format"] for record in records}, {"json", "csv"})
+                self.assertEqual({record["package_output_path"] for record in records}, {
+                    "results/chapter1/datatable/datatables.json", "results/chapter1/datatable/datatables.csv",
+                    "results/chapter2/datatable/datatables.json", "results/chapter2/datatable/datatables.csv",
+                    "custom/results/chapter1/quiz/quizzes.json",
+                })
+                for record in records:
+                    self.assertEqual(record["options"]["profile_overrides"]["context_window"], 24000)
+                    self.assertEqual(record["options"]["profile_overrides"]["max_output_tokens"], 3072)
+                    self.assertEqual(record["options"]["strategy"], "baseline")
+                    self.assertEqual(record["options"]["retries"], 0)
+                    self.assertTrue(record["verbose"])
+                    self.assertTrue(Path(record["work_path"]).is_relative_to(Path("package/cache")))
+                    directory = server._conversion_dir(record["id"])
+                    self.assertTrue((directory / "package/study-set-config.json").is_file())
+                    self.assertEqual(record["model"], "quiz-model" if record["action"] == "create_quizzes" else "package-model")
+                chapter1 = [record for record in records if record["package_source_path"] == "inputs/chapter1.txt"]
+                self.assertEqual(len({record["source_group_id"] for record in chapter1}), 1)
+
+            def fake_generation(*, output_path, input_path, model, options, **kwargs):
+                self.assertEqual(input_path.read_text(encoding="utf-8"), "First chapter")
+                self.assertEqual(model, "quiz-model")
+                self.assertEqual(options.temperature, 0.3)
+                self.assertEqual(options.profile_overrides["context_window"], 24000)
+                self.assertEqual(options.profile_overrides["max_output_tokens"], 3072)
+                self.assertEqual(options.work_dir, server._conversion_dir(quiz["id"]) / quiz["work_path"])
+                output_path.write_text('{"quizzes": []}', encoding="utf-8")
+                return PipelineResult('{"quizzes": []}', {}, {}, options.work_dir)
+
+            quiz = next(record for record in records if record["action"] == "create_quizzes")
+            with patch("server.execute_generation", side_effect=fake_generation), \
+                    patch("server.verbose_logging", return_value=nullcontext()) as logging:
+                continued = self.client.post(f"/api/history/{quiz['id']}/continue")
+            self.assertEqual(continued.status_code, 200)
+            logging.assert_called_once_with(True)
+
+    def test_zip_import_validates_whole_batch_before_creating_jobs(self) -> None:
+        entry = {"input": "inputs", "output": "results", "inputPattern": "*.txt", "types": ["quiz"]}
+        packages = [
+            study_set_zip({"model": "route", "files": [entry, {**entry, "types": ["invalid"]}]}, {"inputs/chapter.txt": "Study"}),
+            study_set_zip({"model": "route", "files": [{**entry, "inputPattern": "*"}]}, {"inputs/chapter.exe": "Unsupported"}),
+            study_set_zip({"model": "route", "files": [{**entry, "output": "../outside"}]}, {"inputs/chapter.txt": "Study"}),
+            b"Not a ZIP",
+        ]
+        with patch("server.execute_generation") as generate, patch("server._ensure_queue_dispatcher") as dispatch:
+            for package in packages:
+                response = self.client.post("/api/study-sets/import", files={"file": ("study.zip", package, "application/zip")})
+                self.assertEqual(response.status_code, 400, response.text)
+                self.assertEqual(list(server.HISTORY_DIR.iterdir()), [])
+        generate.assert_not_called()
+        dispatch.assert_not_called()
+
+    def test_zip_import_rolls_back_partial_durable_staging(self) -> None:
+        package = study_set_zip({"model": "route", "files": [{
+            "input": "inputs", "output": "results", "inputPattern": "*.txt", "types": ["quiz", "qanda"],
+        }]}, {"inputs/chapter.txt": "Study"})
+        real_copy = server.shutil.copy2
+        copies = 0
+
+        def interrupted_copy(*args, **kwargs):
+            nonlocal copies
+            copies += 1
+            if copies == 3:
+                raise OSError("Simulated disk failure")
+            return real_copy(*args, **kwargs)
+
+        with patch("server.shutil.copy2", side_effect=interrupted_copy), patch("server._ensure_queue_dispatcher") as dispatch:
+            response = self.client.post("/api/study-sets/import", files={"file": ("study.zip", package, "application/zip")})
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(list(server.HISTORY_DIR.iterdir()), [])
+        dispatch.assert_not_called()
+
+    def test_zip_import_rejects_malformed_model_profiles_without_queueing(self) -> None:
+        entry = {"input": "inputs", "output": "results", "inputPattern": "*.txt", "types": ["quiz"]}
+        config = {"model": "route", "files": [entry, {
+            **entry, "types": ["qanda"], "pipeline": {"model_profile": "profile.json"},
+        }]}
+        with patch("server.execute_generation") as generate, patch("server._ensure_queue_dispatcher") as dispatch:
+            for profile in ({"max_output_tokens": 0}, {"preferred_input_ratio": "invalid"}, {"temperature": {}}, []):
+                with self.subTest(profile=profile):
+                    package = study_set_zip(config, {"inputs/chapter.txt": "Study", "profile.json": json.dumps(profile)})
+                    response = self.client.post("/api/study-sets/import", files={"file": ("study.zip", package, "application/zip")})
+                    self.assertEqual(response.status_code, 400, response.text)
+                    self.assertEqual(list(server.HISTORY_DIR.iterdir()), [])
+        generate.assert_not_called()
+        dispatch.assert_not_called()
+
+    def test_zip_import_rejects_wrong_extension_and_oversized_upload(self) -> None:
+        with patch("server._ensure_queue_dispatcher") as dispatch:
+            response = self.client.post("/api/study-sets/import", files={"file": ("study.txt", b"text", "text/plain")})
+            self.assertEqual(response.status_code, 400)
+            with patch("study_package.MAX_ARCHIVE_BYTES", 3):
+                response = self.client.post("/api/study-sets/import", files={"file": ("study.zip", b"1234", "application/zip")})
+            self.assertEqual(response.status_code, 413)
+        self.assertEqual(list(server.HISTORY_DIR.iterdir()), [])
+        dispatch.assert_not_called()
 
     def test_convert_rejects_missing_input(self) -> None:
         response = self.client.post(
@@ -87,6 +244,7 @@ class ServerTests(unittest.TestCase):
 
         def fake_execute_generation(*, connector_name, input_path, action, output_path, model=None, api_key=None, options=None):
             self.assertEqual(api_key, "test-secret-key")
+            self.assertEqual(options.profile_overrides, {})
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(fake_output_content, encoding="utf-8")
             return PipelineResult(
@@ -120,6 +278,7 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(len(history), 1)
             self.assertEqual(history[0]["status"], "completed")
             self.assertEqual(history[0]["input_filename"], "pasted_document.txt")
+            self.assertIsNone(history[0]["context_window"])
 
             archive_response = self.client.get(history[0]["download_url"])
             self.assertEqual(archive_response.status_code, 200)
@@ -136,6 +295,71 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(dl_resp.status_code, 200)
             self.assertEqual(dl_resp.text, fake_output_content)
             self.assertEqual(dl_resp.headers.get("content-type"), "application/json")
+
+    def test_uploaded_context_window_reaches_generation_and_history(self) -> None:
+        def fake_generation(*, output_path, options, **kwargs):
+            output_path.write_text("# Report", encoding="utf-8")
+            return PipelineResult("# Report", {}, {}, output_path.parent)
+
+        for context_window, safety_margin in ((32000, 512), (1000, 100)):
+            with self.subTest(context_window=context_window), \
+                    patch("server.execute_generation", side_effect=fake_generation) as generate:
+                response = self.client.post("/api/convert", data={
+                    "action": "create_reports", "connector": "the_connector",
+                    "context_window": str(context_window),
+                }, files={"file": ("chapter.txt", b"Study source", "text/plain")})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(generate.call_args.kwargs["options"].profile_overrides, {
+                    "context_window": context_window, "safety_margin": safety_margin,
+                })
+                record = server._read_record(response.json()["session_id"])
+                self.assertEqual(record["options"]["profile_overrides"]["context_window"], context_window)
+                self.assertEqual(server._public_record(record)["context_window"], context_window)
+
+    def test_invalid_context_window_is_rejected_before_creating_history_or_jobs(self) -> None:
+        with patch("server.execute_generation") as generate, patch("server._ensure_queue_dispatcher") as dispatch:
+            for value in ("0", "-1", "1.5", "invalid", "true"):
+                with self.subTest(value=value):
+                    response = self.client.post("/api/convert", data={
+                        "action": "create_reports", "connector": "the_connector",
+                        "pasted_text": "Study source", "context_window": value, "enqueue": "true",
+                    })
+                    self.assertEqual(response.status_code, 422)
+                    self.assertEqual(list(server.HISTORY_DIR.iterdir()), [])
+        generate.assert_not_called()
+        dispatch.assert_not_called()
+
+    def test_queued_context_window_survives_failure_and_continue_with_new_chunk_size(self) -> None:
+        expected = {"context_window": 24000, "safety_margin": 512}
+        with patch("server._ensure_queue_dispatcher"), patch("server.execute_generation") as generate:
+            response = self.client.post("/api/convert", data={
+                "action": "create_reports", "connector": "the_connector", "pasted_text": "Queued source",
+                "context_window": "24000", "enqueue": "true",
+            })
+            self.assertEqual(response.status_code, 200)
+            generate.assert_not_called()
+            conversion_id = response.json()["session_id"]
+            history = self.client.get("/api/history").json()["conversions"]
+            self.assertEqual(history[0]["context_window"], 24000)
+            self.assertEqual(server._read_record(conversion_id)["options"]["profile_overrides"], expected)
+
+        with patch("server.execute_generation", side_effect=ApplicationError("Provider unavailable")) as generate:
+            failed = self.client.post(f"/api/history/{conversion_id}/continue")
+            self.assertEqual(failed.status_code, 400)
+            self.assertEqual(generate.call_args.kwargs["options"].profile_overrides, expected)
+
+        def resumed_generation(*, output_path, options, **kwargs):
+            self.assertEqual(options.profile_overrides, expected)
+            self.assertEqual(options.chunk_characters, 2048)
+            output_path.write_text("# Report", encoding="utf-8")
+            return PipelineResult("# Report", {}, {}, output_path.parent)
+
+        with patch("server.execute_generation", side_effect=resumed_generation):
+            resumed = self.client.post(f"/api/history/{conversion_id}/continue", data={"chunk_characters": "2048"})
+        self.assertEqual(resumed.status_code, 200)
+        record = server._read_record(conversion_id)
+        self.assertEqual(record["options"]["profile_overrides"], expected)
+        self.assertEqual(server._public_record(record)["context_window"], 24000)
 
     def test_convert_pdf_upload_flow(self) -> None:
         from pypdf import PdfWriter

@@ -1,4 +1,4 @@
-"""The single-episode, twenty-minute policy shared by podcast entry points."""
+"""The single-episode runtime policy shared by podcast entry points."""
 
 from __future__ import annotations
 
@@ -6,18 +6,18 @@ import json
 import re
 
 
-PODCAST_MAX_MINUTES = 20
+PODCAST_MAX_MINUTES = 45
 PODCAST_WORDS_PER_MINUTE = 150
 PODCAST_MAX_MILLISECONDS = PODCAST_MAX_MINUTES * 60_000
 PODCAST_MILLISECONDS_PER_WORD = 60_000 // PODCAST_WORDS_PER_MINUTE
 
-PODCAST_PROMPT_CONSTRAINT = """PODCAST RUNTIME AND EPISODE LIMIT
+PODCAST_PROMPT_CONSTRAINT = f"""PODCAST RUNTIME AND EPISODE LIMIT
 Generate exactly one complete podcast episode for this study set. Never split it into
 multiple episodes, return an episode array, or promise another episode. Its estimated
-runtime must be at most 20 minutes, using 150 spoken dialogue words per minute plus
+runtime must be at most {PODCAST_MAX_MINUTES} minutes, using {PODCAST_WORDS_PER_MINUTE} spoken dialogue words per minute plus
 all explicit [pause=NNN] durations in milliseconds. Count only spoken dialogue, not
 titles, speaker labels, JSON keys, cast descriptions, or other metadata. Without
-pauses the hard maximum is 3,000 dialogue words; pauses reduce that allowance.
+pauses the hard maximum is {PODCAST_MAX_MINUTES * PODCAST_WORDS_PER_MINUTE:,} dialogue words; pauses reduce that allowance.
 There is no minimum runtime or word count. Prefer a shorter focused overview when
 the source is long, selecting its central ideas and representative examples. Include
 one introduction and one sign-off. These episode and runtime limits take precedence
@@ -122,6 +122,6 @@ def podcast_errors(value) -> list[str]:
         errors.append(
             f"Podcast estimated runtime is {runtime['estimated_duration_minutes']:.3f} minutes "
             f"({runtime['dialogue_words']} dialogue words and {runtime['pause_milliseconds']} ms of pauses); "
-            "the maximum is 20 minutes at 150 words per minute including pauses. Shorten this single episode."
+            f"the maximum is {PODCAST_MAX_MINUTES} minutes at {PODCAST_WORDS_PER_MINUTE} words per minute including pauses. Shorten this single episode."
         )
     return errors
