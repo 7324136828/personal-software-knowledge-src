@@ -15,6 +15,7 @@ from diagnostic_logging import verbose_logging
 from errors import ApplicationError, InvalidArgumentsError
 from output_writer import write_output
 from pipeline.engine import PipelineOptions, PipelineResult, run_pipeline
+from runtime_environment import load_environment
 from skill_loader import load_skill
 
 LOGGER = logging.getLogger("content_generator")
@@ -144,6 +145,7 @@ def run_cli_generation(
 ) -> int:
     """Run a CLI request with scoped diagnostics and consistent exit codes."""
 
+    load_environment()
     configure_logging()
     try:
         with verbose_logging(getattr(args, "verbose", False)):

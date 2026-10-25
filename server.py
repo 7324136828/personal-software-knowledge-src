@@ -40,6 +40,10 @@ from diagnostic_logging import verbose_logging
 from pipeline.engine import PipelineOptions
 from podcast_policy import PODCAST_MAX_MINUTES
 from global_settings import MAX_CONCURRENT_RUNS, load_settings, save_settings
+from runtime_environment import load_environment
+
+# Uvicorn imports this module directly, bypassing run.py.
+load_environment()
 
 # Configure logging
 logging.basicConfig(

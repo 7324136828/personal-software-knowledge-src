@@ -15,6 +15,7 @@ from cli_runtime import configure_logging
 from connectors import CONNECTORS
 from errors import ApplicationError, InvalidArgumentsError
 from experiments.runner import PACKAGE_ROOT, SCENARIOS, compare_runs, load_scenario, parse_model_spec, prepare_config, read_config, run_experiment
+from runtime_environment import load_environment
 
 LOGGER = logging.getLogger("content_generator.experiments")
 
@@ -39,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    load_environment()
     configure_logging()
     args = build_parser().parse_args(argv)
     if args.list:
